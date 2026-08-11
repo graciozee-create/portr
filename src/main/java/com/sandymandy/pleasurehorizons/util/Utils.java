@@ -3,25 +3,25 @@ package com.sandymandy.pleasurehorizons.util;
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BlockState;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceManager;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -44,7 +44,7 @@ public class Utils {
     public static BlockPos getBlockPosFromVec3d(Vec3d pos) {return new BlockPos((int) pos.getX(), (int) pos.getY(), (int) pos.getZ());}
 
     public static Settlement findNearestSettlement(World world, BlockPos pos) {
-        if (!(world instanceof ServerWorld serverWorld)) return null;
+        if (!(world instanceof ServerLevel serverWorld)) return null;
 
         SettlementManager manager = SettlementManager.get(serverWorld);
 
@@ -54,7 +54,7 @@ public class Utils {
                 .orElse(null);
     }
 
-    public static Settlement findSettlementByBuilding(ServerWorld world, BlockPos doorPos) {
+    public static Settlement findSettlementByBuilding(ServerLevel world, BlockPos doorPos) {
         List<Settlement> settlements = SettlementManager.get(world).getAllSettlements();
 
         for(Settlement settlement : settlements) {
@@ -234,7 +234,7 @@ public class Utils {
         return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
     }
 
-    public static String getPlayerName(PlayerEntity player){
+    public static String getPlayerName(Player player){
         String name = player.getName().getString();
         name.replace("literal{","").replace("}","");
         return name;

@@ -1,56 +1,18 @@
 package com.sandymandy.pleasurehorizons.entity.ai.goal;
 
-import net.minecraft.entity.ai.goal.Goal;
-
-import java.util.EnumSet;
-import java.util.function.BooleanSupplier;
+import net.minecraft.world.entity.ai.goal.Goal;
+import java.util.function.Supplier;
 
 public class ConditionalGoal extends Goal {
-    private final Goal wrappedGoal;
-    private final BooleanSupplier condition;
-
-    public ConditionalGoal(Goal wrappedGoal, BooleanSupplier condition) {
-        this.wrappedGoal = wrappedGoal;
+    private final Goal wrapped;
+    private final Supplier<Boolean> condition;
+    public ConditionalGoal(Goal wrapped, Supplier<Boolean> condition) {
+        this.wrapped = wrapped;
         this.condition = condition;
     }
-
-    @Override
-    public boolean canStart() {
-        return condition.getAsBoolean() && wrappedGoal.canStart();
-    }
-
-    @Override
-    public boolean shouldContinue() {
-        return condition.getAsBoolean() && wrappedGoal.shouldContinue();
-    }
-
-    @Override
-    public void start() {
-        wrappedGoal.start();
-    }
-
-    @Override
-    public void stop() {
-        wrappedGoal.stop();
-    }
-
-    @Override
-    public void tick() {
-        wrappedGoal.tick();
-    }
-
-    @Override
-    public boolean canStop() {
-        return wrappedGoal.canStop();
-    }
-
-    @Override
-    public boolean shouldRunEveryTick() {
-        return wrappedGoal.shouldRunEveryTick();
-    }
-
-    @Override
-    public EnumSet<Control> getControls() {
-        return wrappedGoal.getControls();
-    }
+    @Override public boolean canUse() { return condition.get() && wrapped.canUse(); }
+    @Override public boolean canContinueToUse() { return condition.get() && wrapped.canContinueToUse(); }
+    @Override public void start() { wrapped.start(); }
+    @Override public void stop() { wrapped.stop(); }
+    @Override public void tick() { wrapped.tick(); }
 }

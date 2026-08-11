@@ -4,9 +4,9 @@ import com.sandymandy.pleasurehorizons.client.gui.screen.settlement.SettlementHu
 import com.sandymandy.pleasurehorizons.client.gui.screen.settlement.SettlementTab;
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Colors;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
 
 public class ResourcesTab extends SettlementTab {
 

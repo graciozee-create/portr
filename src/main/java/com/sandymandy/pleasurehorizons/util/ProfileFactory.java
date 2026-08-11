@@ -2,8 +2,8 @@ package com.sandymandy.pleasurehorizons.util;
 
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.util.variables.CustomGirlProfile;
-import net.minecraft.entity.EntityType;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
 @FunctionalInterface
 public interface ProfileFactory<T extends GirlSceneEntity> {

@@ -2,7 +2,7 @@ package com.sandymandy.pleasurehorizons.config.gui;
 
 import me.shedaniel.autoconfig.gui.registry.GuiRegistry;
 import me.shedaniel.autoconfig.util.Utils;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

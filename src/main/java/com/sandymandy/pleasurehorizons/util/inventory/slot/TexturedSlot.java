@@ -1,8 +1,8 @@
 package com.sandymandy.pleasurehorizons.util.inventory.slot;
 
 import net.minecraft.inventory.Inventory;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public class TexturedSlot extends Slot {

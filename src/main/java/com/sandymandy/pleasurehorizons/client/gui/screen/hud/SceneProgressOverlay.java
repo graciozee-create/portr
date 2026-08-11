@@ -3,7 +3,7 @@ package com.sandymandy.pleasurehorizons.client.gui.screen.hud;
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class SceneProgressOverlay {
     private static final Identifier SCENE_PROGRESS_BAR_TEXTURE = Identifier.of(PleasureHorizons.MOD_ID, "textures/gui/scene_progress_bar.png");

@@ -5,9 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.sandymandy.pleasurehorizons.util.variables.CustomGirlProfile;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import java.util.ArrayList;
 import java.util.List;
 

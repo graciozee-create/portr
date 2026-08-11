@@ -1,8 +1,8 @@
 package com.sandymandy.pleasurehorizons.util;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 
 import java.util.Objects;
 
@@ -19,7 +19,7 @@ public class PleasureHorizonsMessages {
         GlobleMessage(world, Text.literal(message));
     }
 
-    public static void PlayerSpecificMessage(PlayerEntity playerEntity, String messageContent){
+    public static void PlayerSpecificMessage(Player playerEntity, String messageContent){
         Text message = Text.literal(messageContent);
         playerEntity.sendMessage(message,false);
     }

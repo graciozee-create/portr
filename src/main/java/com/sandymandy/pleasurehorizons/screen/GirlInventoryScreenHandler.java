@@ -7,17 +7,17 @@ import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import com.sandymandy.pleasurehorizons.util.inventory.slot.ExclusiveSlot;
 import com.sandymandy.pleasurehorizons.util.inventory.slot.InclusiveSlot;
 import com.sandymandy.pleasurehorizons.util.inventory.slot.PublicArmorSlot;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import java.util.Map;
 
@@ -47,15 +47,15 @@ public class GirlInventoryScreenHandler extends ScreenHandler {
     };
 
     // The codec-compatible constructor
-    public GirlInventoryScreenHandler(int syncId, PlayerInventory playerInventory, PleasureHorizonsClient.GirlScreenData data) {
+    public GirlInventoryScreenHandler(int syncId, Inventory playerInventory, PleasureHorizonsClient.GirlScreenData data) {
         this(syncId, playerInventory, data.entityId());
     }
 
     // This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
     // and can therefore directly provide it as an argument. This inventory will then be synced to the client.
-    public GirlInventoryScreenHandler(int syncId, PlayerInventory playerInventory, int girlId) {
+    public GirlInventoryScreenHandler(int syncId, Inventory playerInventory, int girlId) {
         super(GIRL_INVENTORY_SCREEN_HANDLER, syncId);
-        PlayerEntity player = playerInventory.player;
+        Player player = playerInventory.player;
         World world = player.getWorld();
 
         Entity entity = world.getEntityById(girlId);
@@ -119,12 +119,12 @@ public class GirlInventoryScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
+    public boolean canUse(Player player) {
         return inventory.canPlayerUse(player);
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int index) {
+    public ItemStack quickMove(Player player, int index) {
         return ItemStack.EMPTY;
     }
 

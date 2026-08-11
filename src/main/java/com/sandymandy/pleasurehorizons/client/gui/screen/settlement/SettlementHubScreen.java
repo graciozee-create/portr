@@ -11,11 +11,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Items;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -37,7 +37,7 @@ public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandle
     @Nullable
     private SettlementTabWidget selectedTab;
 
-    public SettlementHubScreen(SettlementHubScreenHandler handler, PlayerInventory inventory, Text title) {
+    public SettlementHubScreen(SettlementHubScreenHandler handler, Inventory inventory, Text title) {
         super(handler, inventory, title);
         this.settlement = handler.getSettlement();
         this.backgroundWidth = WINDOW_WIDTH;

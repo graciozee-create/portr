@@ -3,7 +3,7 @@ package com.sandymandy.pleasurehorizons.registries;
 import com.sandymandy.pleasurehorizons.networking.C2S.InventoryButtonC2SPacket;
 import com.sandymandy.pleasurehorizons.screen.InventoryButtonAction;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 

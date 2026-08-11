@@ -4,10 +4,10 @@ import com.sandymandy.pleasurehorizons.freecam.Freecam;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,21 +31,21 @@ public class MultiPlayerGameModeMixin {
     }
 
     @Inject(method = "interactEntity", at = @At("HEAD"), cancellable = true)
-    private void onInteractEntity(PlayerEntity player, Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+    private void onInteractEntity(Player player, Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (entity.equals(MC.player) || freecam$disableInteract()) {
             cir.setReturnValue(ActionResult.PASS);
         }
     }
 
     @Inject(method = "interactEntityAtLocation", at = @At("HEAD"), cancellable = true)
-    private void onInteractEntityAtLocation(PlayerEntity player, Entity entity, EntityHitResult hitResult, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+    private void onInteractEntityAtLocation(Player player, Entity entity, EntityHitResult hitResult, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (entity.equals(MC.player) || freecam$disableInteract()) {
             cir.setReturnValue(ActionResult.PASS);
         }
     }
 
     @Inject(method = "attackEntity", at = @At("HEAD"), cancellable = true)
-    private void onAttackEntity(PlayerEntity player, Entity target, CallbackInfo ci) {
+    private void onAttackEntity(Player player, Entity target, CallbackInfo ci) {
         if (target.equals(MC.player)) {
             ci.cancel();
         }

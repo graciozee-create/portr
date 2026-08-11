@@ -5,7 +5,7 @@ import me.shedaniel.autoconfig.gui.registry.GuiRegistry;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.gui.entries.KeyCodeEntry;
 import me.shedaniel.clothconfig2.impl.builders.KeyCodeBuilder;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import com.sandymandy.pleasurehorizons.config.ModBindings;
 
 import java.util.ArrayList;

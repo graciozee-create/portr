@@ -2,7 +2,7 @@ package com.sandymandy.pleasurehorizons.client.gui.screen.customize;
 
 import com.sandymandy.pleasurehorizons.client.gui.screen.CustomizeScreen;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class LabelSection<T extends GirlSceneEntity> extends CustomizeSection<T> {
 

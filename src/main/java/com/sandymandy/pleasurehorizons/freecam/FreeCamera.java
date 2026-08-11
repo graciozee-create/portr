@@ -1,23 +1,23 @@
 package com.sandymandy.pleasurehorizons.freecam;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.BlockState;
 import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.client.network.ClientConnectionState;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityPose;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.server.ServerLinks;
 import net.minecraft.util.PlayerInput;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import org.jetbrains.annotations.ApiStatus;
 

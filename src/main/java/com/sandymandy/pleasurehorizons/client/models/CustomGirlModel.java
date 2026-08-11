@@ -5,7 +5,7 @@ import com.sandymandy.pleasurehorizons.entity.girls.CustomGirlEntity;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDataTicketRegistry;
 import com.sandymandy.pleasurehorizons.util.Utils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.renderer.base.GeoRenderState;
 
 import java.util.HashMap;

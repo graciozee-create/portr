@@ -7,7 +7,7 @@ import com.sandymandy.pleasurehorizons.networking.C2S.KoboldCustomizeC2SPacket;
 import com.sandymandy.pleasurehorizons.util.Colors;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import static com.sandymandy.pleasurehorizons.util.Utils.getFormattedByUnderscore;
 

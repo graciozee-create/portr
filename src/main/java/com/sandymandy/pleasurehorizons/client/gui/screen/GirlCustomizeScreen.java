@@ -8,9 +8,9 @@ import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.networking.C2S.GirlCustomizeC2SPacket;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.phys.Vec3;
 
 public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
 

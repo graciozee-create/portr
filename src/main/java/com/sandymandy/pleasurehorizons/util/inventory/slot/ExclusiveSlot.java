@@ -1,9 +1,9 @@
 package com.sandymandy.pleasurehorizons.util.inventory.slot;
 
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 
 public class ExclusiveSlot extends TexturedSlot {
     private final Item canNotInsertItem;

@@ -1,7 +1,7 @@
 package com.sandymandy.pleasurehorizons.mixins.bugfix;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import net.minecraft.screen.ScreenHandler;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +17,7 @@ public class ScreenHandlerMixin {
 
 
     @Inject(method = "setReceivedStack", at = @At("HEAD"), cancellable = true)
-    private void preventSlotCrash(int slot, net.minecraft.item.ItemStack stack, CallbackInfo ci) {
+    private void preventSlotCrash(int slot, net.minecraft.world.item.ItemStack stack, CallbackInfo ci) {
         if (slot < 0 || slot >= ((ScreenHandler) (Object) this).slots.size()) {
             PleasureHorizons.LOGGER.error(
                     "Prevented slot crash: Attempted to access slot {} but only {} slots available",

@@ -1,6 +1,6 @@
 package com.sandymandy.pleasurehorizons.util.rendering;
 
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 public class JigglePhysics {
     private Vec3d velocity = Vec3d.ZERO;

@@ -4,7 +4,7 @@ import com.sandymandy.pleasurehorizons.freecam.Freecam;
 import com.sandymandy.pleasurehorizons.freecam.FreeCamera;
 import net.minecraft.block.enums.CameraSubmersionType;
 import net.minecraft.client.render.Camera;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.BlockView;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;

@@ -14,11 +14,11 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.text.Text;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import static com.sandymandy.pleasurehorizons.util.PleasureHorizonsIcons.*;
 
@@ -29,10 +29,10 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
     private static final int GUI_WIDTH = 176;
     private static final int GUI_HEIGHT = 170;
     private final TameableGirlEntity girl;
-    private final PlayerEntity player;
+    private final Player player;
 
 
-    public GirlInventoryScreen(GirlInventoryScreenHandler handler, PlayerInventory inventory, Text title) {
+    public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Text title) {
         super(handler, inventory, title);
         this.girl = handler.getGirl();
         this.player = inventory.player;

@@ -1,7 +1,7 @@
 package com.sandymandy.pleasurehorizons.util;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class PleasureHorizonsIcons {
     public static final Identifier HEART_ICON = Identifier.of(PleasureHorizons.MOD_ID, "textures/gui/sprites/relationship_heart.png");

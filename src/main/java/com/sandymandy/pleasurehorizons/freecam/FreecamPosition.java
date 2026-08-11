@@ -1,8 +1,8 @@
 package com.sandymandy.pleasurehorizons.freecam;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityPose;
+import net.minecraft.world.level.ChunkPos;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 

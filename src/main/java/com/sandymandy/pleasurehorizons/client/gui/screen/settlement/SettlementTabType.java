@@ -4,8 +4,8 @@ package com.sandymandy.pleasurehorizons.client.gui.screen.settlement;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
 
 @OnlyIn(Dist.CLIENT)
 public enum SettlementTabType {

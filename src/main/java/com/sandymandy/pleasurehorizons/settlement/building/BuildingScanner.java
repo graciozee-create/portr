@@ -5,20 +5,20 @@ import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import com.sandymandy.pleasurehorizons.util.Utils;
 import com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager;
 import com.sandymandy.pleasurehorizons.util.variables.BlockEntry;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BlockState;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.state.property.Properties;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -42,7 +42,7 @@ public class BuildingScanner {
      * Scans from a given position (the inside side of a door or tag).
      * If the origin is floating, it automatically moves it down to floor level.
      */
-    public void scanForBuilding(World world, BlockPos origin, BlockPos doorPos, BlockPos tagPos, BuildingType type, PlayerEntity player) {
+    public void scanForBuilding(World world, BlockPos origin, BlockPos doorPos, BlockPos tagPos, BuildingType type, Player player) {
         if (world.isClient()) return;
 
         BlockPos groundAligned = findGroundLevel(world, origin);
@@ -182,7 +182,7 @@ public class BuildingScanner {
         return checkRequirements(type, liveBlocks, null);
     }
 
-    public boolean checkRequirements(BuildingType type, List<BlockEntry> blocks, @Nullable PlayerEntity player) {
+    public boolean checkRequirements(BuildingType type, List<BlockEntry> blocks, @Nullable Player player) {
         Map<Object, Integer> requirements = type.getRequirements();
 
         for (Map.Entry<Object, Integer> entry : requirements.entrySet()) {
@@ -277,15 +277,15 @@ public class BuildingScanner {
     /**
      * Registers a successfully scanned building to the settlement.
      */
-    private void registerBuilding(World world, BlockPos doorPos, BlockPos tagPos, BuildingType type, List<BlockEntry> structureBlocks, List<BlockPos> validBlocks, PlayerEntity player) {
+    private void registerBuilding(World world, BlockPos doorPos, BlockPos tagPos, BuildingType type, List<BlockEntry> structureBlocks, List<BlockPos> validBlocks, Player player) {
         SettlementBuilding building = new SettlementBuilding(
                 doorPos,
                 tagPos,
                 type,
                 structureBlocks
         );
-        if(SettlementBuildingManager.get((ServerWorld) world).getAllBuildings().containsKey(doorPos)) settlement.removeBuilding(doorPos, (ServerWorld) world);
-        settlement.addBuilding(doorPos, building, (ServerWorld) world);
+        if(SettlementBuildingManager.get((ServerLevel) world).getAllBuildings().containsKey(doorPos)) settlement.removeBuilding(doorPos, (ServerLevel) world);
+        settlement.addBuilding(doorPos, building, (ServerLevel) world);
         PleasureHorizons.LOGGER.info(
                 "[BuildingScanner] Registered building with {} valid quadrants.",
                 validBlocks.size()

@@ -4,7 +4,7 @@ import com.sandymandy.pleasurehorizons.client.gui.screen.CustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.CustomizeScreen.LayoutConfig;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

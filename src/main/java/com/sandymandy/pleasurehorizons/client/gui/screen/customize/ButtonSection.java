@@ -3,8 +3,8 @@ package com.sandymandy.pleasurehorizons.client.gui.screen.customize;
 import com.sandymandy.pleasurehorizons.client.gui.screen.CustomizeScreen;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;

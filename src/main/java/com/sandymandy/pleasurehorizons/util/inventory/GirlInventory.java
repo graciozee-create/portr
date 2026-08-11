@@ -1,10 +1,10 @@
 package com.sandymandy.pleasurehorizons.util.inventory;
 
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.List;
@@ -129,7 +129,7 @@ public interface GirlInventory extends Inventory {
     }
 
     @Override
-    default boolean canPlayerUse(PlayerEntity player) {
+    default boolean canPlayerUse(Player player) {
         return true;
     }
 

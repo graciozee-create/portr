@@ -2,10 +2,10 @@ package com.sandymandy.pleasurehorizons.screen;
 
 import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.network.chat.Component;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class GirlInventoryScreenHandlerFactory implements net.minecraft.world.in
     }
 
     @Override
-    public @Nullable ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+    public @Nullable ScreenHandler createMenu(int syncId, Inventory playerInventory, Player player) {
         return new GirlInventoryScreenHandler(syncId, playerInventory, girl.getId());
     }
 }

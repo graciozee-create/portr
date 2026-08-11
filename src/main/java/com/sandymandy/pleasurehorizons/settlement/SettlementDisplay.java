@@ -2,12 +2,12 @@ package com.sandymandy.pleasurehorizons.settlement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentCodecs;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Defines how a Settlement Tab or Node is visually displayed in the GUI.
@@ -83,7 +83,7 @@ public class SettlementDisplay {
 
     public static SettlementDisplay ofBasic(Text title, Text description) {
         return new SettlementDisplay(
-                net.minecraft.item.Items.BOOK.getDefaultStack(),
+                net.minecraft.world.item.Items.BOOK.getDefaultStack(),
                 title,
                 description,
                 Identifier.ofVanilla("textures/gui/advancements/backgrounds/stone.png")
