@@ -157,7 +157,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
-            player.displayClientMessage(Component.literal("She liked the gift"), true);
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.likedGift"), true);
 
             List<String> replies = this.getCurrentRelationshipLevel() < 4
                     ? this.giftRepliesLike()
@@ -181,8 +182,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.isSceneActive()) {
             // The full inventory/scene GUI is not ported yet; toggling following keeps her useful.
             this.setFollowing(!this.isFollowing());
-            player.displayClientMessage(Component.literal(
-                    this.getGirlDisplayName() + (this.isFollowing() ? " follows you" : " stays here")), true);
+            player.displayClientMessage(Component.translatable(
+                    this.isFollowing()
+                            ? "msg.pleasurehorizons.nowFollowing"
+                            : "msg.pleasurehorizons.nowStaying",
+                    this.getGirlDisplayName()), true);
             return InteractionResult.SUCCESS;
         }
 
@@ -236,12 +240,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.setFollowing(false);
         this.setCurrentRelationshipLevel(0);
         player.displayClientMessage(
-                Component.literal("§cYou broke up with " + this.getGirlDisplayName()), true);
+                Component.translatable("msg.pleasurehorizons.brokeUp", this.getGirlDisplayName()), true);
     }
 
     protected void messageAsEntity(Player player, String message) {
         player.displayClientMessage(
-                Component.literal("<" + this.getGirlDisplayName() + "> " + message), false);
+                Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
     }
 
     public String getGirlDisplayName() {

@@ -38,6 +38,6 @@ public enum BuildingType {
     );
 
     public String getTranslationKey() {
-        return "building.pleasurecraft." + name().toLowerCase();
+        return "building.pleasurehorizons." + name().toLowerCase();
     }
 }
