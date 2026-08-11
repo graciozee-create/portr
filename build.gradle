@@ -39,6 +39,7 @@ repositories {
 }
 
 neoForge {
+    minecraftVersion = project.minecraft_version
     version = project.neo_version
 }
 
