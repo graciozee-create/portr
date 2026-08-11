@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "pleasurehorizons:block/settlement_hub_top",
-    "bottom": "pleasurehorizons:block/settlement_hub_bottom",
-    "side": "pleasurehorizons:block/settlement_hub_side"
-  }
-}
