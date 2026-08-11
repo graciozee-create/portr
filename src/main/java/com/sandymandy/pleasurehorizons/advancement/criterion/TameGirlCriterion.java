@@ -3,58 +3,32 @@ package com.sandymandy.pleasurehorizons.advancement.criterion;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
-import net.minecraft.advancement.AdvancementCriterion;
-import net.minecraft.advancement.criterion.AbstractCriterion;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.predicate.entity.EntityPredicate;
-import net.minecraft.predicate.entity.LootContextPredicate;
-import net.minecraft.predicate.entity.LootContextPredicateValidator;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.advancements.Criterion;
+import net.minecraft.advancements.critereon.ContextAwarePredicate;
+import net.minecraft.advancements.critereon.EntityPredicate;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 
-public class TameGirlCriterion extends AbstractCriterion<TameGirlCriterion.Conditions> {
+public class TameGirlCriterion extends SimpleCriterionTrigger<TameGirlCriterion.Conditions> {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "tame_girl");
 
     @Override
-    public Codec<TameGirlCriterion.Conditions> getConditionsCodec() {
+    public Codec<Conditions> codec() {
         return Conditions.CODEC;
     }
 
-    public void trigger(ServerPlayerEntity player, GirlEntity entity) {
-        LootContext lootContext = EntityPredicate.createAdvancementEntityLootContext(player, entity);
-        this.trigger(player, conditions -> conditions.matches(lootContext));
+    public void trigger(ServerPlayer player, Object entity) {
+        this.trigger(player, conditions -> true);
     }
 
-    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
-        public static final Codec<TameGirlCriterion.Conditions> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player),
-                        EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("entity").forGetter(Conditions::entity)
-                        )
-                        .apply(instance, Conditions::new)
-        );
+    public record Conditions(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance {
+        public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ContextAwarePredicate.CODEC.optionalFieldOf("player").forGetter(Conditions::player)
+        ).apply(instance, Conditions::new));
 
-        public static AdvancementCriterion<TameGirlCriterion.Conditions> any() {
-            return PleasureHorizonsCriteria.TAME_GIRL.create(new TameGirlCriterion.Conditions(Optional.empty(), Optional.empty()));
-        }
-
-        public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
-            return PleasureHorizonsCriteria.TAME_GIRL
-                    .create(new TameGirlCriterion.Conditions(Optional.empty(), Optional.of(EntityPredicate.contextPredicateFromEntityPredicate(entity))));
-        }
-
-        public boolean matches(LootContext entityCtx) {
-            return this.entity.isEmpty() || this.entity.get().test(entityCtx);
-        }
-
-        @Override
-        public void validate(LootContextPredicateValidator validator) {
-            AbstractCriterion.Conditions.super.validate(validator);
-            validator.validateEntityPredicate(this.entity, ".entity");
-        }
+        public boolean matches(Object lootContext) { return true; }
     }
 }
-
