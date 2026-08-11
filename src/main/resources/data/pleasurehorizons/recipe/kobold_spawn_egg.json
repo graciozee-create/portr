@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:raw_iron",
-    "#minecraft:eggs"
+    {
+      "item": "minecraft:raw_iron"
+    },
+    {
+      "tag": "c:eggs"
+    }
   ],
   "result": {
     "count": 1,

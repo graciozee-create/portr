@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:open_eyeblossom",
-    "#minecraft:eggs"
+    {
+      "item": "minecraft:poppy"
+    },
+    {
+      "tag": "c:eggs"
+    }
   ],
   "result": {
     "count": 1,

@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:allium",
-    "#minecraft:eggs"
+    {
+      "item": "minecraft:allium"
+    },
+    {
+      "tag": "c:eggs"
+    }
   ],
   "result": {
     "count": 1,

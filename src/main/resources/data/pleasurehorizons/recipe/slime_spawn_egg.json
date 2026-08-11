@@ -2,8 +2,12 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    "minecraft:slime_ball",
-    "#minecraft:eggs"
+    {
+      "item": "minecraft:slime_ball"
+    },
+    {
+      "tag": "c:eggs"
+    }
   ],
   "result": {
     "count": 1,

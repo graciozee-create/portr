@@ -8,9 +8,10 @@ import software.bernie.geckolib.model.GeoModel;
 /**
  * Resolves the geo model, texture and animation file for a girl.
  *
- * <p>The mod does not use GeckoLib's default asset layout: everything lives under
- * {@code assets/pleasurehorizons/geckolib/...} and textures under {@code textures/entities/}
- * (note the plural), so the paths are built manually instead of via DefaultedEntityGeoModel.</p>
+ * <p>GeckoLib 4.x only scans {@code assets/<modid>/geo/} for models and
+ * {@code assets/<modid>/animations/} for animations - anything elsewhere is never loaded
+ * into its cache and throws at render time. Textures live under {@code textures/entities/}
+ * (note the plural), so the paths are built manually rather than via DefaultedEntityGeoModel.</p>
  */
 public class GirlModel<T extends GirlSceneEntity> extends GeoModel<T> {
     @Override
@@ -18,7 +19,7 @@ public class GirlModel<T extends GirlSceneEntity> extends GeoModel<T> {
         // Nude and dressed variants are separate models; she "undresses" by swapping model.
         String variant = girl.isStripped() ? "nude" : "dressed";
         return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,
-                "geckolib/models/" + variant + "/" + girl.getGirlID() + ".geo.json");
+                "geo/" + variant + "/" + girl.getGirlID() + ".geo.json");
     }
 
     @Override
@@ -30,6 +31,6 @@ public class GirlModel<T extends GirlSceneEntity> extends GeoModel<T> {
     @Override
     public ResourceLocation getAnimationResource(T girl) {
         return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,
-                "geckolib/animations/" + girl.getGirlID() + ".animation.json");
+                "animations/" + girl.getGirlID() + ".animation.json");
     }
 }
