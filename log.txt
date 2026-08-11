@@ -1,93 +1,48 @@
-Run gradle build --no-daemon --stacktrace
-Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx4g -XX:MaxMetaspaceSize=1024m
-Welcome to Gradle 9.6.1!
-Here are the highlights of this release:
- - Improved Configuration Cache hit rates
- - Additional CLI rendering options
- - Important project hierarchy lookup deprecations
-For more details see https://docs.gradle.org/9.6.1/release-notes.html
-To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
-> Configure project :
-Creating Minecraft artifacts without recompilation.
-Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx4g -XX:MaxMetaspaceSize=1024m
-> Task :createMinecraftArtifacts
-Loaded 130 artifacts from /home/runner/work/portr/portr/build/tmp/createMinecraftArtifacts/nfrt_artifact_manifest.properties
-*** Started working on downloadJson
-  ↓ https://launchermeta.mojang.com/mc/game/version_manifest_v2.json
-  ↓ https://piston-meta.mojang.com/v1/packages/091b2c2728f8ac413b6e7e683a6c12f21a53057c/1.21.1.json
- ✓ Completed downloadJson in 0.45s
-*** Started working on downloadClientMappings
-*** Started working on downloadClient
-*** Started working on downloadServer
-  ↓ https://piston-data.mojang.com/v1/objects/59353fb40c36d304f2035d51e7d6e6baa98dc05c/server.jar
-  ↓ https://piston-data.mojang.com/v1/objects/30c73b1c5da787909b2f73340419fdf13b9def88/client.jar
-  ↓ https://piston-data.mojang.com/v1/objects/2244b6f072256667bcd9a73df124d6c58de77992/client.txt
- ✓ Completed downloadClientMappings in 0.46s
-*** Started working on mergeMappings
- ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
- ✓ Completed downloadClient in 0.77s
-*** Started working on stripClient
- ✓ Completed downloadServer in 1.00s
-*** Started working on extractServer
- ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
- ✓ Completed extractServer in 0.75s
-*** Started working on stripServer
- ✓ Completed mergeMappings in 3.34s
- ✓ Completed stripClient in 3.40s
- ✓ Completed stripServer in 2.39s
-*** Started working on merge
- ↳ Running external tool net.neoforged:mergetool:2.0.3:fatjar
- ✓ Completed merge in 3.17s
-*** Started working on rename
- ↳ Running external tool net.neoforged:AutoRenamingTool:2.0.3:all
- ✓ Completed rename in 5.97s
-*** Started working on binaryPatch
-  WARNING: net.minecraftforge:binarypatcher:1.1.1:fatjar is not present in the artifact manifest
-  ↓ https://maven.neoforged.net/releases/net/minecraftforge/binarypatcher/1.1.1/binarypatcher-1.1.1-fatjar.jar
- ↳ Running external tool net.minecraftforge:binarypatcher:1.1.1:fatjar
- ✓ Completed binaryPatch in 5.31s
-*** Started working on copyUnpatchedClasses
- ✓ Completed copyUnpatchedClasses in 1.65s
-*** Started working on applyDevTransforms
- ↳ Running external tool net.neoforged.installertools:installertools:4.0.12:fatjar
- ✓ Completed applyDevTransforms in 1.99s
-*** Started working on binaryWithNeoForge
- ✓ Completed binaryWithNeoForge in 6.70s
-Total runtime: 30.56s
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: type CustomizeScreen does not take parameters
 > Task :compileJava
-/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:11: error: cannot find symbol
-import software.bernie.geckolib.animatable.instance.AnimatableManager;
-                                                   ^
-  symbol:   class AnimatableManager
-  location: package software.bernie.geckolib.animatable.instance
-/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:26: error: package AnimatableManager does not exist
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-                                                     ^
-Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java uses or overrides a deprecated API.
+    public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                             ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: cannot find symbol
+    public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                                                        ^
+  symbol:   class LayoutConfig
+  location: class CustomizeScreen
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: type CustomizeScreen does not take parameters
+    public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                              ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: cannot find symbol
+    public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                                                         ^
+  symbol:   class LayoutConfig
+  location: class CustomizeScreen
+Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-2 errors
+4 errors
 > Task :compileJava FAILED
-FAILURE: Build failed with an exception.
 [Incubating] Problems report is available at: file:///home/runner/work/portr/portr/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
 * What went wrong:
 Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
 > Compilation failed; see the compiler output below.
-  Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java uses or overrides a deprecated API.
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: type CustomizeScreen does not take parameters
+      public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                               ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: type CustomizeScreen does not take parameters
+      public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                                ^
   Note: Recompile with -Xlint:deprecation for details.
-  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:11: error: cannot find symbol
-  import software.bernie.geckolib.animatable.instance.AnimatableManager;
-                                                     ^
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
-    symbol:   class AnimatableManager
-    location: package software.bernie.geckolib.animatable.instance
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:26: error: package AnimatableManager does not exist
-      public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-                                                       ^
-2 actionable tasks: 2 executed
-  2 errors
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: cannot find symbol
+      public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                                                          ^
+    symbol:   class LayoutConfig
+    location: class CustomizeScreen
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: cannot find symbol
+      public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                                                           ^
+    symbol:   class LayoutConfig
+    location: class CustomizeScreen
+  Note: Some input files use or override a deprecated API.
+  4 errors
 * Try:
 > Check your code and dependencies to fix the compilation error(s)
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
@@ -96,6 +51,10 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compile
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
 	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+2 actionable tasks: 2 executed
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
 	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
 	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
@@ -127,17 +86,25 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compile
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
-/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:11: error: cannot find symbol
-import software.bernie.geckolib.animatable.instance.AnimatableManager;
-                                                   ^
-  symbol:   class AnimatableManager
-  location: package software.bernie.geckolib.animatable.instance
-/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:26: error: package AnimatableManager does not exist
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-                                                     ^
-Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java uses or overrides a deprecated API.
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: type CustomizeScreen does not take parameters
+    public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                             ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:19: error: cannot find symbol
+    public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
+                                                                        ^
+  symbol:   class LayoutConfig
+  location: class CustomizeScreen
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: type CustomizeScreen does not take parameters
+    public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                              ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/client/gui/screen/customize/CustomizeSection.java:24: error: cannot find symbol
+    public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);
+                                                                         ^
+  symbol:   class LayoutConfig
+  location: class CustomizeScreen
+Note: Some input files use or override a deprecated API.
 Note: Recompile with -Xlint:deprecation for details.
-2 errors
+4 errors
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:88)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:49)
 	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
@@ -275,5 +242,5 @@ Note: Recompile with -Xlint:deprecation for details.
 	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:68)
 	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:132)
 	... 30 more
-BUILD FAILED in 1m 33s
+BUILD FAILED in 1m 14s
 Error: Process completed with exit code 1.
