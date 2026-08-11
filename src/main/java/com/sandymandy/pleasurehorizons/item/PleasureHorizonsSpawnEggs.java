@@ -1,0 +1,60 @@
+package com.sandymandy.pleasurehorizons.item;
+
+import com.sandymandy.pleasurehorizons.PleasureHorizons;
+import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.Item;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+/**
+ * Spawn eggs for every girl.
+ *
+ * <p>{@link DeferredSpawnEggItem} is the NeoForge replacement for vanilla {@code SpawnEggItem}:
+ * it takes a {@code Supplier<EntityType>} so the egg can be created before the entity type
+ * has finished registering.</p>
+ */
+public class PleasureHorizonsSpawnEggs {
+    public static final DeferredRegister<Item> ITEMS =
+            DeferredRegister.create(Registries.ITEM, PleasureHorizons.MOD_ID);
+
+    /** Every registered egg, in registration order - used to fill the creative tab. */
+    public static final List<DeferredHolder<Item, Item>> ALL_EGGS = new ArrayList<>();
+
+    public static final DeferredHolder<Item, Item> LUCY_SPAWN_EGG =
+            registerEgg("lucy_spawn_egg", GirlRegistry.LUCY::get, 0xF2C4A0, 0xE8A33D);
+    public static final DeferredHolder<Item, Item> MIKA_SPAWN_EGG =
+            registerEgg("mika_spawn_egg", GirlRegistry.MIKA::get, 0xF2C4A0, 0x8B4FA8);
+    public static final DeferredHolder<Item, Item> MOMO_SPAWN_EGG =
+            registerEgg("momo_spawn_egg", GirlRegistry.MOMO::get, 0xF2C4A0, 0xE86A8F);
+    public static final DeferredHolder<Item, Item> SLIME_SPAWN_EGG =
+            registerEgg("slime_spawn_egg", GirlRegistry.SLIME::get, 0x8FD86B, 0x5CA83D);
+    public static final DeferredHolder<Item, Item> KOBOLD_SPAWN_EGG =
+            registerEgg("kobold_spawn_egg", GirlRegistry.KOBOLD::get, 0xC97B3D, 0x6E4326);
+    public static final DeferredHolder<Item, Item> COPPIE_SPAWN_EGG =
+            registerEgg("coppie_spawn_egg", GirlRegistry.COPPIE::get, 0xE0794B, 0x4FBFA8);
+
+    @SuppressWarnings("unchecked")
+    private static DeferredHolder<Item, Item> registerEgg(String name,
+                                                          Supplier<? extends EntityType<?>> type,
+                                                          int background, int highlight) {
+        DeferredHolder<Item, Item> egg = ITEMS.register(name,
+                () -> new DeferredSpawnEggItem(
+                        (Supplier<? extends EntityType<? extends Mob>>) type,
+                        background, highlight, new Item.Properties()));
+        ALL_EGGS.add(egg);
+        return egg;
+    }
+
+    public static void register(IEventBus bus) {
+        ITEMS.register(bus);
+    }
+}

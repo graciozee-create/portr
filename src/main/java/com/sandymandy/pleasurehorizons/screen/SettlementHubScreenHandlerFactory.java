@@ -17,7 +17,7 @@ public class SettlementHubScreenHandlerFactory implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("screen.pleasurecraft.settlement_hub");
+        return Component.translatable("screen.pleasurehorizons.settlement_hub");
     }
 
     @Nullable

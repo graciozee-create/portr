@@ -5,4 +5,4 @@ logs
 *.jar
 *.zip
 hs_err_*.log
-replay_pid*.log
+replay_pid*.logbin/

@@ -2,9 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "X": "minecraft:oak_slab",
-    "Y": "minecraft:gold_nugget",
-    "Z": "minecraft:stone_bricks"
+    "X": {
+      "item": "minecraft:oak_slab"
+    },
+    "Y": {
+      "item": "minecraft:gold_nugget"
+    },
+    "Z": {
+      "item": "minecraft:stone_bricks"
+    }
   },
   "pattern": [
     "XYX",

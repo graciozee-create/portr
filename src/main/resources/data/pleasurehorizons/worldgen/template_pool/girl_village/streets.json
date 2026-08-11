@@ -26,7 +26,7 @@
         "weight": 2,
         "element": {
             "element_type": "minecraft:single_pool_element",
-            "location": "pleasurehorizons:girl_village/streets/street_curve_small",
+            "location": "pleasurehorizons:girl_village/streets/street_turn_small",
             "processors": "minecraft:empty",
             "projection": "terrain_matching"
         }

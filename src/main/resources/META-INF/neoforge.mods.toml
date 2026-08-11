@@ -1,19 +1,17 @@
 modLoader = "javafml"
 loaderVersion = "[4,)"
+license = "CC0-1.0"
+issueTrackerURL = "https://discord.gg/PleasureHorizons"
 
 [[mods]]
 modId = "pleasurehorizons"
 version = "${version}"
 displayName = "Pleasure Horizons"
-authors = ["SandyMandy"]
+authors = "SandyMandy"
 description = '''Pleasure Horizons is an adult-themed mod for Minecraft 1.21+ made using NeoForge. A full remake of the old 1.12.2 FapCraft mod.'''
 displayURL = "https://discord.gg/PleasureHorizons"
 logoFile = "assets/pleasurehorizons/icon.png"
 credits = "SandyMandy"
-license = "CC0-1.0"
-
-[[mods.mixins]]
-config = "pleasurehorizons.mixins.json"
 
 [[dependencies.pleasurehorizons]]
 modId = "neoforge"
@@ -33,19 +31,5 @@ side = "BOTH"
 modId = "geckolib"
 type = "required"
 versionRange = "[4.0.0,)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.pleasurehorizons]]
-modId = "smartbrainlib"
-type = "required"
-versionRange = "[1.16.0,)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.pleasurehorizons]]
-modId = "cloth_config"
-type = "required"
-versionRange = "[15.0.0,)"
 ordering = "NONE"
 side = "BOTH"

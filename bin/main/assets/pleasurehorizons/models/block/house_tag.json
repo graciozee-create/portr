@@ -1,6 +1,0 @@
-{
-  "parent": "pleasurehorizons:block/building_tag",
-  "textures": {
-    "all" : "pleasurehorizons:block/building_tag_house"
-  }
-}

@@ -8,6 +8,7 @@ import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTy
 import com.sandymandy.pleasurehorizons.entity.ai.brain.GirlMemoryTypes;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
+import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
@@ -16,7 +17,7 @@ import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerR
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsSoundEventRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,14 +37,18 @@ public class PleasureHorizons {
     public static final String MOD_ID = "pleasurehorizons";
     public static final String MOD_NAME = "Pleasure Horizons";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
-    public static Map<UUID, ResourceLocation> usedBeds = new HashMap<>();
+    public static Map<UUID, BlockPos> usedBeds = new HashMap<>();
     public static Map<UUID, UUID> activeScenes = new HashMap<>();
 
     public PleasureHorizons(IEventBus modEventBus, ModContainer container, Dist dist) {
         LOGGER.info("Initializing " + MOD_NAME + " for NeoForge 1.21.1!");
+        // Build marker: if you do not see this line in latest.log, the jar you launched
+        // is an older build and does not contain the spawn eggs / creative tab.
+        LOGGER.info("[PH] BUILD MARKER girls-port-v2 :: spawn eggs + creative tab + renderers");
 
         // Registries
         PleasureHorizonsItems.register(modEventBus);
+        PleasureHorizonsSpawnEggs.register(modEventBus);
         PleasureHorizonsBlocks.register(modEventBus);
         PleasureHorizonsBlockEntities.register(modEventBus);
         PleasureHorizonsEntities.register(modEventBus);
@@ -56,7 +61,7 @@ public class PleasureHorizons {
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
         PleasureHorizonsDispenserBehavior.register();
-        PleasureHorizonsItemGroups.register();
+        PleasureHorizonsItemGroups.register(modEventBus);
         Commands.register();
         CustomGirlLoader.register();
 
