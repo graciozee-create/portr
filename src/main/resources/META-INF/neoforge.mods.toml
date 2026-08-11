@@ -13,9 +13,6 @@ displayURL = "https://discord.gg/PleasureHorizons"
 logoFile = "assets/pleasurehorizons/icon.png"
 credits = "SandyMandy"
 
-[[mixins]]
-config = "pleasurehorizons.mixins.json"
-
 [[dependencies.pleasurehorizons]]
 modId = "neoforge"
 type = "required"
@@ -34,12 +31,5 @@ side = "BOTH"
 modId = "geckolib"
 type = "required"
 versionRange = "[4.0.0,)"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.pleasurehorizons]]
-modId = "cloth_config"
-type = "optional"
-versionRange = "[15.0.0,)"
 ordering = "NONE"
 side = "BOTH"

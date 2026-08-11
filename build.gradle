@@ -50,8 +50,6 @@ neoForge {
 
 dependencies {
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:${project.geckolib_version}"
-    implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${project.sbl_version}"
-    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
 }
 
 processResources {
