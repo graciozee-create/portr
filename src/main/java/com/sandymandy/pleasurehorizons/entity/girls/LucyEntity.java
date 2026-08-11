@@ -1,23 +1,31 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
-import com.sandymandy.pleasurehorizons.util.variables.Scene;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.world.World;
-
-import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.Nullable;
 
 public class LucyEntity extends SettlementGirlEntityAI {
-
-    public LucyEntity(EntityType<? extends SettlementGirlEntityAI> entityType, World world) {
-        super(entityType, world);
+    public LucyEntity(EntityType<? extends SettlementGirlEntityAI> entityType, Level level) {
+        super(entityType, level);
     }
 
-    @Override
-    public Item isAttractedTo() {
-        return Items.ALLIUM;
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, 20.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.FOLLOW_RANGE, 32.0)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 
     @Override
@@ -26,68 +34,23 @@ public class LucyEntity extends SettlementGirlEntityAI {
     }
 
     @Override
-    public int getSizeGUI(){return 29;}
-
-    @Override
-    public float getYAxisGUI(){return 0.0525F;}
-
-    @Override
-    public List<Scene> getScenes() {
-        return List.of(
-
-                Scene.stationary("Masturbation",
-                        4,
-                        "masturbating",
-                        4,
-                        true,
-                        true),
-
-                Scene.onPlayer("Paizuri",
-                        6,
-                        List.of("paizuri_intro"),
-                        List.of("paizuri_slow"),
-                        List.of("paizuri_fast"),
-                        "paizuri_cum",
-                        4,
-                        true,
-                        false,
-                        false),
-
-
-                Scene.onPlayer("Blow Job",
-                        8,
-                        List.of("blowjob_intro"),
-                        List.of("blowjob_slow"),
-                        List.of("blowjob_fast"),
-                        "blowjob_cum",
-                        2.5f,
-                        false,
-                        false,
-                        false),
-
-                Scene.onBed("Doggy",
-                        10,
-                        List.of("doggy_intro"),
-                        List.of("doggy_slow"),
-                        List.of("doggy_fast1", "doggy_fast2"),
-                        "doggy_cum",
-                        4.5f,
-                        true,
-                        true,
-                        true,
-                        0f,
-                        "doggy_lay_on_bed",
-                        "doggy_bed_idle")
-                );
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override
-    public List<String> giftRepliesLike() {
-        return List.of("Wow, for me? Thanks!", "An allium? That’s so nice of you…!", "Ahah, this is great!");
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
     }
 
     @Override
-    public List<String> giftRepliesLove() {
-        return List.of("Oh, another one? Well, you’re the real gift here~.", "Babe, you’re too nice. And hot~.", "Stop giving me gifts and just fuck me already~!");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData spawnData) {
+        return super.finalizeSpawn(level, difficulty, reason, spawnData);
     }
 }

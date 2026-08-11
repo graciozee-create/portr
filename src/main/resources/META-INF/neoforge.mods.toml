@@ -15,27 +15,24 @@ license = "CC0-1.0"
 [[mods.mixins]]
 config = "pleasurehorizons.mixins.json"
 
-[[mods.mixins.conditions]]
-type = "neoforge"
-
 [[dependencies.pleasurehorizons]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.1.0,)"
+versionRange = "[21.1.80,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.pleasurehorizons]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.1, 1.22)"
+versionRange = "[1.21.1,1.22)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.pleasurehorizons]]
 modId = "geckolib"
 type = "required"
-versionRange = "[5.2.0,)"
+versionRange = "[4.0.0,)"
 ordering = "NONE"
 side = "BOTH"
 
@@ -49,6 +46,6 @@ side = "BOTH"
 [[dependencies.pleasurehorizons]]
 modId = "cloth_config"
 type = "required"
-versionRange = "[19.0.0,)"
+versionRange = "[15.0.0,)"
 ordering = "NONE"
 side = "BOTH"

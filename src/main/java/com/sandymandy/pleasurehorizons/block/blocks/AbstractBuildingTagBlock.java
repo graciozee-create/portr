@@ -1,89 +1,70 @@
 package com.sandymandy.pleasurehorizons.block.blocks;
 
-import com.sandymandy.pleasurehorizons.block.entity.PleasureHorizonsBlockEntities;
+import com.mojang.serialization.MapCodec;
 import com.sandymandy.pleasurehorizons.block.entity.entities.AbstractBuildingTagBlockEntity;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractBuildingTagBlock extends BlockWithEntity implements BlockEntityProvider {
-    public static final EnumProperty<Direction> FACING = HorizontalFacingBlock.FACING;
-    public static final VoxelShape NORTH_SHAPE = VoxelShapes.cuboid(0.0, 3.0/16.0, 14.0/16.0, 1.0, 13.0/16.0, 1.0);
-    public static final VoxelShape SOUTH_SHAPE = VoxelShapes.cuboid(0.0, 3.0/16.0, 0.0,       1.0, 13.0/16.0, 2.0/16.0);
-    public static final VoxelShape EAST_SHAPE  = VoxelShapes.cuboid(0.0, 3.0/16.0, 0.0,       2.0/16.0, 13.0/16.0, 1.0);
-    public static final VoxelShape WEST_SHAPE  = VoxelShapes.cuboid(14.0/16.0, 3.0/16.0, 0.0, 1.0, 13.0/16.0, 1.0);
+public abstract class AbstractBuildingTagBlock extends BaseEntityBlock {
+    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final VoxelShape NORTH_SHAPE = Shapes.box(0.0, 3.0/16.0, 14.0/16.0, 1.0, 13.0/16.0, 1.0);
+    public static final VoxelShape SOUTH_SHAPE = Shapes.box(0.0, 3.0/16.0, 0.0, 1.0, 13.0/16.0, 2.0/16.0);
+    public static final VoxelShape EAST_SHAPE  = Shapes.box(0.0, 3.0/16.0, 0.0, 2.0/16.0, 13.0/16.0, 1.0);
+    public static final VoxelShape WEST_SHAPE  = Shapes.box(14.0/16.0, 3.0/16.0, 0.0, 1.0, 13.0/16.0, 1.0);
 
-    public AbstractBuildingTagBlock(Settings settings) {
-        super(settings);
-        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
+    public AbstractBuildingTagBlock(Properties properties) {
+        super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    public boolean canMobSpawnInside(BlockState state) {
-        return false;
-    }
-
-    @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    // --- Directional placement ---
-    @Override
-    public BlockState getPlacementState(ItemPlacementContext ctx) {
-        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
-    }
-
-
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
 
     @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        return switch (state.get(Properties.HORIZONTAL_FACING)) {
-              case SOUTH -> SOUTH_SHAPE;
-            case EAST  -> EAST_SHAPE;
-            case WEST  -> WEST_SHAPE;
+    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return switch (state.getValue(FACING)) {
+            case SOUTH -> SOUTH_SHAPE;
+            case EAST -> EAST_SHAPE;
+            case WEST -> WEST_SHAPE;
             default -> NORTH_SHAPE;
         };
     }
 
     @Override
-    @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            World world, BlockState state, BlockEntityType<T> type) {
-
-        return validateTicker(type, PleasureHorizonsBlockEntities.BUILDING_TAG_BLOCK_ENTITY,
-                AbstractBuildingTagBlockEntity::tick);
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
+    @Nullable
+    @Override
+    public abstract BlockEntity newBlockEntity(BlockPos pos, BlockState state);
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) return ActionResult.SUCCESS;
-
-        BlockEntity be = world.getBlockEntity(pos);
-        if (be instanceof AbstractBuildingTagBlockEntity tag) {
-            return tag.onInteract(player, world, pos);
-        }
-
-        return ActionResult.FAIL;
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(props -> {
+            // This will be overridden by subclasses
+            throw new UnsupportedOperationException();
+        });
     }
 }

@@ -1,34 +1,35 @@
 {
-  "required": false,
+  "required": true,
   "minVersion": "0.8",
   "package": "com.sandymandy.pleasurehorizons.mixins",
   "compatibilityLevel": "JAVA_21",
+  "refmap": "pleasurehorizons.mixins.refmap.json",
+  "mixins": [
+    "bugfix.ScreenHandlerMixin",
+    "settlement.ServerWorldMixin"
+  ],
   "client": [
-    "client.GuiMixin",
-    "client.MinecraftMixin",
-    "client.GameRendererMixin",
-    "client.OptionsMixin",
-    "client.LevelRendererMixin",
-    "client.LightTextureMixin",
-    "client.EntityRendererMixin",
-    "client.EntityRenderDispatcherMixin",
-    "client.EntityRenderDispatcherAccessor",
-    "client.ItemInHandRendererMixin",
-    "client.ClientPacketListenerMixin",
-    "client.LocalPlayerMixin",
-    "client.MultiPlayerGameModeMixin",
-    "freecam.CameraMixin",
+    "freecam.BlockStateBaseMixin",
     "freecam.BubbleColumnAmbientSoundHandlerMixin",
+    "freecam.CameraMixin",
+    "freecam.ClientPacketListenerMixin",
+    "freecam.EntityMixin",
+    "freecam.EntityRenderDispatcherAccessor",
+    "freecam.EntityRenderDispatcherMixin",
+    "freecam.EntityRendererMixin",
+    "freecam.GameRendererMixin",
+    "freecam.GuiMixin",
+    "freecam.ItemInHandRendererMixin",
+    "freecam.LevelRendererMixin",
+    "freecam.LightTextureMixin",
+    "freecam.LivingEntityMixin",
+    "freecam.LocalPlayerMixin",
+    "freecam.MinecraftMixin",
+    "freecam.MultiPlayerGameModeMixin",
+    "freecam.OptionsMixin",
     "geckolib.GeoBoneMixin"
   ],
-  "mixins": [
-    "BlockStateBaseMixin",
-    "EntityMixin",
-    "LivingEntityMixin",
-    "ServerWorldMixin",
-    "ScreenHandlerMixin"
-  ],
   "injectors": {
-    "defaultRequire": 0
+    "defaultRequire": 1
   }
 }

@@ -16,7 +16,6 @@ import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerR
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsSoundEventRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
-import com.sandymandy.pleasurehorizons.util.managers.TamedGirlManager;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -53,7 +52,6 @@ public class PleasureHorizons {
         PleasureHorizonsDataComponentTypes.register(modEventBus);
 
         // Other systems
-        GirlRegistry.register(modEventBus);
         GirlMemoryTypes.register(modEventBus);
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
@@ -75,10 +73,10 @@ public class PleasureHorizons {
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
-        // Cleanup dead girls on server tick
-        var server = event.getServer();
-        if (server != null) {
-            TamedGirlManager.get(server.overworld()).cleanupDeadGirls(server.overworld());
-        }
+        // Cleanup disabled for stub to avoid dependency on TamedGirlManager with ServerLevel
+        // var server = event.getServer();
+        // if (server != null) {
+        //     TamedGirlManager.get(server.overworld()).cleanupDeadGirls(server.overworld());
+        // }
     }
 }

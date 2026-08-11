@@ -41,14 +41,16 @@ repositories {
 neoForge {
     version = project.neo_version
     minecraftVersion '1.21.1'
+
+    mixins {
+        config "pleasurehorizons.mixins.json"
+    }
 }
 
 dependencies {
-    compileOnly "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.9.2"
-    compileOnly "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:1.16.10"
-    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:19.0.147"
-    runtimeOnly "com.terraformersmc:modmenu:15.0.0"
-    runtimeOnly "me.shedaniel.cloth:cloth-config-neoforge:19.0.147"
+    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:${project.geckolib_version}"
+    implementation "net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${project.sbl_version}"
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {

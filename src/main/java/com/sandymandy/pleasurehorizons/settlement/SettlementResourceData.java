@@ -2,8 +2,9 @@ package com.sandymandy.pleasurehorizons.settlement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 public record SettlementResourceData(
         float morale,
@@ -13,7 +14,6 @@ public record SettlementResourceData(
 ) {
     public static final SettlementResourceData DEFAULT = new SettlementResourceData(1.0f, 100, 0, 0);
 
-    // === CODEC ===
     public static final Codec<SettlementResourceData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.FLOAT.fieldOf("morale").orElse(1.0f).forGetter(SettlementResourceData::morale),
             Codec.INT.fieldOf("food").orElse(100).forGetter(SettlementResourceData::food),
@@ -21,26 +21,17 @@ public record SettlementResourceData(
             Codec.INT.fieldOf("settlement_tokens").orElse(0).forGetter(SettlementResourceData::settlementTokens)
     ).apply(instance, SettlementResourceData::new));
 
-    // === PACKET_CODEC ===
-    public static final PacketCodec<RegistryByteBuf, SettlementResourceData> PACKET_CODEC = new PacketCodec<>() {
-        @Override
-        public SettlementResourceData decode(RegistryByteBuf buf) {
-            return new SettlementResourceData(
-                    buf.readFloat(),
-                    buf.readVarInt(),
-                    buf.readVarInt(),
-                    buf.readVarInt()
-            );
-        }
+    public static final StreamCodec<RegistryFriendlyByteBuf, SettlementResourceData> PACKET_CODEC = StreamCodec.composite(
+            ByteBufCodecs.FLOAT, SettlementResourceData::morale,
+            ByteBufCodecs.VAR_INT, SettlementResourceData::food,
+            ByteBufCodecs.VAR_INT, SettlementResourceData::materials,
+            ByteBufCodecs.VAR_INT, SettlementResourceData::settlementTokens,
+            SettlementResourceData::new
+    );
 
-        @Override
-        public void encode(RegistryByteBuf buf, SettlementResourceData data) {
-            buf.writeFloat(data.morale());
-            buf.writeVarInt(data.food());
-            buf.writeVarInt(data.materials());
-            buf.writeVarInt(data.settlementTokens());
-        }
-    };
+    public SettlementResourceData() {
+        this(1.0f, 100, 0, 0);
+    }
 
     public SettlementResourceData withMorale(float morale) {
         return new SettlementResourceData(morale, food, materials, settlementTokens);

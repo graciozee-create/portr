@@ -1,26 +1,31 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
-import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
-import com.sandymandy.pleasurehorizons.util.variables.Scene;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.world.World;
-
-import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import org.jetbrains.annotations.Nullable;
 
 public class MikaEntity extends SettlementGirlEntityAI {
-
-    public MikaEntity(EntityType<? extends SettlementGirlEntityAI> entityType, World world) {
-        super(entityType, world);
+    public MikaEntity(EntityType<? extends SettlementGirlEntityAI> entityType, Level level) {
+        super(entityType, level);
     }
 
-    @Override
-    public Item isAttractedTo() {
-        return Items.OPEN_EYEBLOSSOM;
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, 20.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.FOLLOW_RANGE, 32.0)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 
     @Override
@@ -29,72 +34,23 @@ public class MikaEntity extends SettlementGirlEntityAI {
     }
 
     @Override
-    public int getSizeGUI(){return 25;}
-
-    @Override
-    public float getWeaponBoneXRotation() {
-        return -80f;
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override
-    public List<Scene> getScenes() {
-        return List.of(
-                Scene.onPlayer("Face fuck",
-                        6,
-                        List.of("carry_intro"),
-                        List.of("carry_slow1"),
-                        List.of("carry_fast"),
-                        "carry_cum",
-                        2.5f,
-                        false,
-                        false,
-                        false),
-
-                Scene.onBed("Missionary",
-                        8,
-                        List.of("missionary_intro"),
-                        List.of("missionary_slow"),
-                        List.of("missionary_fast"),
-                        "missionary_cum",
-                        3f,
-                        true,
-                        false,
-                        true,
-                        0.5f,
-                        "sit_down",
-                        "sit_down_idle"),
-
-                Scene.onBed("Cowgirl",
-                        10,
-                        List.of("cowgirl_intro"),
-                        List.of("cowgirl_slow"),
-                        List.of("cowgirl_fast"),
-                        "cowgirl_cum",
-                        3f,
-                        true,
-                        false,
-                        true,
-                        0.5f,
-                        "sit_down",
-                        "sit_down_idle")
-        );
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
     }
 
     @Override
-    public List<String> giftRepliesLike() {
-        return List.of("Wait is that… An actual open eyeblossom…!", "You’re a pretty lame but this is… Thanks…!", "Amazing… So that’s what an eyeblossom looks like…!");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
     }
 
+    @Nullable
     @Override
-    public List<String> giftRepliesLove() {
-        return List.of("Mm, you’re actually pretty hot y’know…", "Are you in need of a mommy or something?", "C-Come on… This is too much…");
-    }
-
-    public static DefaultAttributeContainer.Builder createAttributes() {
-        return GirlEntity.createDefaultAttributes()
-                .add(EntityAttributes.MAX_HEALTH, 30)
-                .add(EntityAttributes.MOVEMENT_SPEED, .18)
-                .add(EntityAttributes.ATTACK_DAMAGE, 5);
-
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData spawnData) {
+        return super.finalizeSpawn(level, difficulty, reason, spawnData);
     }
 }

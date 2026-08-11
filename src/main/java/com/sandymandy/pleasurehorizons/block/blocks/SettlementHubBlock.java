@@ -1,112 +1,46 @@
 package com.sandymandy.pleasurehorizons.block.blocks;
 
 import com.mojang.serialization.MapCodec;
-import com.sandymandy.pleasurehorizons.block.entity.PleasureHorizonsBlockEntities;
 import com.sandymandy.pleasurehorizons.block.entity.entities.SettlementHubBlockEntity;
-import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.context.LootWorldContext;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+public class SettlementHubBlock extends BaseEntityBlock {
+    public static final MapCodec<SettlementHubBlock> CODEC = simpleCodec(SettlementHubBlock::new);
 
-public class SettlementHubBlock extends BlockWithEntity implements BlockEntityProvider {
-    public static final MapCodec<SettlementHubBlock> CODEC = SettlementHubBlock.createCodec(SettlementHubBlock::new);
-
-    @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        super.onPlaced(world, pos, state, placer, itemStack);
-
-        if (world instanceof ServerWorld serverWorld && placer instanceof PlayerEntity player) {
-            BlockEntity be = world.getBlockEntity(pos);
-            if (be instanceof SettlementHubBlockEntity hub) {
-                hub.initializeWithOwner(serverWorld, player.getUuid());
-            }
-        }
-    }
-
-    public SettlementHubBlock(Settings settings) {
-        super(settings);
+    public SettlementHubBlock(Properties properties) {
+        super(properties);
     }
 
     @Override
-    public boolean canMobSpawnInside(BlockState state) {
-        return false;
-    }
-
-    @Override
-    protected MapCodec<? extends BlockWithEntity> getCodec() {
+    protected MapCodec<? extends BaseEntityBlock> codec() {
         return CODEC;
     }
 
     @Override
-    public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SettlementHubBlockEntity(pos, state);
     }
 
     @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
+    }
+
     @Nullable
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-            World world, BlockState state, BlockEntityType<T> type) {
-
-        return validateTicker(type, PleasureHorizonsBlockEntities.SETTLEMENT_HUB_BLOCK_ENTITY,
-                SettlementHubBlockEntity::tick);
-    }
-
-
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? null : (lvl, pos, st, be) -> {
+            if (be instanceof SettlementHubBlockEntity hub) {
+                SettlementHubBlockEntity.tick(lvl, pos, st, hub);
+            }
+        };
     }
-
-    @Override
-    public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-        if (world instanceof ServerWorld serverWorld) {
-            SettlementManager manager = SettlementManager.get(serverWorld);
-            manager.getAllSettlements().stream()
-                    .filter(s -> s.getCorePos().equals(pos))
-                    .findFirst()
-                    .ifPresent(s -> manager.removeSettlement(s.getId()));
-        }
-        super.onBroken(world, pos, state);
-
-    }
-
-    @Override
-    protected List<ItemStack> getDroppedStacks(BlockState state, LootWorldContext.Builder builder) {
-        return super.getDroppedStacks(state, builder);
-    }
-
-
-    @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) return ActionResult.SUCCESS;
-
-        BlockEntity be = world.getBlockEntity(pos);
-        if (be instanceof SettlementHubBlockEntity hub) {
-            hub.openGui((ServerWorld) world, (ServerPlayerEntity) player);
-        }
-
-
-
-        return ActionResult.SUCCESS;
-    }
-
-
 }

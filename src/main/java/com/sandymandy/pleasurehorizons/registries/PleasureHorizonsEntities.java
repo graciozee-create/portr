@@ -12,6 +12,8 @@ public class PleasureHorizonsEntities {
 
     public static void register(IEventBus bus) {
         ENTITY_TYPES.register(bus);
+        // Actual entities are in GirlRegistry
+        GirlRegistry.register(bus);
     }
 
     public static void registerEntities() {
