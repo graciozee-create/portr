@@ -38,6 +38,10 @@ repositories {
     maven { url 'https://maven.shedaniel.me/' }
 }
 
+minecraft {
+    version = project.minecraft_version
+}
+
 neoForge {
     version = project.neo_version
 }
