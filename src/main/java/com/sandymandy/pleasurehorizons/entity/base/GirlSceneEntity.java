@@ -111,4 +111,23 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         return state.setAndContinue(
                 RawAnimation.begin().then(getAnimationPath("idle"), Animation.LoopType.LOOP));
     }
+
+    /**
+     * Set by the "Strip" inventory button; consumed once by {@link #shouldStrip()}
+     * on the next tick so the request survives the packet-to-tick hop exactly once.
+     */
+    private boolean requestStrip = false;
+
+    public void requestStrip() {
+        this.requestStrip = true;
+    }
+
+    /** Returns true at most once per {@link #requestStrip()} call. */
+    public boolean shouldStrip() {
+        if (this.requestStrip) {
+            this.requestStrip = false;
+            return true;
+        }
+        return false;
+    }
 }

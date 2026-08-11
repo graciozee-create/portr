@@ -3,6 +3,7 @@ package com.sandymandy.pleasurehorizons.entity.base.tamable;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -241,6 +242,18 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.setCurrentRelationshipLevel(0);
         player.displayClientMessage(
                 Component.translatable("msg.pleasurehorizons.brokeUp", this.getGirlDisplayName()), true);
+    }
+
+    /**
+     * Breaks up and plays the angry-particle effect on every nearby client.
+     *
+     * <p>Upstream also plays her "sad" voice line here. The per-girl voice groups
+     * are not registered in this port yet, so that part is intentionally omitted
+     * rather than guessed at.</p>
+     */
+    public void breakUpParticles(Player player) {
+        this.breakUp(player);
+        this.level().broadcastEntityEvent(this, PleasureHorizonsEntityStatuses.ANGRY_PARTICLES);
     }
 
     protected void messageAsEntity(Player player, String message) {

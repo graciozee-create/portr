@@ -374,6 +374,27 @@ public abstract class GirlEntity extends PathfinderMob {
         return this.entityData.get(BASE_POS);
     }
 
+    /** Marks her current position as her home base. */
+    public void setBasePosHere() {
+        setBasePos(this.blockPosition());
+    }
+
+    /**
+     * Sends her back to her home base and sits her down there.
+     *
+     * <p>Upstream teleports unconditionally, but BASE_POS defaults to
+     * {@link BlockPos#ZERO}; without this guard a girl whose base was never set
+     * would be flung to world origin.</p>
+     */
+    public void teleportToBase() {
+        BlockPos base = this.getBasePos();
+        if (BlockPos.ZERO.equals(base)) {
+            return;
+        }
+        setSitting(true);
+        this.teleportTo(base.getX() + 0.5D, base.getY(), base.getZ() + 0.5D);
+    }
+
     public void setBreastSize(int value) {
         this.entityData.set(BREAST_SIZE, value);
     }
