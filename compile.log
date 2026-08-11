@@ -1,0 +1,31 @@
+Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx512m
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Task :createMinecraftArtifacts
+Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx512m
+Loaded 124 artifacts from C:\Users\s\Desktop\PleasureHorizons-NeoForge\build\tmp\createMinecraftArtifacts\nfrt_artifact_manifest.properties
+[1m*** Started working on [4mdownloadJson[0m[0m
+ [1m[92mDONE [0m Completed [4mdownloadJson[0m in 0.03s
+[1m*** Started working on [4mdownloadServer[0m[0m
+[1m*** Started working on [4mdownloadClient[0m[0m
+[1m*** Started working on [4mdownloadClientMappings[0m[0m
+[1m*** Started working on [4mlistLibraries[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mlistLibraries[0m in 0.00s
+ [1m[92mDONE [0m Completed [4mdownloadServer[0m in 0.05s
+ [1m[92mDONE [0m Completed [4mdownloadClient[0m in 0.05s
+ [1m[92mDONE [0m Completed [4mdownloadClientMappings[0m in 0.05s
+[1m*** Started working on [4mmergeMappings[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mmergeMappings[0m in 0.00s
+[1m*** Started working on [4mstripClient[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mstripClient[0m in 0.00s
+[1m*** Started working on [4mextractServer[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mextractServer[0m in 0.00s
+[1m*** Started working on [4mstripServer[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mstripServer[0m in 0.00s
+[1m*** Started working on [4mmerge[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mmerge[0m in 0.00s
+[1m*** Started working on [4mrename[0m[0m
+ [1m[92mREUSE[0m Used cache of [4mrename[0m in 0.00s
+[1m*** Started working on [4mdecompile[0m[0m
+ RUN   Running external tool org.vineflower:vineflower:1.10.1

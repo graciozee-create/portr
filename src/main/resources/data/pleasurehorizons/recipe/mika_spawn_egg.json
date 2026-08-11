@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:open_eyeblossom",
+    "#minecraft:eggs"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pleasurehorizons:mika_spawn_egg"
+  }
+}

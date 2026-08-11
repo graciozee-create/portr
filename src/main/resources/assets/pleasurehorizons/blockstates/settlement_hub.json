@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model" : "pleasurehorizons:block/settlement_hub"
+    }
+  }
+}

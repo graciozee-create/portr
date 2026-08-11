@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:raw_iron",
+    "#minecraft:eggs"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pleasurehorizons:kobold_spawn_egg"
+  }
+}

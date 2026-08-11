@@ -1,0 +1,8 @@
+.gradle
+build
+out
+logs
+*.jar
+*.zip
+hs_err_*.log
+replay_pid*.log

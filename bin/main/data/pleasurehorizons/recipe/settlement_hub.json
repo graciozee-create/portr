@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "X": "minecraft:oak_slab",
+    "Y": "minecraft:gold_nugget",
+    "Z": "minecraft:stone_bricks"
+  },
+  "pattern": [
+    "XYX",
+    "ZXZ",
+    "ZZZ"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pleasurehorizons:settlement_hub"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "pleasurehorizons:block/carved_girl_pumpkin",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "pleasurehorizons:block/carved_girl_pumpkin"
+    },
+    "facing=south": {
+      "model": "pleasurehorizons:block/carved_girl_pumpkin",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "pleasurehorizons:block/carved_girl_pumpkin",
+      "y": 270
+    }
+  }
+}

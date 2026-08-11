@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+    "ingredients": [
+    "minecraft:carved_pumpkin",
+    "minecraft:poppy"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pleasurehorizons:carved_girl_pumpkin"
+  }
+}

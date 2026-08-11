@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:allium",
+    "#minecraft:eggs"
+  ],
+  "result": {
+    "count": 1,
+    "id": "pleasurehorizons:lucy_spawn_egg"
+  }
+}

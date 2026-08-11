@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "pleasurehorizons:item/milk_jug_half"
+  }
+}

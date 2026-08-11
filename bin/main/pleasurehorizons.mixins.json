@@ -1,0 +1,34 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.sandymandy.pleasurehorizons.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "client.GuiMixin",
+    "client.MinecraftMixin",
+    "client.GameRendererMixin",
+    "client.OptionsMixin",
+    "client.LevelRendererMixin",
+    "client.LightTextureMixin",
+    "client.EntityRendererMixin",
+    "client.EntityRenderDispatcherMixin",
+    "client.EntityRenderDispatcherAccessor",
+    "client.ItemInHandRendererMixin",
+    "client.ClientPacketListenerMixin",
+    "client.LocalPlayerMixin",
+    "client.MultiPlayerGameModeMixin",
+    "freecam.CameraMixin",
+    "freecam.BubbleColumnAmbientSoundHandlerMixin",
+    "geckolib.GeoBoneMixin"
+  ],
+  "mixins": [
+    "BlockStateBaseMixin",
+    "EntityMixin",
+    "LivingEntityMixin",
+    "ServerWorldMixin",
+    "ScreenHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

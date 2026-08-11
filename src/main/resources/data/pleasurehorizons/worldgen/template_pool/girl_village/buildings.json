@@ -1,0 +1,13 @@
+{
+    "name": "pleasurehorizons:girl_village/buildings",
+    "fallback": "minecraft:empty",
+    "elements": [{
+        "weight": 1,
+        "element": {
+            "location": "pleasurehorizons:girl_village/houses/basic_house_1",
+            "processors": "minecraft:empty",
+            "projection": "rigid",
+            "element_type": "minecraft:single_pool_element"
+        }
+    }]
+}
