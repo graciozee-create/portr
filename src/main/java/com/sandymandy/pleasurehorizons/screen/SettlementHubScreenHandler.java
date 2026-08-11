@@ -8,7 +8,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 
 import static com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry.SETTLEMENT_HUB_SCREEN_HANDLER;
 
-public class SettlementHubScreenHandler extends ScreenHandler {
+public class SettlementHubScreenHandler extends AbstractContainerMenu {
     private final Settlement settlement;
 
     public SettlementHubScreenHandler(int syncId, Inventory playerInventory, Settlement data) {

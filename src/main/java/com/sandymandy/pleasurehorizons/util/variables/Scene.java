@@ -19,9 +19,9 @@ public class Scene {
 
     public static final Scene EMPTY = new Scene("", 0, SceneOptions.EMPTY, SceneAnimations.EMPTY, SceneType.ON_PLAYER);
 
-    public static final PacketCodec<RegistryByteBuf, Scene> PACKET_CODEC = PacketCodec.tuple(
-            PacketCodecs.STRING, Scene::displayName,
-            PacketCodecs.VAR_INT, Scene::requiredRelationshipLevel,
+    public static final StreamCodec<RegistryFriendlyByteBuf, Scene> PACKET_CODEC = StreamCodec.tuple(
+            ByteBufCodecs.STRING, Scene::displayName,
+            ByteBufCodecs.VAR_INT, Scene::requiredRelationshipLevel,
             SceneOptions.PACKET_CODEC, Scene::options,
             SceneAnimations.PACKET_CODEC, Scene::animations,
             SceneType.PACKET_CODEC, Scene::sceneType,
@@ -198,15 +198,15 @@ public class Scene {
                 Codec.STRING.fieldOf("stationaryLoopAnim").forGetter(SceneAnimations::stationaryLoopAnim)
         ).apply(instance, SceneAnimations::new));
 
-        public static final PacketCodec<RegistryByteBuf, SceneAnimations> PACKET_CODEC = PacketCodec.tuple(
-                PacketCodecs.collection(ArrayList::new, PacketCodecs.STRING), SceneAnimations::introAnim,
-                PacketCodecs.collection(ArrayList::new, PacketCodecs.STRING), SceneAnimations::slowAnim,
-                PacketCodecs.collection(ArrayList::new, PacketCodecs.STRING), SceneAnimations::fastAnim,
-                PacketCodecs.STRING, SceneAnimations::cumAnim,
-                PacketCodecs.STRING, SceneAnimations::layOnBed,
-                PacketCodecs.STRING, SceneAnimations::bedIdle,
-                PacketCodecs.collection(ArrayList::new, PacketCodecs.STRING), SceneAnimations::stationaryIntroAnim,
-                PacketCodecs.STRING, SceneAnimations::stationaryLoopAnim,
+        public static final StreamCodec<RegistryFriendlyByteBuf, SceneAnimations> PACKET_CODEC = StreamCodec.tuple(
+                ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.STRING), SceneAnimations::introAnim,
+                ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.STRING), SceneAnimations::slowAnim,
+                ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.STRING), SceneAnimations::fastAnim,
+                ByteBufCodecs.STRING, SceneAnimations::cumAnim,
+                ByteBufCodecs.STRING, SceneAnimations::layOnBed,
+                ByteBufCodecs.STRING, SceneAnimations::bedIdle,
+                ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.STRING), SceneAnimations::stationaryIntroAnim,
+                ByteBufCodecs.STRING, SceneAnimations::stationaryLoopAnim,
                 SceneAnimations::new
         );
 
@@ -260,14 +260,14 @@ public class Scene {
                 Codec.INT.fieldOf("amountOfLoops").forGetter(SceneOptions::amountOfLoops)
         ).apply(instance, SceneOptions::new));
 
-        public static final PacketCodec<RegistryByteBuf, SceneOptions> PACKET_CODEC = PacketCodec.tuple(
-                PacketCodecs.FLOAT, SceneOptions::cumThreshold,
-                PacketCodecs.BOOLEAN, SceneOptions::needsToStrip,
-                PacketCodecs.BOOLEAN, SceneOptions::useKeyFrameEvents,
-                PacketCodecs.BOOLEAN, SceneOptions::countTowardsImpregnation,
-                PacketCodecs.BOOLEAN, SceneOptions::hidePlayer,
-                PacketCodecs.FLOAT, SceneOptions::bedAlignmentOffset,
-                PacketCodecs.INTEGER, SceneOptions::amountOfLoops,
+        public static final StreamCodec<RegistryFriendlyByteBuf, SceneOptions> PACKET_CODEC = StreamCodec.tuple(
+                ByteBufCodecs.FLOAT, SceneOptions::cumThreshold,
+                ByteBufCodecs.BOOLEAN, SceneOptions::needsToStrip,
+                ByteBufCodecs.BOOLEAN, SceneOptions::useKeyFrameEvents,
+                ByteBufCodecs.BOOLEAN, SceneOptions::countTowardsImpregnation,
+                ByteBufCodecs.BOOLEAN, SceneOptions::hidePlayer,
+                ByteBufCodecs.FLOAT, SceneOptions::bedAlignmentOffset,
+                ByteBufCodecs.INTEGER, SceneOptions::amountOfLoops,
                 SceneOptions::new
         );
 

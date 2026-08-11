@@ -17,12 +17,12 @@ public class GirlInventoryScreenHandlerFactory implements net.minecraft.world.in
     }
 
     @Override
-    public Text getDisplayName() {
+    public Component getDisplayName() {
         return Component.literal("");
     }
 
     @Override
-    public @Nullable ScreenHandler createMenu(int syncId, Inventory playerInventory, Player player) {
+    public @Nullable AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
         return new GirlInventoryScreenHandler(syncId, playerInventory, girl.getId());
     }
 }

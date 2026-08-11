@@ -40,7 +40,7 @@ class DoubleSliderEntry extends TooltipListEntry<Double> {
     private final Supplier<Double> defaultValue;
     private final List<ClickableWidget> widgets;
 
-    DoubleSliderEntry(Text fieldName, int precision, double minimum, double maximum, double value, Text resetText, Supplier<Double> defaultValue, @Nullable Consumer<Double> save) {
+    DoubleSliderEntry(Component fieldName, int precision, double minimum, double maximum, double value, Component resetText, Supplier<Double> defaultValue, @Nullable Consumer<Double> save) {
         //noinspection deprecation,UnstableApiUsage
         super(fieldName, null);
         this.value = new AtomicDouble(value);
@@ -99,7 +99,7 @@ class DoubleSliderEntry extends TooltipListEntry<Double> {
         sliderWidget.active = isEditable();
         sliderWidget.setY(y);
 
-        Text name = getDisplayedFieldName();
+        Component name = getDisplayedFieldName();
         if (MC.textRenderer.isRightToLeft()) {
             graphics.drawTextWithShadow(MC.textRenderer, name.asOrderedText(), window.getScaledWidth() - x - MC.textRenderer.getWidth(name), y + 6, getPreferredTextColor());
             resetButton.setX(x);
@@ -117,7 +117,7 @@ class DoubleSliderEntry extends TooltipListEntry<Double> {
 
     private final class Slider extends SliderWidget {
         private Slider(int x, int y, int width, int height, double value) {
-            super(x, y, width, height, Text.empty(), value);
+            super(x, y, width, height, Component.empty(), value);
         }
 
         @Override

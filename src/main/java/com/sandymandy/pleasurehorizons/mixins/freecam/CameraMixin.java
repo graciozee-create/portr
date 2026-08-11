@@ -5,7 +5,7 @@ import com.sandymandy.pleasurehorizons.freecam.FreeCamera;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.client.render.Camera;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.BlockView;
+import net.minecraft.world.BlockGetter;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +22,7 @@ public class CameraMixin {
     @Shadow private float cameraY;
 
     @Inject(method = "update", at = @At("HEAD"))
-    public void onUpdate(BlockView area, Entity newFocusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
+    public void onUpdate(BlockGetter area, Entity newFocusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
         if (newFocusedEntity == null || this.focusedEntity == null || newFocusedEntity.equals(this.focusedEntity)) {
             return;
         }

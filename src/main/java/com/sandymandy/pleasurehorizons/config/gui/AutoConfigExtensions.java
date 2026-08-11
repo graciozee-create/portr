@@ -22,7 +22,7 @@ import java.util.function.Predicate;
  */
 @SuppressWarnings("JavadocReference")
 public class AutoConfigExtensions {
-    static final Text RESET_TEXT = Component.translatable("text.cloth-config.reset_value");
+    static final Component RESET_TEXT = Component.translatable("text.cloth-config.reset_value");
     static final ConfigEntryBuilder ENTRY_BUILDER = ConfigEntryBuilder.create();
 
     private AutoConfigExtensions() {}

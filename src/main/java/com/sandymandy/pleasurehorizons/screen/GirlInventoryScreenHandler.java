@@ -23,16 +23,16 @@ import java.util.Map;
 
 import static com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry.GIRL_INVENTORY_SCREEN_HANDLER;
 
-public class GirlInventoryScreenHandler extends ScreenHandler {
+public class GirlInventoryScreenHandler extends AbstractContainerMenu {
     private final Inventory inventory;
     private final TameableGirlEntity girl;
-    public static final Identifier EMPTY_HELMET_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/helmet");
-    public static final Identifier EMPTY_CHESTPLATE_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/chestplate");
-    public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/leggings");
-    public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/boots");
-    public static final Identifier EMPTY_SWORD_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/sword");
-    public static final Identifier EMPTY_BOW_TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,"container/slot/bow");
-    public static final Map<EquipmentSlot, Identifier> EMPTY_ARMOR_SLOT_TEXTURES = Map.of(
+    public static final ResourceLocation EMPTY_HELMET_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/helmet");
+    public static final ResourceLocation EMPTY_CHESTPLATE_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/chestplate");
+    public static final ResourceLocation EMPTY_LEGGINGS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/leggings");
+    public static final ResourceLocation EMPTY_BOOTS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/boots");
+    public static final ResourceLocation EMPTY_SWORD_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/sword");
+    public static final ResourceLocation EMPTY_BOW_TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,"container/slot/bow");
+    public static final Map<EquipmentSlot, ResourceLocation> EMPTY_ARMOR_SLOT_TEXTURES = Map.of(
             EquipmentSlot.FEET,
             EMPTY_BOOTS_SLOT_TEXTURE,
             EquipmentSlot.LEGS,
@@ -87,7 +87,7 @@ public class GirlInventoryScreenHandler extends ScreenHandler {
 
         for (int i = 0; i < 4; i++) {
             EquipmentSlot equipmentSlot = EQUIPMENT_SLOT_ORDER[i];
-            Identifier identifier = EMPTY_ARMOR_SLOT_TEXTURES.get(equipmentSlot);
+            ResourceLocation identifier = EMPTY_ARMOR_SLOT_TEXTURES.get(equipmentSlot);
             this.addSlot(new PublicArmorSlot(inventory, girl, equipmentSlot,
                     GirlInventory.ARMOR_END - i, 8, 6 + i * 18, identifier));
         }

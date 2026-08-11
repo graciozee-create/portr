@@ -21,7 +21,7 @@ public class ResourcesTab extends SettlementTab {
     }
 
     @Override
-    public Text getTitle() {
+    public Component getTitle() {
         return Component.literal("Resources");
     }
 

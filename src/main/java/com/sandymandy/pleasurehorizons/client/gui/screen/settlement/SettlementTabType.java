@@ -91,7 +91,7 @@ public enum SettlementTabType {
 
     public void drawBackground(DrawContext context, int x, int y, boolean selected, int index) {
         Textures tex = selected ? this.selected : this.unselected;
-        Identifier texture;
+        ResourceLocation texture;
         if (index == 0) texture = tex.first();
         else if (index == tabCount - 1) texture = tex.last();
         else texture = tex.middle();
@@ -150,5 +150,5 @@ public enum SettlementTabType {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public record Textures(Identifier first, Identifier middle, Identifier last) {}
+    public record Textures(ResourceLocation first, ResourceLocation middle, ResourceLocation last) {}
 }

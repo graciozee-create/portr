@@ -23,7 +23,7 @@ public class GuiMixin {
     }
 
     @Inject(method = "renderOverlay", at = @At("HEAD"), cancellable = true)
-    private void onRenderTextureOverlay(DrawContext guiGraphics, Identifier shaderLocation, float alpha, CallbackInfo ci) {
+    private void onRenderTextureOverlay(DrawContext guiGraphics, ResourceLocation shaderLocation, float alpha, CallbackInfo ci) {
         if (Freecam.isEnabled()) {
             ci.cancel();
         }

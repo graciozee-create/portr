@@ -35,7 +35,7 @@ public class SettlementBuildingManager extends PersistentState {
     );
 
     // __Core Methods__
-    public static SettlementBuildingManager get(ServerWorld world) {
+    public static SettlementBuildingManager get(ServerLevel world) {
         return world.getPersistentStateManager().getOrCreate(TYPE);
     }
 

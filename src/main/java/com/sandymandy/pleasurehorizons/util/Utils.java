@@ -122,7 +122,7 @@ public class Utils {
 
     }
 
-    public static boolean assetExistsClient(Identifier path) {
+    public static boolean assetExistsClient(ResourceLocation path) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.getResourceManager() == null)
             return false;
@@ -198,7 +198,7 @@ public class Utils {
     }
 
     public static String getReadableItemName(Item tameItem) {
-        Identifier id = Registries.ITEM.getId(tameItem);
+        ResourceLocation id = Registries.ITEM.getId(tameItem);
 
         if (id != null) {
             String path = id.getPath(); // e.g., "blue_allium"

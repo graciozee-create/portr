@@ -111,7 +111,7 @@ public class GirlsCommand {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) return 0;
 
-        ServerWorld world = player.getWorld();
+        ServerLevel world = player.getWorld();
         TamedGirlManager manager = TamedGirlManager.get(world);
 
         var owned = manager.getGirlsOwnedBy(player.getUuid());
@@ -142,7 +142,7 @@ public class GirlsCommand {
     }
 
     private static int spawnGirl(ServerCommandSource source, String id, Vec3d pos) {
-        ServerWorld world = source.getWorld();
+        ServerLevel world = source.getWorld();
 
         // Validate profile
         CustomGirlProfile profile = CustomGirlLoader.LOADED_PROFILES.get(id);

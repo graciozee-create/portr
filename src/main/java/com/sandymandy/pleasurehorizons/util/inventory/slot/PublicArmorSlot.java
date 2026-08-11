@@ -15,9 +15,9 @@ public class PublicArmorSlot extends Slot {
     private final LivingEntity entity;
     private final EquipmentSlot equipmentSlot;
     @Nullable
-    private final Identifier backgroundSprite;
+    private final ResourceLocation backgroundSprite;
 
-    public PublicArmorSlot(Inventory inventory, LivingEntity entity, EquipmentSlot equipmentSlot, int index, int x, int y, @Nullable Identifier backgroundSprite) {
+    public PublicArmorSlot(Inventory inventory, LivingEntity entity, EquipmentSlot equipmentSlot, int index, int x, int y, @Nullable ResourceLocation backgroundSprite) {
         super(inventory, index, x, y);
         this.entity = entity;
         this.equipmentSlot = equipmentSlot;
@@ -49,7 +49,7 @@ public class PublicArmorSlot extends Slot {
     }
 
     @Override
-    public @Nullable Identifier getBackgroundSprite() {
+    public @Nullable ResourceLocation getBackgroundSprite() {
         return this.backgroundSprite;
     }
 }

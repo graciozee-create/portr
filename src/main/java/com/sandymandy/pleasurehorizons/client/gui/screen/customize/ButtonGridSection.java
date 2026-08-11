@@ -16,12 +16,12 @@ public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSe
     private final String groupId;
     private final V[] options;
     private final int columns;
-    private final Function<V, Text> labelProvider;
+    private final Function<V, Component> labelProvider;
     private final Consumer<V> onSelect;
     private final Supplier<V> currentValue;
 
     public ButtonGridSection(T entity, T previewEntity, String title, String groupId, V[] options, int columns,
-                             Function<V, Text> labelProvider, Consumer<V> onSelect, Supplier<V> currentValue) {
+                             Function<V, Component> labelProvider, Consumer<V> onSelect, Supplier<V> currentValue) {
         super(entity, previewEntity);
         this.title = title;
         this.groupId = groupId;

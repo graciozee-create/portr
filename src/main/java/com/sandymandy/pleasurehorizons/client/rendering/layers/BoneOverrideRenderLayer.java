@@ -37,9 +37,9 @@ public class BoneOverrideRenderLayer<T extends GeoAnimatable, O, R extends GeoRe
         if (poseStack == null || poseStack.peek() == null) return;
 
         // Maps
-        Map<String, Identifier> layer1 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES);
-        Map<String, Identifier> layer2 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES_LAYER_TWO);
-        Map<String, Identifier> layer3 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES_LAYER_THREE);
+        Map<String, ResourceLocation> layer1 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES);
+        Map<String, ResourceLocation> layer2 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES_LAYER_TWO);
+        Map<String, ResourceLocation> layer3 = state.getGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_BONE_TEXTURE_OVERRIDES_LAYER_THREE);
 
         // Render all 3 layers
         renderOverrideLayer(model, poseStack, buffers, state, layer1, packedLight, packedOverlay, renderColor);
@@ -52,7 +52,7 @@ public class BoneOverrideRenderLayer<T extends GeoAnimatable, O, R extends GeoRe
             MatrixStack poseStack,
             VertexConsumerProvider buffers,
             R state,
-            Map<String, Identifier> map,
+            Map<String, ResourceLocation> map,
             int packedLight,
             int packedOverlay,
             int renderColor

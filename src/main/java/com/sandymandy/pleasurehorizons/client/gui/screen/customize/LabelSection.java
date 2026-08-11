@@ -6,9 +6,9 @@ import net.minecraft.network.chat.Component;
 
 public class LabelSection<T extends GirlSceneEntity> extends CustomizeSection<T> {
 
-    private final Text text;
+    private final Component text;
 
-    public LabelSection(T entity, T previewEntity, Text text) {
+    public LabelSection(T entity, T previewEntity, Component text) {
         super(entity, previewEntity);
         this.text = text;
     }

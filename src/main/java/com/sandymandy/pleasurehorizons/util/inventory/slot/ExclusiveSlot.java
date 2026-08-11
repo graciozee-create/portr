@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 public class ExclusiveSlot extends TexturedSlot {
     private final Item canNotInsertItem;
 
-    public ExclusiveSlot(Inventory inventory, int index, int x, int y, Identifier backgroundSpite, Item canNotInsertItem) {
+    public ExclusiveSlot(Inventory inventory, int index, int x, int y, ResourceLocation backgroundSpite, Item canNotInsertItem) {
         super(inventory, index, x, y, backgroundSpite);
         this.canNotInsertItem = canNotInsertItem;
     }

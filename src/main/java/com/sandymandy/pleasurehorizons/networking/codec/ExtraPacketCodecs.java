@@ -6,7 +6,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 
 public class ExtraPacketCodecs {
-    public static final PacketCodec<RegistryByteBuf, BlockState> BLOCK_STATE_PACKET_CODEC = PacketCodec.ofStatic(
+    public static final StreamCodec<RegistryFriendlyByteBuf, BlockState> BLOCK_STATE_PACKET_CODEC = StreamCodec.ofStatic(
             (buf, state) -> buf.writeVarInt(Block.STATE_IDS.getRawId(state)),
             buf -> Block.STATE_IDS.get(buf.readVarInt())
     );

@@ -15,7 +15,7 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
     private final Map<String, Boolean> fallbackUsed = new HashMap<>();
 
     @Override
-    public Identifier getModelResource(GeoRenderState renderState) {
+    public ResourceLocation getModelResource(GeoRenderState renderState) {
         boolean stripped = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.IS_STRIPPED, false).booleanValue();
         String girlID = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_ID, "");
 
@@ -47,7 +47,7 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
     }
 
     @Override
-    public Identifier getAnimationResource(CustomGirlEntity animatable) {
+    public ResourceLocation getAnimationResource(CustomGirlEntity animatable) {
         String folder = "geckolib/animations/";
 
         String filePath = folder + animatable.getGirlID() + ".animation.json";
@@ -62,7 +62,7 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
     }
 
     @Override
-    public Identifier getTextureResource(GeoRenderState renderState) {
+    public ResourceLocation getTextureResource(GeoRenderState renderState) {
         String girlID = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_ID, "");
 
         String folder = "textures/entities/";

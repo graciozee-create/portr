@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ScreenHandler.class)
+@Mixin(AbstractContainerMenu.class)
 public class ScreenHandlerMixin {
 
     /**FIXME: Even though this Mixin prevents out of bounds error
@@ -18,10 +18,10 @@ public class ScreenHandlerMixin {
 
     @Inject(method = "setReceivedStack", at = @At("HEAD"), cancellable = true)
     private void preventSlotCrash(int slot, net.minecraft.world.item.ItemStack stack, CallbackInfo ci) {
-        if (slot < 0 || slot >= ((ScreenHandler) (Object) this).slots.size()) {
+        if (slot < 0 || slot >= ((AbstractContainerMenu) (Object) this).slots.size()) {
             PleasureHorizons.LOGGER.error(
                     "Prevented slot crash: Attempted to access slot {} but only {} slots available",
-                    slot, ((ScreenHandler) (Object) this).slots.size()
+                    slot, ((AbstractContainerMenu) (Object) this).slots.size()
             );
             ci.cancel(); // Prevent the crash
         }

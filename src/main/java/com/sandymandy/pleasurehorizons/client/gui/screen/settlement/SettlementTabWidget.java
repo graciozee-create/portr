@@ -19,8 +19,8 @@ public class SettlementTabWidget {
     private final int index;
     private final SettlementDisplay display;
     private final ItemStack icon;
-    private final Text title;
-    private final Identifier background;
+    private final Component title;
+    private final ResourceLocation background;
 
     @Nullable
     private SettlementTab contentProvider;
@@ -128,11 +128,11 @@ public class SettlementTabWidget {
     }
 
     // === Accessors ===
-    public Text getTitle() {
+    public Component getTitle() {
         return title;
     }
 
-    public Identifier getBackground() {
+    public ResourceLocation getBackground() {
         return background;
     }
 

@@ -31,7 +31,7 @@ public abstract class SettlementTab {
     protected double maxScrollY = 0;
 
     @Nullable
-    private Identifier backgroundTexture;
+    private ResourceLocation backgroundTexture;
 
     public SettlementTab(SettlementHubScreen screen, Settlement settlement) {
         this.screen = screen;
@@ -56,7 +56,7 @@ public abstract class SettlementTab {
     /**
      * Set the background texture for this tab
      */
-    public void setBackgroundTexture(Identifier texture) {
+    public void setBackgroundTexture(ResourceLocation texture) {
         this.backgroundTexture = texture;
     }
 
@@ -68,7 +68,7 @@ public abstract class SettlementTab {
     /**
      * Get the title of this tab (not currently used, but kept for consistency)
      */
-    public abstract Text getTitle();
+    public abstract Component getTitle();
 
     /**
      * Update scroll bounds based on content size

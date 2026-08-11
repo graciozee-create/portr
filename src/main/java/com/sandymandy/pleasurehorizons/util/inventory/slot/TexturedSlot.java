@@ -6,15 +6,15 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public class TexturedSlot extends Slot {
-    private final Identifier backgroundSpite;
+    private final ResourceLocation backgroundSpite;
 
-    public TexturedSlot(Inventory inventory, int index, int x, int y, Identifier backgroundSpite) {
+    public TexturedSlot(Inventory inventory, int index, int x, int y, ResourceLocation backgroundSpite) {
         super(inventory, index, x, y);
         this.backgroundSpite = backgroundSpite;
     }
 
     @Override
-    public @Nullable Identifier getBackgroundSprite() {
+    public @Nullable ResourceLocation getBackgroundSprite() {
         return backgroundSpite;
     }
 

@@ -18,12 +18,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ServerWorld.class)
+@Mixin(ServerLevel.class)
 public abstract class ServerWorldMixin {
 
     @Inject(method = "onBlockStateChanged", at = @At("HEAD"))
     private void onBlockChanged(BlockPos pos, BlockState oldState, BlockState newState, CallbackInfo ci) {
-        ServerWorld serverWorld = (ServerWorld) (Object) this;
+        ServerLevel serverWorld = (ServerLevel) (Object) this;
 
         // Check if the block type actually changed (ignore state-only changes like fence connections)
         if (oldState.isOf(newState.getBlock())) return;
@@ -38,7 +38,7 @@ public abstract class ServerWorldMixin {
     }
 
     @Unique
-    private void validateBuildingRequirements(ServerWorld world, SettlementBuilding building, BlockPos brokenPos) {
+    private void validateBuildingRequirements(ServerLevel world, SettlementBuilding building, BlockPos brokenPos) {
         BlockPos doorPos = building.doorPos();
         Settlement settlement = Utils.findSettlementByBuilding(world, doorPos);
         if (settlement == null) return;

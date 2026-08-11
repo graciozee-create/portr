@@ -18,7 +18,7 @@ public class EntityRendererMixin {
 
     @Inject(method = "renderLabelIfPresent", at = @At("HEAD"), cancellable = true)
     private void onRenderLabel(EntityRenderState renderState,
-                               Text component,
+                               Component component,
                                MatrixStack poseStack,
                                VertexConsumerProvider multiBufferSource,
                                int packedLightCoords,

@@ -22,7 +22,7 @@ import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandler> {
-    private static final Identifier WINDOW_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/advancements/window.png");
+    private static final ResourceLocation WINDOW_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/advancements/window.png");
     private static final int WINDOW_WIDTH = 252;
     private static final int WINDOW_HEIGHT = 140;
     private static final int PAGE_X = 9;
@@ -37,7 +37,7 @@ public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandle
     @Nullable
     private SettlementTabWidget selectedTab;
 
-    public SettlementHubScreen(SettlementHubScreenHandler handler, Inventory inventory, Text title) {
+    public SettlementHubScreen(SettlementHubScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
         this.settlement = handler.getSettlement();
         this.backgroundWidth = WINDOW_WIDTH;

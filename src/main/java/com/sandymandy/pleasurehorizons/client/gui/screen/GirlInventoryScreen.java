@@ -23,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import static com.sandymandy.pleasurehorizons.util.PleasureHorizonsIcons.*;
 
 public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandler> {
-    private static final Identifier TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "/textures/gui/inventory.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "/textures/gui/inventory.png");
     private float xMouse;
     private float yMouse;
     private static final int GUI_WIDTH = 176;
@@ -32,7 +32,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
     private final Player player;
 
 
-    public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Text title) {
+    public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
         this.girl = handler.getGirl();
         this.player = inventory.player;
@@ -93,7 +93,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
 
     }
 
-    private Identifier getPregnancyIcon(int stage) {
+    private ResourceLocation getPregnancyIcon(int stage) {
         switch (stage) {
             case 1 -> {
                 return PREGNANCY_LEVEL_ONE_ICON;
@@ -119,7 +119,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
         PacketDistributor.sendToServer(new SetGUIOpenStateC2SPacket(this.girl.getId(),false));
     }
 
-    private void drawButton(Text label, InventoryButtonAction action, int x, int y, int buttonWidth, int buttonHeight){
+    private void drawButton(Component label, InventoryButtonAction action, int x, int y, int buttonWidth, int buttonHeight){
 
         ButtonWidget button = ButtonWidget.builder(
                 label,
@@ -161,7 +161,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
             for (int i = 0; i < InventoryButtonRegistry.BUTTONS_LEFT.size(); i++) {
                 InventoryButtonAction action = InventoryButtonRegistry.BUTTONS_LEFT.get(i);
                 int y = startY + i * (buttonHeight + paddingY);
-                Text dynamicLabel = action.label();
+                Component dynamicLabel = action.label();
 
 
 
@@ -171,7 +171,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
             for (int i = 0; i < InventoryButtonRegistry.BUTTONS_RIGHT.size(); i++) {
                 InventoryButtonAction action = InventoryButtonRegistry.BUTTONS_RIGHT.get(i);
                 int y = startY + i * (buttonHeight + paddingY);
-                Text dynamicLabel = action.label();
+                Component dynamicLabel = action.label();
 
                 if (action.label().getString().equals("Sit") && girl.isSitting()){
                     dynamicLabel = Component.literal("Stand");

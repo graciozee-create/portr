@@ -7,7 +7,7 @@ import net.minecraft.world.level.Level;
 import java.util.Objects;
 
 public class PleasureHorizonsMessages {
-    public static void GlobleMessage(World world, Text message) {
+    public static void GlobleMessage(World world, Component message) {
         if (world.isClient()) return;
 
         Objects.requireNonNull(world.getServer())
@@ -20,7 +20,7 @@ public class PleasureHorizonsMessages {
     }
 
     public static void PlayerSpecificMessage(Player playerEntity, String messageContent){
-        Text message = Component.literal(messageContent);
+        Component message = Component.literal(messageContent);
         playerEntity.sendMessage(message,false);
     }
 

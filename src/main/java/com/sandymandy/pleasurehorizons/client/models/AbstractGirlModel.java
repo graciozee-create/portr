@@ -43,7 +43,7 @@ public abstract class AbstractGirlModel<T extends GirlSceneEntity> extends GeoMo
     }
 
     @Override
-    public Identifier getModelResource(GeoRenderState renderState) {
+    public ResourceLocation getModelResource(GeoRenderState renderState) {
         // Check if entity is stripped
         boolean stripped = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.IS_STRIPPED, false).booleanValue();
         String girlID = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_ID, "");
@@ -60,7 +60,7 @@ public abstract class AbstractGirlModel<T extends GirlSceneEntity> extends GeoMo
 
 
     @Override
-    public Identifier getTextureResource(GeoRenderState renderState) {
+    public ResourceLocation getTextureResource(GeoRenderState renderState) {
         String girlID = renderState.getOrDefaultGeckolibData(PleasureHorizonsDataTicketRegistry.GIRL_ID, "");
 
         String filePath = "textures/entities/" + girlID + ".png";
@@ -69,7 +69,7 @@ public abstract class AbstractGirlModel<T extends GirlSceneEntity> extends GeoMo
     }
 
     @Override
-    public Identifier getAnimationResource(T animatable) {
+    public ResourceLocation getAnimationResource(T animatable) {
         return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, animatable.getGirlID());
     }
 

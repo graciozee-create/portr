@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 public class InclusiveSlot extends TexturedSlot{
     private final Item insertItem;
 
-    public InclusiveSlot(Inventory inventory, int index, int x, int y, Identifier backgroundSpite, Item insertItem) {
+    public InclusiveSlot(Inventory inventory, int index, int x, int y, ResourceLocation backgroundSpite, Item insertItem) {
         super(inventory, index, x, y, backgroundSpite);
         this.insertItem = insertItem;
     }

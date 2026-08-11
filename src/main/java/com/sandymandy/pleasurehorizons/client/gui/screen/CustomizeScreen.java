@@ -35,7 +35,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
 
     protected double scrollOffset = 0;
 
-    public CustomizeScreen(Text title, int entityId, int previewEntityId, Class<T> entityClass) {
+    public CustomizeScreen(Component title, int entityId, int previewEntityId, Class<T> entityClass) {
         super(title);
         this.entityId = entityId;
 
@@ -177,7 +177,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         PacketDistributor.sendToServer(new SetGUIOpenStateC2SPacket(this.entityId, false));
     }
 
-    public ButtonWidget createSelectableButton(String groupId, Text message, int x, int y, int width, int height, ButtonWidget.PressAction onPress) {
+    public ButtonWidget createSelectableButton(String groupId, Component message, int x, int y, int width, int height, ButtonWidget.PressAction onPress) {
         ButtonWidget button = ButtonWidget.builder(message, btn -> {
             selectButton(groupId, btn);
             onPress.onPress(btn);
