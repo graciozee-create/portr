@@ -1,0 +1,1311 @@
+Run gradle build --no-daemon --stacktrace
+  
+Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx4g -XX:MaxMetaspaceSize=1024m
+Welcome to Gradle 9.6.1!
+Here are the highlights of this release:
+ - Improved Configuration Cache hit rates
+ - Additional CLI rendering options
+ - Important project hierarchy lookup deprecations
+For more details see https://docs.gradle.org/9.6.1/release-notes.html
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Configure project :
+Creating Minecraft artifacts without recompilation.
+Picked up _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx4g -XX:MaxMetaspaceSize=1024m
+> Task :createMinecraftArtifacts
+Loaded 130 artifacts from /home/runner/work/portr/portr/build/tmp/createMinecraftArtifacts/nfrt_artifact_manifest.properties
+*** Started working on downloadJson
+  ↓ https://launchermeta.mojang.com/mc/game/version_manifest_v2.json
+  ↓ https://piston-meta.mojang.com/v1/packages/091b2c2728f8ac413b6e7e683a6c12f21a53057c/1.21.1.json
+ ✓ Completed downloadJson in 0.48s
+*** Started working on downloadServer
+*** Started working on downloadClientMappings
+*** Started working on downloadClient
+  ↓ https://piston-data.mojang.com/v1/objects/2244b6f072256667bcd9a73df124d6c58de77992/client.txt
+  ↓ https://piston-data.mojang.com/v1/objects/30c73b1c5da787909b2f73340419fdf13b9def88/client.jar
+  ↓ https://piston-data.mojang.com/v1/objects/59353fb40c36d304f2035d51e7d6e6baa98dc05c/server.jar
+ ✓ Completed downloadClientMappings in 0.42s
+*** Started working on mergeMappings
+ ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
+ ✓ Completed downloadClient in 0.92s
+*** Started working on stripClient
+ ✓ Completed downloadServer in 1.17s
+*** Started working on extractServer
+ ↳ Running external tool net.neoforged.installertools:installertools:2.1.2:fatjar
+ ✓ Completed extractServer in 0.71s
+*** Started working on stripServer
+ ✓ Completed stripServer in 2.15s
+ ✓ Completed mergeMappings in 3.78s
+ ✓ Completed stripClient in 3.56s
+*** Started working on merge
+ ↳ Running external tool net.neoforged:mergetool:2.0.3:fatjar
+ ✓ Completed merge in 3.09s
+*** Started working on rename
+ ↳ Running external tool net.neoforged:AutoRenamingTool:2.0.3:all
+ ✓ Completed rename in 5.69s
+*** Started working on binaryPatch
+  WARNING: net.minecraftforge:binarypatcher:1.1.1:fatjar is not present in the artifact manifest
+  ↓ https://maven.neoforged.net/releases/net/minecraftforge/binarypatcher/1.1.1/binarypatcher-1.1.1-fatjar.jar
+ ↳ Running external tool net.minecraftforge:binarypatcher:1.1.1:fatjar
+ ✓ Completed binaryPatch in 5.33s
+*** Started working on copyUnpatchedClasses
+ ✓ Completed copyUnpatchedClasses in 1.66s
+*** Started working on applyDevTransforms
+ ↳ Running external tool net.neoforged.installertools:installertools:4.0.12:fatjar
+ ✓ Completed applyDevTransforms in 2.03s
+*** Started working on binaryWithNeoForge
+ ✓ Completed binaryWithNeoForge in 6.68s
+Total runtime: 30.32s
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+> Task :compileJava
+    public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                               ^
+  symbol:   class Vec2f
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                               ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                               ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:33: error: cannot find symbol
+    public static final DataTicket<Vec3d> PREVIOUS_VELOCITY = DataTicket.create("previous_velocity", Vec3d.class);
+                                   ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:4: error: package net.minecraft.sound does not exist
+import net.minecraft.sound.SoundEvent;
+                          ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:8: error: cannot find symbol
+    private static final Map<SceneKey, List<SoundEvent>> SOUND_EVENTS = new HashMap<>();
+                                            ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:9: error: cannot find symbol
+    private static final Map<SceneKey, List<SoundEvent>> RANDOM_SOUNDS = new HashMap<>();
+                                            ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:18: error: cannot find symbol
+    public static void registerSound(String girlID, String frameKey, SoundEvent event) {
+                                                                     ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:24: error: cannot find symbol
+    public static void registerSound(String girlID, String frameKey, List<SoundEvent> events) {
+                                                                          ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:30: error: cannot find symbol
+    public static List<SoundEvent> getSound(String girlID, String keyframe) {
+                       ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:7: error: package net.minecraft.advancement does not exist
+import net.minecraft.advancement.AdvancementCriterion;
+                                ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:8: error: package net.minecraft.advancement.criterion does not exist
+import net.minecraft.advancement.criterion.AbstractCriterion;
+                                          ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:9: error: package net.minecraft.loot.context does not exist
+import net.minecraft.loot.context.LootContext;
+                                 ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:10: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.EntityPredicate;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:11: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.LootContextPredicate;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:12: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.LootContextPredicateValidator;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:13: error: cannot find symbol
+import net.minecraft.server.network.ServerPlayerEntity;
+                                   ^
+  symbol:   class ServerPlayerEntity
+  location: package net.minecraft.server.network
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:18: error: cannot find symbol
+public class TameGirlCriterion extends AbstractCriterion<TameGirlCriterion.Conditions> {
+                                       ^
+  symbol: class AbstractCriterion
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: package AbstractCriterion does not exist
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                                                                                       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                      ^
+  symbol:   class LootContextPredicate
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                             ^
+  symbol:   class LootContextPredicate
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:26: error: cannot find symbol
+    public void trigger(ServerPlayerEntity player, GirlEntity entity) {
+                        ^
+  symbol:   class ServerPlayerEntity
+  location: class TameGirlCriterion
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:40: error: cannot find symbol
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> any() {
+                      ^
+  symbol:   class AdvancementCriterion
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: package EntityPredicate does not exist
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                                                                                               ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: cannot find symbol
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                      ^
+  symbol:   class AdvancementCriterion
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:49: error: cannot find symbol
+        public boolean matches(LootContext entityCtx) {
+                               ^
+  symbol:   class LootContext
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:54: error: cannot find symbol
+        public void validate(LootContextPredicateValidator validator) {
+                             ^
+  symbol:   class LootContextPredicateValidator
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:28: error: addAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:33: error: readAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:38: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:18: error: SlimeEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class SlimeEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:42: error: addAdditionalSaveData(CompoundTag) in SlimeEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:47: error: readAdditionalSaveData(CompoundTag) in SlimeEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:18: error: CustomGirlEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class CustomGirlEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:18: error: MikaEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class MikaEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MikaEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MikaEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:18: error: MomoEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class MomoEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MomoEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MomoEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:18: error: CoppieEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class CoppieEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CoppieEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CoppieEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:18: error: KoboldEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class KoboldEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:42: error: addAdditionalSaveData(CompoundTag) in KoboldEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:47: error: readAdditionalSaveData(CompoundTag) in KoboldEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:18: error: LucyEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class LucyEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:42: error: addAdditionalSaveData(CompoundTag) in LucyEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:47: error: readAdditionalSaveData(CompoundTag) in LucyEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:39: error: cannot find symbol
+                    .usingConvertsTo(MILK_JUG_EMPTY.get())));
+                    ^
+  symbol:   method usingConvertsTo(Item)
+  location: class Properties
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:53: error: cannot find symbol
+                    .usingConvertsTo(MILK_JUG_HALF.get())));
+                    ^
+  symbol:   method usingConvertsTo(Item)
+  location: class Properties
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/block/blocks/CarvedGirlPumpkinBlock.java:16: error: codec() in CarvedGirlPumpkinBlock cannot override codec() in CarvedPumpkinBlock
+    protected MapCodec<? extends CarvedPumpkinBlock> codec() {
+                                                     ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizons.java:60: error: cannot find symbol
+        Commands.register();
+                ^
+  symbol:   method register()
+  location: class Commands
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizonsClient.java:15: error: cannot find symbol
+        com.sandymandy.pleasurehorizons.config.ModConfig.init();
+                                                        ^
+  symbol:   method init()
+  location: class ModConfig
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:13: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_STRIPPED = DataTicket.create("is_stripped", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:14: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_IN_SCENE = DataTicket.create("is_in_scene", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:15: error: cannot find symbol
+    public static final DataTicket<Boolean> HAS_VEHICLE = DataTicket.create("has_vehicle", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:16: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_SPRINTING = DataTicket.create("is_running", Boolean.class);
+                                                                     ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:17: error: cannot find symbol
+    public static final DataTicket<String> GIRL_ID = DataTicket.create("girl_id", String.class);
+                                                               ^
+  symbol:   method create(String,Class<String>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:18: error: cannot find symbol
+    public static final DataTicket<Integer> ENTITY_ID = DataTicket.create("entity_id", Integer.class);
+                                                                  ^
+  symbol:   method create(String,Class<Integer>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:19: error: cannot find symbol
+    public static final DataTicket<Entity> GIRL_FIRST_PASSENGER = DataTicket.create("girl_first_passenger", Entity.class);
+                                                                            ^
+  symbol:   method create(String,Class<Entity>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:20: error: cannot find symbol
+    public static final DataTicket<Float> GIRL_WEAPON_BONE_ROTATION_X = DataTicket.create("wep_bone_rot_x", Float.class);
+                                                                                  ^
+  symbol:   method create(String,Class<Float>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:21: error: cannot find symbol
+    public static final DataTicket<ItemStack> GIRL_MAIN_HAND_STACK = DataTicket.create("girl_main_hand_stack", ItemStack.class);
+                                                                               ^
+  symbol:   method create(String,Class<ItemStack>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:22: error: cannot find symbol
+    public static final DataTicket<Map<String, Boolean>> GIRL_BONE_VISIBILITY = (DataTicket<Map<String, Boolean>>) (Object) DataTicket.create("girl_bone_visibility", Map.class);
+                                                                                                                                      ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                                                                                      ^
+  symbol:   class Vec2f
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                                                                                                                  ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:24: error: cannot find symbol
+    public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides", Map.class);
+                                                                                                                                                               ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:25: error: cannot find symbol
+    public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES_LAYER_TWO = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides_layer_two", Map.class);
+                                                                                                                                                                         ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:26: error: cannot find symbol
+    public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES_LAYER_THREE = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides_layer_three", Map.class);
+                                                                                                                                                                           ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:27: error: cannot find symbol
+    public static final DataTicket<Map<String, Integer>> GIRL_BONE_COLOR_OVERRIDES = (DataTicket<Map<String, Integer>>) (Object) DataTicket.create("girl_bone_color_overrides", Map.class);
+                                                                                                                                           ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                                                                                          ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                                                                                                                      ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                                                                                           ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                                                                                                                       ^
+  symbol:   method create(String,Class<Map>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:30: error: cannot find symbol
+    public static final DataTicket<String> PASSENGER_BONE_NAME = DataTicket.create("passenger_bone_name", String.class);
+                                                                           ^
+  symbol:   method create(String,Class<String>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:31: error: cannot find symbol
+    public static final DataTicket<Float> YAW = DataTicket.create("yaw", Float.class);
+                                                          ^
+  symbol:   method create(String,Class<Float>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:32: error: cannot find symbol
+    public static final DataTicket<Float> PREVIOUS_YAW = DataTicket.create("previous_yaw", Float.class);
+                                                                   ^
+  symbol:   method create(String,Class<Float>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:33: error: cannot find symbol
+    public static final DataTicket<Vec3d> PREVIOUS_VELOCITY = DataTicket.create("previous_velocity", Vec3d.class);
+                                                                                                     ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:36: error: cannot find symbol
+        List<SoundEvent> result = new ArrayList<>();
+             ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:39: error: cannot find symbol
+        for (Map.Entry<SceneKey, List<SoundEvent>> entry : SOUND_EVENTS.entrySet()) {
+                                      ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:52: error: cannot find symbol
+        for (Map.Entry<SceneKey, List<SoundEvent>> entry : RANDOM_SOUNDS.entrySet()) {
+                                      ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:59: error: cannot find symbol
+                    List<SoundEvent> pool = entry.getValue();
+                         ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsScreenHandlerRegistry.java:16: error: cannot infer type arguments for MenuType<>
+    public static final MenuType<?> GIRL_INVENTORY_SCREEN_HANDLER = new MenuType<>((id, inv) -> null);
+                                                                    ^
+  reason: cannot infer type-variable(s) T
+    (actual and formal argument lists differ in length)
+  where T is a type-variable:
+    T extends AbstractContainerMenu declared in class MenuType
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsScreenHandlerRegistry.java:18: error: cannot infer type arguments for MenuType<>
+    public static final MenuType<?> SETTLEMENT_HUB_SCREEN_HANDLER = new MenuType<>((id, inv) -> null);
+                                                                    ^
+  reason: cannot infer type-variable(s) T
+    (actual and formal argument lists differ in length)
+  where T is a type-variable:
+    T extends AbstractContainerMenu declared in class MenuType
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:25: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "lucy"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:30: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "mika"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:35: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "momo"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:40: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "slime"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:45: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "kobold"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:50: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                    .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "coppie"))));
+                    ^
+  where T is a type-variable:
+    T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+100 errors
+> Task :compileJava FAILED
+[Incubating] Problems report is available at: file:///home/runner/work/portr/portr/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  Note: Recompile with -Xlint:deprecation for details.
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:28: error: addAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:33: error: readAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:42: error: addAdditionalSaveData(CompoundTag) in SlimeEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:47: error: readAdditionalSaveData(CompoundTag) in SlimeEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MikaEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MikaEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MomoEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MomoEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CoppieEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CoppieEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:42: error: addAdditionalSaveData(CompoundTag) in KoboldEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:47: error: readAdditionalSaveData(CompoundTag) in KoboldEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:42: error: addAdditionalSaveData(CompoundTag) in LucyEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+      protected void addAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:47: error: readAdditionalSaveData(CompoundTag) in LucyEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+      protected void readAdditionalSaveData(CompoundTag compound) {
+                     ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/block/blocks/CarvedGirlPumpkinBlock.java:16: error: codec() in CarvedGirlPumpkinBlock cannot override codec() in CarvedPumpkinBlock
+      protected MapCodec<? extends CarvedPumpkinBlock> codec() {
+                                                       ^
+    attempting to assign weaker access privileges; was public
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                                 ^
+    symbol:   class Vec2f
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                                 ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                                 ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:33: error: cannot find symbol
+      public static final DataTicket<Vec3d> PREVIOUS_VELOCITY = DataTicket.create("previous_velocity", Vec3d.class);
+                                     ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:8: error: cannot find symbol
+      private static final Map<SceneKey, List<SoundEvent>> SOUND_EVENTS = new HashMap<>();
+                                              ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:9: error: cannot find symbol
+      private static final Map<SceneKey, List<SoundEvent>> RANDOM_SOUNDS = new HashMap<>();
+                                              ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:18: error: cannot find symbol
+      public static void registerSound(String girlID, String frameKey, SoundEvent event) {
+                                                                       ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:24: error: cannot find symbol
+      public static void registerSound(String girlID, String frameKey, List<SoundEvent> events) {
+                                                                            ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:30: error: cannot find symbol
+      public static List<SoundEvent> getSound(String girlID, String keyframe) {
+                         ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:13: error: cannot find symbol
+  import net.minecraft.server.network.ServerPlayerEntity;
+                                     ^
+    symbol:   class ServerPlayerEntity
+    location: package net.minecraft.server.network
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+      public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                        ^
+    symbol:   class LootContextPredicate
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+      public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                               ^
+    symbol:   class LootContextPredicate
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:26: error: cannot find symbol
+      public void trigger(ServerPlayerEntity player, GirlEntity entity) {
+                          ^
+    symbol:   class ServerPlayerEntity
+    location: class TameGirlCriterion
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:40: error: cannot find symbol
+          public static AdvancementCriterion<TameGirlCriterion.Conditions> any() {
+                        ^
+    symbol:   class AdvancementCriterion
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: cannot find symbol
+          public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                        ^
+    symbol:   class AdvancementCriterion
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:49: error: cannot find symbol
+          public boolean matches(LootContext entityCtx) {
+                                 ^
+    symbol:   class LootContext
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:54: error: cannot find symbol
+          public void validate(LootContextPredicateValidator validator) {
+                               ^
+    symbol:   class LootContextPredicateValidator
+    location: class Conditions
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                                                                                        ^
+    symbol:   class Vec2f
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                                                                                            ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                                                                                             ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:33: error: cannot find symbol
+      public static final DataTicket<Vec3d> PREVIOUS_VELOCITY = DataTicket.create("previous_velocity", Vec3d.class);
+                                                                                                       ^
+    symbol:   class Vec3d
+    location: class PleasureHorizonsDataTicketRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:36: error: cannot find symbol
+          List<SoundEvent> result = new ArrayList<>();
+               ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:39: error: cannot find symbol
+          for (Map.Entry<SceneKey, List<SoundEvent>> entry : SOUND_EVENTS.entrySet()) {
+                                        ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:52: error: cannot find symbol
+          for (Map.Entry<SceneKey, List<SoundEvent>> entry : RANDOM_SOUNDS.entrySet()) {
+                                        ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:59: error: cannot find symbol
+                      List<SoundEvent> pool = entry.getValue();
+                           ^
+    symbol:   class SoundEvent
+    location: class SceneKeyframeEventRegistry
+  Note: Recompile with -Xlint:unchecked for details.
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:38: error: method does not override or implement a method from a supertype
+      @Override
+      ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsScreenHandlerRegistry.java:16: error: cannot infer type arguments for MenuType<>
+      public static final MenuType<?> GIRL_INVENTORY_SCREEN_HANDLER = new MenuType<>((id, inv) -> null);
+                                                                      ^
+    reason: cannot infer type-variable(s) T
+      (actual and formal argument lists differ in length)
+    where T is a type-variable:
+      T extends AbstractContainerMenu declared in class MenuType
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsScreenHandlerRegistry.java:18: error: cannot infer type arguments for MenuType<>
+      public static final MenuType<?> SETTLEMENT_HUB_SCREEN_HANDLER = new MenuType<>((id, inv) -> null);
+                                                                      ^
+    reason: cannot infer type-variable(s) T
+      (actual and formal argument lists differ in length)
+    where T is a type-variable:
+      T extends AbstractContainerMenu declared in class MenuType
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:39: error: cannot find symbol
+                      .usingConvertsTo(MILK_JUG_EMPTY.get())));
+                      ^
+    symbol:   method usingConvertsTo(Item)
+    location: class Properties
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:53: error: cannot find symbol
+                      .usingConvertsTo(MILK_JUG_HALF.get())));
+                      ^
+    symbol:   method usingConvertsTo(Item)
+    location: class Properties
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizons.java:60: error: cannot find symbol
+          Commands.register();
+                  ^
+    symbol:   method register()
+    location: class Commands
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizonsClient.java:15: error: cannot find symbol
+          com.sandymandy.pleasurehorizons.config.ModConfig.init();
+                                                          ^
+    symbol:   method init()
+    location: class ModConfig
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:13: error: cannot find symbol
+      public static final DataTicket<Boolean> IS_STRIPPED = DataTicket.create("is_stripped", Boolean.class);
+                                                                      ^
+    symbol:   method create(String,Class<Boolean>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:14: error: cannot find symbol
+      public static final DataTicket<Boolean> IS_IN_SCENE = DataTicket.create("is_in_scene", Boolean.class);
+                                                                      ^
+    symbol:   method create(String,Class<Boolean>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:15: error: cannot find symbol
+      public static final DataTicket<Boolean> HAS_VEHICLE = DataTicket.create("has_vehicle", Boolean.class);
+                                                                      ^
+    symbol:   method create(String,Class<Boolean>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:16: error: cannot find symbol
+      public static final DataTicket<Boolean> IS_SPRINTING = DataTicket.create("is_running", Boolean.class);
+                                                                       ^
+    symbol:   method create(String,Class<Boolean>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:17: error: cannot find symbol
+      public static final DataTicket<String> GIRL_ID = DataTicket.create("girl_id", String.class);
+                                                                 ^
+    symbol:   method create(String,Class<String>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:18: error: cannot find symbol
+      public static final DataTicket<Integer> ENTITY_ID = DataTicket.create("entity_id", Integer.class);
+                                                                    ^
+    symbol:   method create(String,Class<Integer>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:19: error: cannot find symbol
+      public static final DataTicket<Entity> GIRL_FIRST_PASSENGER = DataTicket.create("girl_first_passenger", Entity.class);
+                                                                              ^
+    symbol:   method create(String,Class<Entity>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:20: error: cannot find symbol
+      public static final DataTicket<Float> GIRL_WEAPON_BONE_ROTATION_X = DataTicket.create("wep_bone_rot_x", Float.class);
+                                                                                    ^
+    symbol:   method create(String,Class<Float>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:21: error: cannot find symbol
+      public static final DataTicket<ItemStack> GIRL_MAIN_HAND_STACK = DataTicket.create("girl_main_hand_stack", ItemStack.class);
+                                                                                 ^
+    symbol:   method create(String,Class<ItemStack>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:22: error: cannot find symbol
+      public static final DataTicket<Map<String, Boolean>> GIRL_BONE_VISIBILITY = (DataTicket<Map<String, Boolean>>) (Object) DataTicket.create("girl_bone_visibility", Map.class);
+                                                                                                                                        ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                                                                                                                    ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:24: error: cannot find symbol
+      public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides", Map.class);
+                                                                                                                                                                 ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:25: error: cannot find symbol
+      public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES_LAYER_TWO = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides_layer_two", Map.class);
+                                                                                                                                                                           ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:26: error: cannot find symbol
+      public static final DataTicket<Map<String, ResourceLocation>> GIRL_BONE_TEXTURE_OVERRIDES_LAYER_THREE = (DataTicket<Map<String, ResourceLocation>>) (Object) DataTicket.create("girl_bone_texture_overrides_layer_three", Map.class);
+                                                                                                                                                                             ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:27: error: cannot find symbol
+      public static final DataTicket<Map<String, Integer>> GIRL_BONE_COLOR_OVERRIDES = (DataTicket<Map<String, Integer>>) (Object) DataTicket.create("girl_bone_color_overrides", Map.class);
+                                                                                                                                             ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                                                                                                                        ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+      public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                                                                                                                         ^
+    symbol:   method create(String,Class<Map>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:30: error: cannot find symbol
+      public static final DataTicket<String> PASSENGER_BONE_NAME = DataTicket.create("passenger_bone_name", String.class);
+                                                                             ^
+    symbol:   method create(String,Class<String>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:31: error: cannot find symbol
+      public static final DataTicket<Float> YAW = DataTicket.create("yaw", Float.class);
+                                                            ^
+    symbol:   method create(String,Class<Float>)
+    location: class DataTicket
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:32: error: cannot find symbol
+      public static final DataTicket<Float> PREVIOUS_YAW = DataTicket.create("previous_yaw", Float.class);
+                                                                     ^
+    symbol:   method create(String,Class<Float>)
+    location: class DataTicket
+  Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java uses or overrides a deprecated API.
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:25: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "lucy"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:30: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "mika"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:35: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "momo"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:40: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "slime"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:45: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "kobold"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/GirlRegistry.java:50: error: incompatible types: no instance(s) of type variable(s) T exist so that ResourceKey<T> conforms to String
+                      .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "coppie"))));
+                      ^
+    where T is a type-variable:
+      T extends Object declared in method <T>create(ResourceKey<? extends Registry<T>>,ResourceLocation)
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:18: error: SlimeEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class SlimeEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:18: error: CustomGirlEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class CustomGirlEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:18: error: MikaEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class MikaEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:18: error: MomoEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class MomoEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:18: error: CoppieEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class CoppieEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:18: error: KoboldEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class KoboldEntity extends SettlementGirlEntityAI {
+         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:18: error: LucyEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+  public class LucyEntity extends SettlementGirlEntityAI {
+         ^
+  Note: /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java uses unchecked or unsafe operations.
+  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:18: error: cannot find symbol
+  public class TameGirlCriterion extends AbstractCriterion<TameGirlCriterion.Conditions> {
+                                         ^
+    symbol: class AbstractCriterion
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:4: error: package net.minecraft.sound does not exist
+  import net.minecraft.sound.SoundEvent;
+                            ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:7: error: package net.minecraft.advancement does not exist
+  import net.minecraft.advancement.AdvancementCriterion;
+                                  ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:8: error: package net.minecraft.advancement.criterion does not exist
+  import net.minecraft.advancement.criterion.AbstractCriterion;
+                                            ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:9: error: package net.minecraft.loot.context does not exist
+  import net.minecraft.loot.context.LootContext;
+                                   ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:10: error: package net.minecraft.predicate.entity does not exist
+  import net.minecraft.predicate.entity.EntityPredicate;
+                                       ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:11: error: package net.minecraft.predicate.entity does not exist
+  import net.minecraft.predicate.entity.LootContextPredicate;
+                                       ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:12: error: package net.minecraft.predicate.entity does not exist
+  import net.minecraft.predicate.entity.LootContextPredicateValidator;
+                                       ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: package AbstractCriterion does not exist
+      public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                                                                                         ^
+  /home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: package EntityPredicate does not exist
+          public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                                                                                                 ^
+  100 errors
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:23: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec2f>> GIRL_BONE_UV_OFFSETS = (DataTicket<Map<String, Vec2f>>) (Object) DataTicket.create("girl_bone_uv_offsets", Map.class);
+                                               ^
+  symbol:   class Vec2f
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:28: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_SIZE_OVERRIDES = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_size_overrides", Map.class);
+                                               ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:29: error: cannot find symbol
+    public static final DataTicket<Map<String, Vec3d>> GIRL_BONE_POSITION_OFFSET = (DataTicket<Map<String, Vec3d>>) (Object) DataTicket.create("girl_bone_pos_offset", Map.class);
+                                               ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:33: error: cannot find symbol
+    public static final DataTicket<Vec3d> PREVIOUS_VELOCITY = DataTicket.create("previous_velocity", Vec3d.class);
+                                   ^
+  symbol:   class Vec3d
+  location: class PleasureHorizonsDataTicketRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:4: error: package net.minecraft.sound does not exist
+import net.minecraft.sound.SoundEvent;
+                          ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:8: error: cannot find symbol
+    private static final Map<SceneKey, List<SoundEvent>> SOUND_EVENTS = new HashMap<>();
+                                            ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:9: error: cannot find symbol
+    private static final Map<SceneKey, List<SoundEvent>> RANDOM_SOUNDS = new HashMap<>();
+                                            ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:18: error: cannot find symbol
+    public static void registerSound(String girlID, String frameKey, SoundEvent event) {
+                                                                     ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:24: error: cannot find symbol
+    public static void registerSound(String girlID, String frameKey, List<SoundEvent> events) {
+                                                                          ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/SceneKeyframeEventRegistry.java:30: error: cannot find symbol
+    public static List<SoundEvent> getSound(String girlID, String keyframe) {
+                       ^
+  symbol:   class SoundEvent
+  location: class SceneKeyframeEventRegistry
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:7: error: package net.minecraft.advancement does not exist
+import net.minecraft.advancement.AdvancementCriterion;
+                                ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:8: error: package net.minecraft.advancement.criterion does not exist
+import net.minecraft.advancement.criterion.AbstractCriterion;
+                                          ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:9: error: package net.minecraft.loot.context does not exist
+import net.minecraft.loot.context.LootContext;
+                                 ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:10: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.EntityPredicate;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:11: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.LootContextPredicate;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:12: error: package net.minecraft.predicate.entity does not exist
+import net.minecraft.predicate.entity.LootContextPredicateValidator;
+                                     ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:13: error: cannot find symbol
+import net.minecraft.server.network.ServerPlayerEntity;
+                                   ^
+  symbol:   class ServerPlayerEntity
+  location: package net.minecraft.server.network
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:18: error: cannot find symbol
+public class TameGirlCriterion extends AbstractCriterion<TameGirlCriterion.Conditions> {
+                                       ^
+  symbol: class AbstractCriterion
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: package AbstractCriterion does not exist
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                                                                                       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                      ^
+  symbol:   class LootContextPredicate
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:31: error: cannot find symbol
+    public record Conditions(Optional<LootContextPredicate> player, Optional<LootContextPredicate> entity) implements AbstractCriterion.Conditions {
+                                                                             ^
+  symbol:   class LootContextPredicate
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:26: error: cannot find symbol
+    public void trigger(ServerPlayerEntity player, GirlEntity entity) {
+                        ^
+  symbol:   class ServerPlayerEntity
+  location: class TameGirlCriterion
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:40: error: cannot find symbol
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> any() {
+                      ^
+  symbol:   class AdvancementCriterion
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: package EntityPredicate does not exist
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                                                                                               ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:44: error: cannot find symbol
+        public static AdvancementCriterion<TameGirlCriterion.Conditions> create(EntityPredicate.Builder entity) {
+                      ^
+  symbol:   class AdvancementCriterion
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:49: error: cannot find symbol
+        public boolean matches(LootContext entityCtx) {
+                               ^
+  symbol:   class LootContext
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/advancement/criterion/TameGirlCriterion.java:54: error: cannot find symbol
+        public void validate(LootContextPredicateValidator validator) {
+                             ^
+  symbol:   class LootContextPredicateValidator
+  location: class Conditions
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:36: error: addAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/GirlSceneEntity.java:41: error: readAdditionalSaveData(CompoundTag) in GirlSceneEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/TameableGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in TameableGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:28: error: addAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:33: error: readAdditionalSaveData(CompoundTag) in SettlementGirlEntityAI cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/tamable/SettlementGirlEntityAI.java:38: error: method does not override or implement a method from a supertype
+    @Override
+    ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:21: error: addAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/base/wild/WildGirlEntity.java:26: error: readAdditionalSaveData(CompoundTag) in WildGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:18: error: SlimeEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class SlimeEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:42: error: addAdditionalSaveData(CompoundTag) in SlimeEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/SlimeEntity.java:47: error: readAdditionalSaveData(CompoundTag) in SlimeEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:18: error: CustomGirlEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class CustomGirlEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CustomGirlEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CustomGirlEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:18: error: MikaEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class MikaEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MikaEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MikaEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MikaEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:18: error: MomoEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class MomoEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:42: error: addAdditionalSaveData(CompoundTag) in MomoEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/MomoEntity.java:47: error: readAdditionalSaveData(CompoundTag) in MomoEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:18: error: CoppieEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class CoppieEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:42: error: addAdditionalSaveData(CompoundTag) in CoppieEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/CoppieEntity.java:47: error: readAdditionalSaveData(CompoundTag) in CoppieEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:18: error: KoboldEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class KoboldEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:42: error: addAdditionalSaveData(CompoundTag) in KoboldEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/KoboldEntity.java:47: error: readAdditionalSaveData(CompoundTag) in KoboldEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:18: error: LucyEntity is not abstract and does not override abstract method registerControllers(ControllerRegistrar) in GeoAnimatable
+public class LucyEntity extends SettlementGirlEntityAI {
+       ^
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:42: error: addAdditionalSaveData(CompoundTag) in LucyEntity cannot override addAdditionalSaveData(CompoundTag) in Mob
+    protected void addAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/entity/girls/LucyEntity.java:47: error: readAdditionalSaveData(CompoundTag) in LucyEntity cannot override readAdditionalSaveData(CompoundTag) in Mob
+    protected void readAdditionalSaveData(CompoundTag compound) {
+                   ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:39: error: cannot find symbol
+                    .usingConvertsTo(MILK_JUG_EMPTY.get())));
+                    ^
+  symbol:   method usingConvertsTo(Item)
+  location: class Properties
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/item/PleasureHorizonsItems.java:53: error: cannot find symbol
+                    .usingConvertsTo(MILK_JUG_HALF.get())));
+                    ^
+  symbol:   method usingConvertsTo(Item)
+  location: class Properties
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/block/blocks/CarvedGirlPumpkinBlock.java:16: error: codec() in CarvedGirlPumpkinBlock cannot override codec() in CarvedPumpkinBlock
+    protected MapCodec<? extends CarvedPumpkinBlock> codec() {
+                                                     ^
+  attempting to assign weaker access privileges; was public
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizons.java:60: error: cannot find symbol
+        Commands.register();
+                ^
+  symbol:   method register()
+  location: class Commands
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/PleasureHorizonsClient.java:15: error: cannot find symbol
+        com.sandymandy.pleasurehorizons.config.ModConfig.init();
+                                                        ^
+  symbol:   method init()
+  location: class ModConfig
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:13: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_STRIPPED = DataTicket.create("is_stripped", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:14: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_IN_SCENE = DataTicket.create("is_in_scene", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:15: error: cannot find symbol
+    public static final DataTicket<Boolean> HAS_VEHICLE = DataTicket.create("has_vehicle", Boolean.class);
+                                                                    ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:16: error: cannot find symbol
+    public static final DataTicket<Boolean> IS_SPRINTING = DataTicket.create("is_running", Boolean.class);
+                                                                     ^
+  symbol:   method create(String,Class<Boolean>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:17: error: cannot find symbol
+    public static final DataTicket<String> GIRL_ID = DataTicket.create("girl_id", String.class);
+                                                               ^
+  symbol:   method create(String,Class<String>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:18: error: cannot find symbol
+    public static final DataTicket<Integer> ENTITY_ID = DataTicket.create("entity_id", Integer.class);
+                                                                  ^
+  symbol:   method create(String,Class<Integer>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:19: error: cannot find symbol
+    public static final DataTicket<Entity> GIRL_FIRST_PASSENGER = DataTicket.create("girl_first_passenger", Entity.class);
+                                                                            ^
+  symbol:   method create(String,Class<Entity>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:20: error: cannot find symbol
+    public static final DataTicket<Float> GIRL_WEAPON_BONE_ROTATION_X = DataTicket.create("wep_bone_rot_x", Float.class);
+                                                                                  ^
+  symbol:   method create(String,Class<Float>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:21: error: cannot find symbol
+    public static final DataTicket<ItemStack> GIRL_MAIN_HAND_STACK = DataTicket.create("girl_main_hand_stack", ItemStack.class);
+                                                                               ^
+  symbol:   method create(String,Class<ItemStack>)
+  location: class DataTicket
+/home/runner/work/portr/portr/src/main/java/com/sandymandy/pleasurehorizons/registries/PleasureHorizonsDataTicketRegistry.java:22: error: cannot find symbol
+    public static final DataTicket<Map<String, Boolean>> GIRL_BONE_VISIBILITY = (DataTicket<Map<String, Boolean>>) (Object) DataTicket.create("girl_bone_visibility", Map.class);
