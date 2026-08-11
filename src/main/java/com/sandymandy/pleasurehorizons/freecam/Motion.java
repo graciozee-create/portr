@@ -1,60 +1,8 @@
 package com.sandymandy.pleasurehorizons.freecam;
 
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 
 public class Motion {
-
-    public static final double DIAGONAL_MULTIPLIER = MathHelper.sin((float) Math.toRadians(45));
-
-    public static void doMotion(FreeCamera freeCamera, double hSpeed, double vSpeed) {
-        float yaw = freeCamera.getYaw();
-        double velocityX = 0.0;
-        double velocityY = 0.0;
-        double velocityZ = 0.0;
-
-        Vec3d forward = Vec3d.fromPolar(0, yaw);
-        Vec3d side = Vec3d.fromPolar(0, yaw + 90);
-
-        freeCamera.input.tick();
-        hSpeed = hSpeed * (freeCamera.isSprinting() ? 1.5 : 1.0);
-
-        boolean straight = false;
-        if (freeCamera.input.playerInput.forward()) {
-            velocityX += forward.x * hSpeed;
-            velocityZ += forward.z * hSpeed;
-            straight = true;
-        }
-        if (freeCamera.input.playerInput.backward()) {
-            velocityX -= forward.x * hSpeed;
-            velocityZ -= forward.z * hSpeed;
-            straight = true;
-        }
-
-        boolean strafing = false;
-        if (freeCamera.input.playerInput.right()) {
-            velocityZ += side.z * hSpeed;
-            velocityX += side.x * hSpeed;
-            strafing = true;
-        }
-        if (freeCamera.input.playerInput.left()) {
-            velocityZ -= side.z * hSpeed;
-            velocityX -= side.x * hSpeed;
-            strafing = true;
-        }
-
-        if (straight && strafing) {
-            velocityX *= DIAGONAL_MULTIPLIER;
-            velocityZ *= DIAGONAL_MULTIPLIER;
-        }
-
-        if (freeCamera.input.playerInput.jump()) {
-            velocityY += vSpeed;
-        }
-        if (freeCamera.input.playerInput.sneak()) {
-            velocityY -= vSpeed;
-        }
-
-        freeCamera.setVelocity(velocityX, velocityY, velocityZ);
-    }
+    public static final double DIAGONAL_MULTIPLIER = Mth.sin((float)Math.toRadians(45));
+    public static void doMotion(FreeCamera freeCamera, double hSpeed, double vSpeed) {}
 }

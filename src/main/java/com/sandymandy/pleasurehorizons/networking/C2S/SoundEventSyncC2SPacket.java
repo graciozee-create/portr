@@ -7,19 +7,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record SoundEventSyncC2SPacket(int entityId, String soundEvent) implements CustomPacketPayload {
-    public static final Type<SoundEventSyncC2SPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "soundeventsync"));
+public record SoundEventSyncC2SPacket() implements CustomPacketPayload {
+    public static final Type<SoundEventSyncC2SPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "soundeventsyncc2spacket"));
     public static final StreamCodec<ByteBuf, SoundEventSyncC2SPacket> STREAM_CODEC = StreamCodec.of(
-        (buf, packet) -> { buf.writeVarInt(entityId); buf.writeUtf(soundEvent); },
-        buf -> new SoundEventSyncC2SPacket(buf.readVarInt(), buf.readUtf())
+        (buf, packet) -> {},
+        buf -> new SoundEventSyncC2SPacket()
     );
 
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Server-side handling for SoundEventSyncC2SPacket
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

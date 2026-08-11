@@ -1,21 +1,14 @@
 package com.sandymandy.pleasurehorizons.util.inventory.slot;
-
-import net.minecraft.inventory.Inventory;
+import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.world.item.Item;
 
 public class TexturedSlot extends Slot {
-    private final ResourceLocation backgroundSpite;
-
-    public TexturedSlot(Inventory inventory, int index, int x, int y, ResourceLocation backgroundSpite) {
+    public TexturedSlot(Container inventory, int index, int x, int y, ResourceLocation bg, Item item) {
         super(inventory, index, x, y);
-        this.backgroundSpite = backgroundSpite;
     }
-
-    @Override
-    public @Nullable ResourceLocation getBackgroundSprite() {
-        return backgroundSpite;
+    public TexturedSlot(Container inventory, int index, int x, int y, ResourceLocation bg) {
+        super(inventory, index, x, y);
     }
-
 }

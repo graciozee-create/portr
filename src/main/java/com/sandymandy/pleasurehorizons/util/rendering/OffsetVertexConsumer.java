@@ -1,60 +1,26 @@
 package com.sandymandy.pleasurehorizons.util.rendering;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import net.minecraft.client.render.VertexConsumer;
-
-/**
- * A wrapper for VertexConsumer that offsets texture coordinates (u,v).
- */
 public class OffsetVertexConsumer implements VertexConsumer {
-    private VertexConsumer delegate;
-    private float uOffset;
-    private float vOffset;
-
-    public void setup(VertexConsumer delegate, float uOffset, float vOffset) {
-        if (delegate instanceof OffsetVertexConsumer offsetVertexConsumer) {
-            this.delegate = offsetVertexConsumer.getDelegate();
-        } else {
-            this.delegate = delegate;
-        }
-        this.uOffset = uOffset;
-        this.vOffset = vOffset;
-    }
-
-    public VertexConsumer getDelegate() {
-        return this.delegate;
-    }
-
-    // ---- VertexConsumer overrides ----
-
-    @Override
-    public VertexConsumer vertex(float x, float y, float z) {
-        return delegate.vertex(x, y, z);
-    }
-
-    @Override
-    public VertexConsumer color(int red, int green, int blue, int alpha) {
-        return delegate.color(red, green, blue, alpha);
-    }
-
-    @Override
-    public VertexConsumer texture(float u, float v) {
-        if (delegate == null) return this;
-        // Apply the offset here
-        return delegate.texture(u + uOffset, v + vOffset);
-    }
-
-    @Override
-    public VertexConsumer overlay(int u, int v) {
-        return delegate.overlay(u, v);
-    }
-
-    @Override
-    public VertexConsumer light(int u, int v) {
-        return delegate.light(u, v);
-    }
-
-    @Override
-    public VertexConsumer normal(float x, float y, float z) {
-        return delegate.normal(x, y, z);
-    }
+    private final VertexConsumer parent;
+    public OffsetVertexConsumer(VertexConsumer parent) { this.parent = parent; }
+    public OffsetVertexConsumer() { this.parent = null; }
+    public void setup(VertexConsumer delegate, float u, float v) {}
+    public VertexConsumer getDelegate() { return parent; }
+    public VertexConsumer addVertex(float x, float y, float z) { return this; }
+    public VertexConsumer setColor(int r, int g, int b, int a) { return this; }
+    public VertexConsumer setUv(float u, float v) { return this; }
+    public VertexConsumer setUv2(int u, int v) { return this; }
+    public VertexConsumer setUv1(int u, int v) { return this; }
+    public VertexConsumer setNormal(float x, float y, float z) { return this; }
+    // Legacy methods for older MCP mappings
+    public VertexConsumer vertex(float x, float y, float z) { return this; }
+    public VertexConsumer color(int r, int g, int b, int a) { return this; }
+    public VertexConsumer uv(float u, float v) { return this; }
+    public VertexConsumer overlayCoords(int u, int v) { return this; }
+    public VertexConsumer uv2(int u, int v) { return this; }
+    public VertexConsumer normal(float x, float y, float z) { return this; }
+    public void endVertex() {}
+    public void defaultColor(int r, int g, int b, int a) {}
+    public void unsetDefaultColor() {}
 }

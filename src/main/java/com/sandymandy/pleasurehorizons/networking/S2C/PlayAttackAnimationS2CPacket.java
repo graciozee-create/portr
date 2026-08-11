@@ -7,19 +7,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record PlayAttackAnimationS2CPacket(int entityId) implements CustomPacketPayload {
-    public static final Type<PlayAttackAnimationS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "play_attack_animation"));
+public record PlayAttackAnimationS2CPacket() implements CustomPacketPayload {
+    public static final Type<PlayAttackAnimationS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "playattackanimations2cpacket"));
     public static final StreamCodec<ByteBuf, PlayAttackAnimationS2CPacket> STREAM_CODEC = StreamCodec.of(
-        (buf, packet) -> { buf.writeVarInt(packet.entityId); },
-        buf -> new PlayAttackAnimationS2CPacket(buf.readVarInt())
+        (buf, packet) -> {},
+        buf -> new PlayAttackAnimationS2CPacket()
     );
 
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Client-side handling
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

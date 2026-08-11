@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record RefreshModelsS2CPacket() implements CustomPacketPayload {
-    public static final Type<RefreshModelsS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "refresh_models"));
+    public static final Type<RefreshModelsS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "refreshmodelss2cpacket"));
     public static final StreamCodec<ByteBuf, RefreshModelsS2CPacket> STREAM_CODEC = StreamCodec.of(
         (buf, packet) -> {},
         buf -> new RefreshModelsS2CPacket()
@@ -18,8 +18,6 @@ public record RefreshModelsS2CPacket() implements CustomPacketPayload {
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Client-side handling
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

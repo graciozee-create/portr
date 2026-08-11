@@ -7,19 +7,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record OpenCustomizeScreenS2CPacket(int entityId, int previewEntityId) implements CustomPacketPayload {
-    public static final Type<OpenCustomizeScreenS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "open_customize_screen"));
+public record OpenCustomizeScreenS2CPacket() implements CustomPacketPayload {
+    public static final Type<OpenCustomizeScreenS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "opencustomizescreens2cpacket"));
     public static final StreamCodec<ByteBuf, OpenCustomizeScreenS2CPacket> STREAM_CODEC = StreamCodec.of(
-        (buf, packet) -> { buf.writeVarInt(packet.entityId); buf.writeVarInt(packet.previewEntityId); },
-        buf -> new OpenCustomizeScreenS2CPacket(buf.readVarInt(), buf.readVarInt())
+        (buf, packet) -> {},
+        buf -> new OpenCustomizeScreenS2CPacket()
     );
 
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Client-side handling
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

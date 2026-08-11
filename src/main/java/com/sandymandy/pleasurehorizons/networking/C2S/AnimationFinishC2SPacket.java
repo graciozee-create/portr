@@ -7,19 +7,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record AnimationFinishC2SPacket(int entityId) implements CustomPacketPayload {
-    public static final Type<AnimationFinishC2SPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "animationfinish"));
+public record AnimationFinishC2SPacket() implements CustomPacketPayload {
+    public static final Type<AnimationFinishC2SPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "animationfinishc2spacket"));
     public static final StreamCodec<ByteBuf, AnimationFinishC2SPacket> STREAM_CODEC = StreamCodec.of(
-        (buf, packet) -> { buf.writeVarInt(entityId); },
-        buf -> new AnimationFinishC2SPacket(buf.readVarInt())
+        (buf, packet) -> {},
+        buf -> new AnimationFinishC2SPacket()
     );
 
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Server-side handling for AnimationFinishC2SPacket
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

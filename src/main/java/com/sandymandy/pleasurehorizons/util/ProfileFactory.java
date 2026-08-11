@@ -5,7 +5,6 @@ import com.sandymandy.pleasurehorizons.util.variables.CustomGirlProfile;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
-@FunctionalInterface
 public interface ProfileFactory<T extends GirlSceneEntity> {
-    T create(EntityType<T> type, World world, CustomGirlProfile profile);
+    T create(EntityType<T> type, Level level, CustomGirlProfile profile);
 }

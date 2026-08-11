@@ -4,15 +4,15 @@ import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.networking.C2S.*;
 import com.sandymandy.pleasurehorizons.networking.S2C.*;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-@Mod.EventBusSubscriber(modid = PleasureHorizons.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = PleasureHorizons.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class PleasureHorizonsPackets {
 
     public static void register() {
-        PleasureHorizons.LOGGER.info("Registering Pleasure Horizons packets");
+        PleasureHorizons.LOGGER.info("Registering packets");
     }
 
     @SubscribeEvent
@@ -43,6 +43,5 @@ public class PleasureHorizonsPackets {
         registrar.playToClient(PlayAttackAnimationS2CPacket.TYPE, PlayAttackAnimationS2CPacket.STREAM_CODEC, PlayAttackAnimationS2CPacket::handle);
         registrar.playToClient(RunAnimEventsS2CPacket.TYPE, RunAnimEventsS2CPacket.STREAM_CODEC, RunAnimEventsS2CPacket::handle);
         registrar.playToClient(OpenKoboldCustomizeScreenS2CPacket.TYPE, OpenKoboldCustomizeScreenS2CPacket.STREAM_CODEC, OpenKoboldCustomizeScreenS2CPacket::handle);
-        PleasureHorizons.LOGGER.info("Registered all Pleasure Horizons payloads");
     }
 }

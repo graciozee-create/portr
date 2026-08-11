@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record PlayCumHudAnimationS2CPacket() implements CustomPacketPayload {
-    public static final Type<PlayCumHudAnimationS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "play_cum_hud_animation"));
+    public static final Type<PlayCumHudAnimationS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "playcumhudanimations2cpacket"));
     public static final StreamCodec<ByteBuf, PlayCumHudAnimationS2CPacket> STREAM_CODEC = StreamCodec.of(
         (buf, packet) -> {},
         buf -> new PlayCumHudAnimationS2CPacket()
@@ -18,8 +18,6 @@ public record PlayCumHudAnimationS2CPacket() implements CustomPacketPayload {
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Client-side handling
-        });
+        ctx.enqueueWork(() -> {});
     }
 }

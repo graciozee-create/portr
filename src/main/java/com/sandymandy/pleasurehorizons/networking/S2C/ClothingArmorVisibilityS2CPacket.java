@@ -7,29 +7,17 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record ClothingArmorVisibilityS2CPacket(int entityId, boolean[] armor) implements CustomPacketPayload {
-    public static final Type<ClothingArmorVisibilityS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "clothing_armor_visibility"));
+public record ClothingArmorVisibilityS2CPacket() implements CustomPacketPayload {
+    public static final Type<ClothingArmorVisibilityS2CPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "clothingarmorvisibilitys2cpacket"));
     public static final StreamCodec<ByteBuf, ClothingArmorVisibilityS2CPacket> STREAM_CODEC = StreamCodec.of(
-        (buf, packet) -> {
-            buf.writeVarInt(packet.entityId);
-            buf.writeVarInt(packet.armor.length);
-            for (boolean b : packet.armor) buf.writeBoolean(b);
-        },
-        buf -> {
-            int entityId = buf.readVarInt();
-            int len = buf.readVarInt();
-            boolean[] armor = new boolean[len];
-            for (int i = 0; i < len; i++) armor[i] = buf.readBoolean();
-            return new ClothingArmorVisibilityS2CPacket(entityId, armor);
-        }
+        (buf, packet) -> {},
+        buf -> new ClothingArmorVisibilityS2CPacket()
     );
 
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            // Client-side handling
-        });
+        ctx.enqueueWork(() -> {});
     }
 }
