@@ -41,12 +41,8 @@ repositories {
 neoForge {
     version = project.neo_version
 
-    mixins {
-        config "pleasurehorizons.mixins.json"
-    }
-
     mods {
-        "${archives_base_name}" {
+        "pleasurehorizons" {
             sourceSet(sourceSets.main)
         }
     }
