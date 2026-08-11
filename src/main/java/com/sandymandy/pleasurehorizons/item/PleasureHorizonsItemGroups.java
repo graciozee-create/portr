@@ -24,6 +24,9 @@ public class PleasureHorizonsItemGroups {
                         output.accept(PleasureHorizonsItems.MILK_JUG_EMPTY.get());
                         output.accept(PleasureHorizonsItems.MILK_JUG_HALF.get());
                         output.accept(PleasureHorizonsItems.MILK_JUG_FULL.get());
+                        output.accept(PleasureHorizonsItems.SETTLEMENT_HUB_ITEM.get());
+                        output.accept(PleasureHorizonsItems.HOUSE_TAG_ITEM.get());
+                        output.accept(PleasureHorizonsItems.CARVED_GIRL_PUMPKIN_ITEM.get());
                     })
                     .build());
 

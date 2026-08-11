@@ -194,5 +194,7 @@
   "text.autoconfig.pleasurehorizons.option.notification.notifyFreecam.@Tooltip": "Notifies you when entering/exiting freecam.",
   "text.autoconfig.pleasurehorizons.option.notification.notifyTripod": "Tripod Notifications",
   "text.autoconfig.pleasurehorizons.option.notification.notifyTripod.@Tooltip": "Notifies you when entering/exiting tripod cameras.",
-  "itemGroup.pleasurehorizons.main": "Pleasure Horizons"
+  "itemGroup.pleasurehorizons.main": "Pleasure Horizons",
+  "item.pleasurehorizons.house_tag": "House Tag",
+  "item.pleasurehorizons.carved_girl_pumpkin": "Carved Girl Pumpkin"
 }

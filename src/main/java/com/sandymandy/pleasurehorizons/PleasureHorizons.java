@@ -42,6 +42,9 @@ public class PleasureHorizons {
 
     public PleasureHorizons(IEventBus modEventBus, ModContainer container, Dist dist) {
         LOGGER.info("Initializing " + MOD_NAME + " for NeoForge 1.21.1!");
+        // Build marker: if you do not see this line in latest.log, the jar you launched
+        // is an older build and does not contain the spawn eggs / creative tab.
+        LOGGER.info("[PH] BUILD MARKER girls-port-v2 :: spawn eggs + creative tab + renderers");
 
         // Registries
         PleasureHorizonsItems.register(modEventBus);
