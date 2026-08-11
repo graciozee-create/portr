@@ -8,6 +8,7 @@ import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTy
 import com.sandymandy.pleasurehorizons.entity.ai.brain.GirlMemoryTypes;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
+import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
@@ -44,6 +45,7 @@ public class PleasureHorizons {
 
         // Registries
         PleasureHorizonsItems.register(modEventBus);
+        PleasureHorizonsSpawnEggs.register(modEventBus);
         PleasureHorizonsBlocks.register(modEventBus);
         PleasureHorizonsBlockEntities.register(modEventBus);
         PleasureHorizonsEntities.register(modEventBus);
@@ -56,7 +58,7 @@ public class PleasureHorizons {
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
         PleasureHorizonsDispenserBehavior.register();
-        PleasureHorizonsItemGroups.register();
+        PleasureHorizonsItemGroups.register(modEventBus);
         Commands.register();
         CustomGirlLoader.register();
 

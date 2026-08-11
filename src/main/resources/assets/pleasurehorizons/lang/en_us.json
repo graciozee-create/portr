@@ -1,20 +1,12 @@
 {
   "item.pleasurehorizons.lucy_spawn_egg": "Lucy Spawn Egg",
-
   "item.pleasurehorizons.mika_spawn_egg": "Mika Spawn Egg",
-
   "item.pleasurehorizons.momo_spawn_egg": "Momo Spawn Egg",
-
   "item.pleasurehorizons.slime_spawn_egg": "Slime Spawn Egg",
-  
   "item.pleasurehorizons.coppie_spawn_egg": "Coppie Spawn Egg",
-
   "item.pleasurehorizons.kobold_spawn_egg": "Kobold Spawn Egg",
-
   "item.pleasurehorizons.settlement_hub": "Settlement Hub",
-
   "item.pleasurehorizons.bottle_of_breast_milk": "Bottle of Breast Milk",
-
   "item.pleasurehorizons.settlement_recruit_contract": "Settlement Recruit Contract",
   "item.pleasurehorizons.settlement_recruit_contract.use_on_entity.invalid_entity": "This can only be used on girls that support settlements!",
   "item.pleasurehorizons.settlement_recruit_contract.use_on_entity.is_not_owner": "You don't own this girl!",
@@ -25,354 +17,182 @@
   "item.pleasurehorizons.settlement_recruit_contract.use_on_entity.left_settlement": "left",
   "item.pleasurehorizons.settlement_recruit_contract.use_on_entity.joined_settlement": "joined",
   "item.pleasurehorizons.settlement_recruit_contract.use_on_block.set_settlement_id": "Connected To",
-
   "item.pleasurehorizons.milk_jug_full": "Milk Jug",
   "item.pleasurehorizons.milk_jug_half": "Used Milk Jug",
   "item.pleasurehorizons.milk_jug_empty": "Empty Milk Jug",
-
-  "block.pleasurehorizons.settlement_hub" : "Settlement Hub",
-
-  "block.pleasurehorizons.house_tag" : "House Building Tag",
-
-  "block.pleasurehorizons.carved_girl_pumpkin" : "Carved Girl Pumpkin",
-
+  "block.pleasurehorizons.settlement_hub": "Settlement Hub",
+  "block.pleasurehorizons.house_tag": "House Building Tag",
+  "block.pleasurehorizons.carved_girl_pumpkin": "Carved Girl Pumpkin",
   "entity.pleasurehorizons.lucy": "Lucy",
-
   "entity.pleasurehorizons.mika": "Mika",
-
   "entity.pleasurehorizons.momo": "Momo",
-
   "entity.pleasurehorizons.slime": "Slime",
-  
   "entity.pleasurehorizons.coppie": "Coppie",
-
   "entity.pleasurehorizons.kobold": "Kobold",
-
   "entity.pleasurehorizons.custom_girl": "Custom Girl",
-
   "screen.pleasurehorizons.girl_inventory": "Inventory",
   "screen.pleasurehorizons.girl_inventory.relationship_tooltip": "Relationship Level",
   "screen.pleasurehorizons.girl_inventory.pregnancy_tooltip": "Pregnancy Stage",
-
-  "screen.pleasurehorizons.settlement_hub" : "Settlement Hub",
-
+  "screen.pleasurehorizons.settlement_hub": "Settlement Hub",
   "itemgroup.pleasurehorizons.pleasure_horizons_items": "Pleasure Horizons Items",
-
   "itemgroup.pleasurehorizons.pleasure_horizons_blocks": "Pleasure Horizons Blocks",
-
-  "msg.pleasurehorizons.noBedFound" : "We need a vacant bed nearby for this...",
-
-  "msg.pleasurehorizons.alreadyInRelationship" : "She's Already In A Relationship With Someone",
-
+  "msg.pleasurehorizons.noBedFound": "We need a vacant bed nearby for this...",
+  "msg.pleasurehorizons.alreadyInRelationship": "She's Already In A Relationship With Someone",
   "msg.pleasurehorizons.isPregnant": "She isn't in the mood to talk",
-
-  "msg.pleasurehorizons.canGoInToFreeCam" : "To go into freecam mode press F4",
-
+  "msg.pleasurehorizons.canGoInToFreeCam": "To go into freecam mode press F4",
   "key.pleasurehorizons.thrust": "Thrust",
-
   "key.pleasurehorizons.cum": "Cum",
-
   "key.categories.pleasurehorizons": "Pleasure Horizons",
-
-  "subtitles.bedrustle" : "Bed rustles",
-
-  "subtitles.belljingle" : "Bell Jingles",
-
-  "subtitles.clap" : "Clap",
-
-  "subtitles.cuminflation" : "Cum Inflation",
-
-  "subtitles.flap" : "Flap",
-
-  "subtitles.inserts" : "Inserts",
-
-  "subtitles.pounding" : "Pounding",
-
-  "subtitles.slap" : "Slap",
-
-  "subtitles.slide" : "Slide",
-
-  "subtitles.smallinserts" : "Small Inserts",
-
-  "subtitles.touch" : "Touch",
-
-  "subtitles.plob" : "Plob",
-
+  "subtitles.bedrustle": "Bed rustles",
+  "subtitles.belljingle": "Bell Jingles",
+  "subtitles.clap": "Clap",
+  "subtitles.cuminflation": "Cum Inflation",
+  "subtitles.flap": "Flap",
+  "subtitles.inserts": "Inserts",
+  "subtitles.pounding": "Pounding",
+  "subtitles.slap": "Slap",
+  "subtitles.slide": "Slide",
+  "subtitles.smallinserts": "Small Inserts",
+  "subtitles.touch": "Touch",
+  "subtitles.plob": "Plob",
   "subtitles.lucy.heavybreathing": "Heavy breathing",
-
   "subtitles.lucy.hmph": "Hmph",
-
   "subtitles.lucy.huh": "Huh",
-
   "subtitles.lucy.aftersessionmoan": "After Session Moan",
-
   "subtitles.lucy.ahh": "Ahh",
-
   "subtitles.lucy.bjmoan": "BJ Moan",
-
   "subtitles.lucy.giggle": "Giggle",
-
   "subtitles.lucy.happyoh": "Happy Oh",
-
   "subtitles.lucy.lightbreathing": "Light Breathing",
-
   "subtitles.lucy.lipsound": "Lip Sounds",
-
   "subtitles.lucy.mmm": "Mmm",
-
   "subtitles.lucy.moan": "Moan",
-
   "subtitles.lucy.sadoh": "Sad Oh",
-
   "subtitles.lucy.sigh": "Sigh",
-
   "subtitles.momo.ahh": "Ahh",
-
   "subtitles.momo.bjmoan": "BJ Moan",
-
   "subtitles.momo.moan": "Moan",
-
   "subtitles.momo.lightbreathing": "Light Breathing",
-
   "subtitles.momo.giggle": "Giggle",
-
   "subtitles.momo.hey": "Hey",
-
   "subtitles.momo.happyoh": "Happy Oh",
-
   "subtitles.momo.sadoh": "Sad Oh",
-
   "subtitles.momo.sigh": "Sigh",
-
   "subtitles.momo.huh": "Huh",
-
   "subtitles.momo.hmph": "Hmph",
-
   "subtitles.momo.mmm": "Mmm",
-
   "subtitles.mika.aftersessionmoan": "After Session Moan",
-
   "subtitles.mika.ahh": "Ahh",
-
   "subtitles.mika.bjmoan": "BJ Moan",
-
   "subtitles.mika.cometomommy": "Come To Mommy",
-
   "subtitles.mika.giggle": "Giggle",
-
   "subtitles.mika.goodboy": "Good Boy",
-
   "subtitles.mika.happyoh": "Happy Oh",
-
   "subtitles.mika.heavybreathing": "Heavy Breathing",
-
   "subtitles.mika.hmph": "Hmph",
-
   "subtitles.mika.huh": "Huh",
-
   "subtitles.mika.lightbreathing": "Light Breathing",
-
   "subtitles.mika.lipsound": "Lip Sounds",
-
   "subtitles.mika.mmm": "Mmm",
-
   "subtitles.mika.moan": "Moan",
-
   "subtitles.mika.mommyhorny": "Mommy's hornny",
-
   "subtitles.mika.sadoh": "Sad Oh",
-
   "subtitles.mika.sigh": "Sigh",
-
   "key.categories.freecam": "Pleasure Horizons - Freecam",
-
   "key.freecam.toggle": "Toggle Freecam",
-
   "key.freecam.playerControl": "Control Player",
-
   "key.freecam.tripodReset": "Reset Tripod",
-
   "key.freecam.configGui": "Config GUI",
-
   "msg.freecam.enable": "Freecam has been enabled.",
-
   "msg.freecam.disable": "Freecam has been disabled.",
-
   "msg.freecam.openTripod": "Opening camera %s",
-
   "msg.freecam.closeTripod": "Closing camera %s",
-
   "msg.freecam.tripodReset": "Reset camera %s",
-
   "text.autoconfig.pleasurehorizons.category.default": "Pleasure Horizons",
-
   "text.autoconfig.pleasurehorizons.category.freecam": "Free Cam",
-
   "text.autoconfig.pleasurehorizons.title": "Pleasure Horizons Options",
-
   "text.autoconfig.pleasurehorizons.option.girls": "Girls",
-
   "text.autoconfig.pleasurehorizons.option.girls.boobWindow": "Boob Window",
-
   "text.autoconfig.pleasurehorizons.option.girls.disableShading": "Disable Shading",
-
   "text.autoconfig.pleasurehorizons.option.girls.disableVillagerNose": "Disables Villager Nose",
-
   "text.autoconfig.pleasurehorizons.option.girls.disableVillagerNose.@Tooltip": "Disables the villager nose on the copper golem girl",
-
   "text.autoconfig.pleasurehorizons.option.girls.boobWindow.@Tooltip": "Makes the armor on the girls have a window to see their breast",
-
   "text.autoconfig.pleasurehorizons.option.girls.disableShading.@Tooltip": "Disables the shading/shadows on the girls and makes them have flat lighting",
-
   "text.autoconfig.pleasurehorizons.option.player": "Player",
-
   "text.autoconfig.pleasurehorizons.option.player.penisShaftColor": "Penis Shaft Color",
-
   "text.autoconfig.pleasurehorizons.option.player.penisShaftColor.@Tooltip": "Sets the color of the shaft of penis on the player model",
-
   "text.autoconfig.pleasurehorizons.option.player.penisHeadColor": "Penis Head Color",
-
   "text.autoconfig.pleasurehorizons.option.player.penisHeadColor.@Tooltip": "Sets the color of the head of penis on the player model",
-
   "text.autoconfig.pleasurehorizons.option.keybinds": "Keybinds",
-
   "text.autoconfig.pleasurehorizons.option.keybinds.holdThrust": "Hold Thrust",
-
   "text.autoconfig.pleasurehorizons.option.keybinds.holdThrust.@Tooltip": "Makes the thrust key act either as a toggle or a hold",
-
   "text.autoconfig.pleasurehorizons.option.controls": "Key Bindings",
-
   "text.autoconfig.pleasurehorizons.option.controls.@Tooltip": "Freecam key bindings.",
-
   "text.autoconfig.pleasurehorizons.option.movement": "Movement Options",
-
   "text.autoconfig.pleasurehorizons.option.movement.@Tooltip": "How the camera moves.",
-
   "text.autoconfig.pleasurehorizons.option.movement.flightMode": "Flight Mode",
-
   "text.autoconfig.pleasurehorizons.option.movement.flightMode.@Tooltip": "The type of flight used by freecam.",
-
   "text.autoconfig.pleasurehorizons.option.movement.flightMode.default": "Default",
-
   "text.autoconfig.pleasurehorizons.option.movement.flightMode.creative": "Creative",
-
   "text.autoconfig.pleasurehorizons.option.movement.horizontalSpeed": "Horizontal Speed",
-
   "text.autoconfig.pleasurehorizons.option.movement.horizontalSpeed.@Tooltip": "The horizontal speed of freecam.",
-
   "text.autoconfig.pleasurehorizons.option.movement.verticalSpeed": "Vertical Speed",
-
   "text.autoconfig.pleasurehorizons.option.movement.verticalSpeed.@Tooltip": "The vertical speed of freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision": "Collision Options",
-
   "text.autoconfig.pleasurehorizons.option.collision.@Tooltip": "Which blocks you can travel through in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreTransparent": "Ignore Transparent Blocks",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreTransparent.@Tooltip": "Allows travelling through transparent blocks in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreOpenable": "Ignore Openable Blocks",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreOpenable.@Tooltip": "Allows travelling through doors/trapdoors/gates in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreCustom": "Custom Ignore List",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreCustom.@Tooltip[0]": "Allows travelling through specific blocks in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.ids": "Ignore IDs",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.ids.@Tooltip[0]": "Use block id, e.g. \"grass_block\".",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.ids.@Tooltip[1]": "If the namespace is omitted, \"minehorizons:\" is assumed.",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.patterns": "Ignore Regular Expressions",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.patterns.@Tooltip[0]": "Use Regular Expression syntax.",
-
   "text.autoconfig.pleasurehorizons.option.collision.whitelist.patterns.@Tooltip[1]": "Matched against full block id, e.g. \"minehorizons:grass_block\".",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreAll": "Ignore All Collision",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreAll.@Tooltip[0]": "Allows travelling through all blocks in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreAll.@Tooltip[1]": "§eOverrides above settings.",
-
   "text.autoconfig.pleasurehorizons.option.collision.ignoreAll.@ModrinthTooltip[2]": "§cNOTE: Can only be used in singleplayer, creative, or with operator status.",
-
   "text.autoconfig.pleasurehorizons.option.collision.alwaysCheck": "Always Check Initial Collision",
-
   "text.autoconfig.pleasurehorizons.option.collision.alwaysCheck.@Tooltip[0]": "Whether §7Initial Perspective§r should check for",
-
   "text.autoconfig.pleasurehorizons.option.collision.alwaysCheck.@Tooltip[1]": "collision, even when using §7Ignore All Collision§r.",
-
   "text.autoconfig.pleasurehorizons.option.visual": "Visual Options",
-
   "text.autoconfig.pleasurehorizons.option.visual.@Tooltip": "The look of freecam.",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective": "Initial Perspective",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective.@Tooltip": "The initial perspective of the camera.",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective.firstPerson": "First Person",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective.thirdPerson": "Third Person",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective.thirdPersonMirror": "Mirror",
-
   "text.autoconfig.pleasurehorizons.option.visual.perspective.inside": "Inside",
-
   "text.autoconfig.pleasurehorizons.option.visual.hidePlayer": "Hide Player",
-
   "text.autoconfig.pleasurehorizons.option.visual.showPlayer.@Tooltip": "Hides your player model.",
-
   "text.autoconfig.pleasurehorizons.option.visual.showHand": "Show Hand",
-
   "text.autoconfig.pleasurehorizons.option.visual.showHand.@Tooltip": "Whether you can see your hand in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.visual.fullBright": "Full Brightness",
-
   "text.autoconfig.pleasurehorizons.option.visual.fullBright.@Tooltip": "Increases brightness while in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion": "Show Submersion Fog",
-
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion.@Tooltip": "Whether you see a fog overlay underwater, in lava, or powdered snow.",
-
   "text.autoconfig.pleasurehorizons.option.utility": "Utility Options",
-
   "text.autoconfig.pleasurehorizons.option.utility.@Tooltip": "Freecam enhancements.",
-
   "text.autoconfig.pleasurehorizons.option.utility.disableOnDamage": "Disable on Damage",
-
   "text.autoconfig.pleasurehorizons.option.utility.disableOnDamage.@Tooltip": "Disables freecam when damage is received.",
-
   "text.autoconfig.pleasurehorizons.option.utility.freezePlayer": "Freeze Player",
-
   "text.autoconfig.pleasurehorizons.option.utility.freezePlayer.@Tooltip[0]": "Prevents player movement while freecam is active.",
-
   "text.autoconfig.pleasurehorizons.option.utility.freezePlayer.@Tooltip[1]": "§cWARNING: Multiplayer usage not advised.",
-
   "text.autoconfig.pleasurehorizons.option.utility.allowInteract": "Allow Interaction",
-
   "text.autoconfig.pleasurehorizons.option.utility.allowInteract.@Tooltip[0]": "Whether you can interact with blocks/entities in freecam.",
-
   "text.autoconfig.pleasurehorizons.option.utility.interactionMode": "Interaction Mode",
-
   "text.autoconfig.pleasurehorizons.option.utility.interactionMode.@Tooltip": "The source of block/entity interactions.",
-
   "text.autoconfig.pleasurehorizons.option.utility.interactionMode.camera": "Camera",
-
   "text.autoconfig.pleasurehorizons.option.utility.interactionMode.player": "Player",
-
   "text.autoconfig.pleasurehorizons.option.notification": "Notification Options",
-
   "text.autoconfig.pleasurehorizons.option.notification.@Tooltip": "Show or hide notifications.",
-
   "text.autoconfig.pleasurehorizons.option.notification.notifyFreecam": "Freecam Notifications",
-
   "text.autoconfig.pleasurehorizons.option.notification.notifyFreecam.@Tooltip": "Notifies you when entering/exiting freecam.",
-
   "text.autoconfig.pleasurehorizons.option.notification.notifyTripod": "Tripod Notifications",
-
-  "text.autoconfig.pleasurehorizons.option.notification.notifyTripod.@Tooltip": "Notifies you when entering/exiting tripod cameras."
+  "text.autoconfig.pleasurehorizons.option.notification.notifyTripod.@Tooltip": "Notifies you when entering/exiting tripod cameras.",
+  "itemGroup.pleasurehorizons.main": "Pleasure Horizons"
 }

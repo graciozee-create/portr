@@ -15,7 +15,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 public class CustomGirlEntity extends SettlementGirlEntityAI {
-    public CustomGirlEntity(EntityType<? extends SettlementGirlEntityAI> entityType, Level level) {
+    public CustomGirlEntity(EntityType<? extends net.minecraft.world.entity.PathfinderMob> entityType, Level level) {
         super(entityType, level);
     }
 
@@ -29,7 +29,12 @@ public class CustomGirlEntity extends SettlementGirlEntityAI {
 
     @Override
     public String getGirlID() {
-        return "customgirlentity";
+        return "default";
+    }
+
+    @Override
+    protected boolean hasBlinkAnimation() {
+        return false;
     }
 
     @Override
