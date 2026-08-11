@@ -1,16 +1,15 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +29,7 @@ public class KoboldEntity extends SettlementGirlEntityAI {
 
     @Override
     public String getGirlID() {
-        return "kobold";
+        return "koboldentity";
     }
 
     @Override
@@ -39,12 +38,12 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
     }
 
