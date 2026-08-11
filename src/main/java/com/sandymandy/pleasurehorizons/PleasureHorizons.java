@@ -17,7 +17,7 @@ import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerR
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsSoundEventRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -37,7 +37,7 @@ public class PleasureHorizons {
     public static final String MOD_ID = "pleasurehorizons";
     public static final String MOD_NAME = "Pleasure Horizons";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
-    public static Map<UUID, ResourceLocation> usedBeds = new HashMap<>();
+    public static Map<UUID, BlockPos> usedBeds = new HashMap<>();
     public static Map<UUID, UUID> activeScenes = new HashMap<>();
 
     public PleasureHorizons(IEventBus modEventBus, ModContainer container, Dist dist) {
