@@ -40,10 +40,15 @@ repositories {
 
 neoForge {
     version = project.neo_version
-    minecraftVersion '1.21.1'
 
     mixins {
         config "pleasurehorizons.mixins.json"
+    }
+
+    mods {
+        "${archives_base_name}" {
+            sourceSet(sourceSets.main)
+        }
     }
 }
 
