@@ -38,12 +38,9 @@ repositories {
     maven { url 'https://maven.shedaniel.me/' }
 }
 
-minecraft {
-    version = project.minecraft_version
-}
-
 neoForge {
     version = project.neo_version
+    minecraftVersion '1.21.1'
 }
 
 dependencies {
