@@ -18,7 +18,7 @@ public class GirlInventoryScreenHandlerFactory implements net.minecraft.world.in
 
     @Override
     public Text getDisplayName() {
-        return Text.literal("");
+        return Component.literal("");
     }
 
     @Override

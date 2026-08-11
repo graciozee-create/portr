@@ -2,7 +2,7 @@ package com.sandymandy.pleasurehorizons.mixins.freecam;
 
 import com.sandymandy.pleasurehorizons.freecam.Freecam;
 import com.sandymandy.pleasurehorizons.freecam.FreeCamera;
-import net.minecraft.block.enums.CameraSubmersionType;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.client.render.Camera;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.BlockView;

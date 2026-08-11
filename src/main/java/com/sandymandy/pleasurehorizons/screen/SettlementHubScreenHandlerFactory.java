@@ -18,7 +18,7 @@ public class SettlementHubScreenHandlerFactory implements net.minecraft.world.in
 
     @Override
     public Text getDisplayName() {
-        return Text.translatable("screen.pleasurecraft.settlement_hub");
+        return Component.translatable("screen.pleasurecraft.settlement_hub");
     }
 
     @Override

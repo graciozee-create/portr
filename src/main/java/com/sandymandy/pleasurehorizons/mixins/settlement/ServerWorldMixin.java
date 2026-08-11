@@ -7,7 +7,7 @@ import com.sandymandy.pleasurehorizons.util.Utils;
 import com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager;
 import net.minecraft.world.level.block.BlockState;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.state.property.Properties;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -49,7 +49,7 @@ public abstract class ServerWorldMixin {
 
         if (!stillValid) {
             settlement.removeBuilding(building.getDoorPos(), world);
-            PleasureHorizonsMessages.GlobleMessage(world, Text.literal("[BuildingScanner] Invalid building at: X" + doorPos.getX() + ", Y" + doorPos.getY() + ", Z" + doorPos.getZ() + " due to changes inside").formatted(Formatting.RED));
+            PleasureHorizonsMessages.GlobleMessage(world, Component.literal("[BuildingScanner] Invalid building at: X" + doorPos.getX() + ", Y" + doorPos.getY() + ", Z" + doorPos.getZ() + " due to changes inside").formatted(Formatting.RED));
         }
     }
 }

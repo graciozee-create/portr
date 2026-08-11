@@ -26,7 +26,7 @@ public class CustomGirlParser {
         if(tameItemId == null){
             throw new Exception("Girl does not have a tame_item property");
         }
-        Item tameItem = Registries.ITEM.get(Identifier.of(tameItemId));
+        Item tameItem = Registries.ITEM.get(ResourceLocation.fromNamespaceAndPath(tameItemId));
 
         // Attributes
         JsonObject attr = json.getAsJsonObject("attributes");

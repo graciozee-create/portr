@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Optional;
 
 public class TameGirlCriterion extends AbstractCriterion<TameGirlCriterion.Conditions> {
-    public static final Identifier ID = Identifier.of(PleasureHorizons.MOD_ID, "tame_girl");
+    public static final Identifier ID = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "tame_girl");
 
     @Override
     public Codec<TameGirlCriterion.Conditions> getConditionsCodec() {

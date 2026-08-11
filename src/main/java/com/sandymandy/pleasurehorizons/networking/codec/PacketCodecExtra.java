@@ -1,7 +1,7 @@
 package com.sandymandy.pleasurehorizons.networking.codec;
 
 import com.mojang.datafixers.util.*;
-import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.function.Function;
 

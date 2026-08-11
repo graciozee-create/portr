@@ -21,7 +21,7 @@ public class SettlersTab extends SettlementTab {
 
     @Override
     public Text getTitle() {
-        return Text.literal("Settlers");
+        return Component.literal("Settlers");
     }
 
     @Override
@@ -31,7 +31,7 @@ public class SettlersTab extends SettlementTab {
         // Header
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Settlement Population").formatted(Formatting.BOLD),
+                Component.literal("Settlement Population").formatted(Formatting.BOLD),
                 10, yOffset,
                 Colors.WHITE,
                 true
@@ -42,7 +42,7 @@ public class SettlersTab extends SettlementTab {
         // Population stats
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Total Population: 25"),
+                Component.literal("Total Population: 25"),
                 20, yOffset,
                 Colors.LIGHT_GRAY,
                 false
@@ -51,7 +51,7 @@ public class SettlersTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Employed: 20"),
+                Component.literal("Employed: 20"),
                 20, yOffset,
                 0x00FF0000,
                 false
@@ -60,7 +60,7 @@ public class SettlersTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Idle: 5"),
+                Component.literal("Idle: 5"),
                 20, yOffset,
                 0xFFAA0000,
                 false
@@ -70,7 +70,7 @@ public class SettlersTab extends SettlementTab {
         // Settler categories
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Occupations:").formatted(Formatting.UNDERLINE),
+                Component.literal("Occupations:").formatted(Formatting.UNDERLINE),
                 20, yOffset,
                 Colors.LIGHT_YELLOW,
                 false
@@ -89,7 +89,7 @@ public class SettlersTab extends SettlementTab {
         for (String occupation : occupations) {
             context.drawText(
                     screen.getTextRenderer(),
-                    Text.literal("• " + occupation),
+                    Component.literal("• " + occupation),
                     30, yOffset,
                     Colors.LIGHT_GRAY,
                     false
@@ -102,7 +102,7 @@ public class SettlersTab extends SettlementTab {
         // Happiness indicator
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Settlement Happiness:"),
+                Component.literal("Settlement Happiness:"),
                 20, yOffset,
                 Colors.GRAY,
                 false
@@ -120,7 +120,7 @@ public class SettlersTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("85%"),
+                Component.literal("85%"),
                 barX + barWidth + 5, yOffset,
                 0xFFAA00,
                 false

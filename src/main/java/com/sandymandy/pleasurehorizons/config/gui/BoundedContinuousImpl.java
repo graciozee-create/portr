@@ -21,7 +21,7 @@ class BoundedContinuousImpl {
                     Supplier<Double> defaultValue = () -> Utils.getUnsafely(field, defaults);
                     double value = Utils.getUnsafely(field, config, defaultValue.get());
                     BoundedContinuous bounds = field.getAnnotation(BoundedContinuous.class);
-                    return Collections.singletonList(new DoubleSliderEntry(Text.translatable(i18n), bounds.precision(), bounds.min(), bounds.max(), value, RESET_TEXT, defaultValue, save));
+                    return Collections.singletonList(new DoubleSliderEntry(Component.translatable(i18n), bounds.precision(), bounds.min(), bounds.max(), value, RESET_TEXT, defaultValue, save));
                 },
                 field -> field.getType() == Double.TYPE || field.getType() == Double.class,
                 BoundedContinuous.class

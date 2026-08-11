@@ -105,7 +105,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         int actionButtonWidth = (layout.contentWidth - 5) / 2;
 
         ButtonWidget confirmBtn = ButtonWidget.builder(
-                Text.literal("§a§lConfirm"),
+                Component.literal("§a§lConfirm"),
                 button -> {
                     onConfirm();
                     this.close();
@@ -114,7 +114,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         this.addDrawableChild(confirmBtn);
 
         ButtonWidget cancelBtn = ButtonWidget.builder(
-                Text.literal("§c§lCancel"),
+                Component.literal("§c§lCancel"),
                 button -> this.close()
         ).dimensions(layout.centerX + actionButtonWidth + 5, currentY, actionButtonWidth, 20).build();
         this.addDrawableChild(cancelBtn);

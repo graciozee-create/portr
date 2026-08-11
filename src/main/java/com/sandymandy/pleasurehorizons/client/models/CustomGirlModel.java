@@ -27,18 +27,18 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
 
 
         boolean inGui = MinecraftClient.getInstance().currentScreen != null;
-        boolean exists = Utils.assetExistsClient(Identifier.of(PleasureHorizons.MOD_ID,filePath));
+        boolean exists = Utils.assetExistsClient(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,filePath));
 
         // First-time fallback or still no model loaded
         if (!exists) {
             fallbackUsed.put(girlID, true);
             if(!inGui) PleasureHorizons.LOGGER.error("Model files for " + girlID + " doesn't exist");
-            return Identifier.of(PleasureHorizons.MOD_ID, folder + "default");
+            return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, folder + "default");
         }
 
         // Model exists now, but GUI is still open -> keep fallback until GUI closes
         if (inGui && fallbackUsed.getOrDefault(girlID, false)) {
-            return Identifier.of(PleasureHorizons.MOD_ID, folder + "default");
+            return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, folder + "default");
         }
 
         // GUI closed, model exists -> switch to actual
@@ -53,7 +53,7 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
         String filePath = folder + animatable.getGirlID() + ".animation.json";
 
 
-        if(Utils.assetExistsClient(Identifier.of(PleasureHorizons.MOD_ID, filePath))) {
+        if(Utils.assetExistsClient(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, filePath))) {
             return super.getAnimationResource(animatable);
         }
         else {
@@ -68,11 +68,11 @@ public class CustomGirlModel extends AbstractGirlModel<CustomGirlEntity>{
         String folder = "textures/entities/";
 
         String filePath = folder + girlID + ".png";
-        if(Utils.assetExistsClient(Identifier.of(PleasureHorizons.MOD_ID, filePath))) {
+        if(Utils.assetExistsClient(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, filePath))) {
             return super.getTextureResource(renderState);
         }
         else {
-            return Identifier.of(PleasureHorizons.MOD_ID, folder + "default.png");
+            return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, folder + "default.png");
         }
     }
 }

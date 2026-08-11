@@ -2,8 +2,8 @@ package com.sandymandy.pleasurehorizons.util.variables;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 public enum ScenePhase {
     NONE,
@@ -17,18 +17,14 @@ public enum ScenePhase {
     STATIONARY_INTRO,
     STATIONARY;
 
-    /**
-     * A PacketCodec for encoding/decoding ScenePhase values over the network.
-     * Uses ordinal indexing for efficiency (like vanilla enums).
-     */
-    public static final PacketCodec<ByteBuf, ScenePhase> PACKET_CODEC = PacketCodecs.indexed(
-            i -> ScenePhase.values()[i],  // Decode: int ordinal -> enum
-            ScenePhase::ordinal           // Encode: enum -> int ordinal
+    public static final StreamCodec<ByteBuf, ScenePhase> PACKET_CODEC = ByteBufCodecs.BYTE.map(
+            b -> ScenePhase.values()[b],
+            v -> (byte) v.ordinal()
     );
 
     public static final Codec<ScenePhase> CODEC =
             Codec.INT.xmap(
-                    i -> ScenePhase.values()[i],   // decode
-                    ScenePhase::ordinal            // encode
+                    i -> ScenePhase.values()[i],
+                    ScenePhase::ordinal
             );
 }

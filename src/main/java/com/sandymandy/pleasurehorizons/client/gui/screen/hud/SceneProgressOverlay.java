@@ -6,8 +6,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.resources.ResourceLocation;
 
 public class SceneProgressOverlay {
-    private static final Identifier SCENE_PROGRESS_BAR_TEXTURE = Identifier.of(PleasureHorizons.MOD_ID, "textures/gui/scene_progress_bar.png");
-    private static final Identifier READY_TO_CUM_TEXTURE = Identifier.of(PleasureHorizons.MOD_ID, "textures/gui/cum_button.png");
+    private static final Identifier SCENE_PROGRESS_BAR_TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "textures/gui/scene_progress_bar.png");
+    private static final Identifier READY_TO_CUM_TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "textures/gui/cum_button.png");
     private static boolean animatingCum = false;
     private static long cumStartTime = 0L;
     private static final long CUM_ANIM_DURATION = 500; // ms

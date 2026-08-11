@@ -22,7 +22,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
     private int bottomHornType;
 
     public KoboldCustomizeScreen(int entityId, int previewEntityId) {
-        super(Text.literal("§6§lKobold Customization"), entityId, previewEntityId, KoboldEntity.class);
+        super(Component.literal("§6§lKobold Customization"), entityId, previewEntityId, KoboldEntity.class);
 
         if (entity != null) {
             this.bodySize = entity.getBodySize();
@@ -64,7 +64,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 "color_preset",
                 KoboldEntity.PatternPresets.values(),
                 2, // 2 columns
-                preset -> Text.literal(getFormattedByUnderscore(preset.name())),
+                preset -> Component.literal(getFormattedByUnderscore(preset.name())),
                 preset -> {
                     primaryColor = preset.primary;
                     secondaryColor = preset.secondary;
@@ -94,7 +94,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 "iris_color",
                 irisColors,
                 3, // 3 columns
-                color -> Text.literal("■").styled(style -> style.withColor(color)),
+                color -> Component.literal("■").styled(style -> style.withColor(color)),
                 color -> {
                     irisColor = color;
                 },
@@ -109,7 +109,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 "top_horn",
                 topHornTypes,
                 4, // 4 columns
-                type -> Text.literal("Type " + type),
+                type -> Component.literal("Type " + type),
                 type -> {
                     topHornType = type;
                 },
@@ -124,7 +124,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 "bottom_horn",
                 bottomHornTypes,
                 3, // 3 columns
-                type -> Text.literal("Type " + type),
+                type -> Component.literal("Type " + type),
                 type -> {
                     bottomHornType = type;
                 },
@@ -140,7 +140,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
             @Override
             public int render(CustomizeScreen<KoboldEntity> screen, LayoutConfig layout, int currentY) {
                 ButtonWidget randomizeBtn = ButtonWidget.builder(
-                        Text.literal("§d§lRandomize"),
+                        Component.literal("§d§lRandomize"),
                         button -> randomizeAll()
                 ).dimensions(layout.centerX, currentY, layout.contentWidth, 20).build();
 

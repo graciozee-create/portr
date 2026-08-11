@@ -22,7 +22,7 @@ import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandler> {
-    private static final Identifier WINDOW_TEXTURE = Identifier.ofVanilla("textures/gui/advancements/window.png");
+    private static final Identifier WINDOW_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/advancements/window.png");
     private static final int WINDOW_WIDTH = 252;
     private static final int WINDOW_HEIGHT = 140;
     private static final int PAGE_X = 9;
@@ -53,16 +53,16 @@ public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandle
         // Create tabs with proper displays
         addTab("resources", SettlementDisplay.create(
                 Items.CHEST.getDefaultStack(),
-                Text.literal("Resources"),
-                Text.literal("Resource overview"),
-                Identifier.ofVanilla("textures/gui/advancements/backgrounds/nether.png")
+                Component.literal("Resources"),
+                Component.literal("Resource overview"),
+                ResourceLocation.withDefaultNamespace("textures/gui/advancements/backgrounds/nether.png")
         )).setContentProvider(new ResourcesTab(this, settlement));
 
         addTab("settlers", SettlementDisplay.create(
                 Items.PLAYER_HEAD.getDefaultStack(),
-                Text.literal("Settlers"),
-                Text.literal("Population management"),
-                Identifier.ofVanilla("textures/gui/advancements/backgrounds/end.png")
+                Component.literal("Settlers"),
+                Component.literal("Population management"),
+                ResourceLocation.withDefaultNamespace("textures/gui/advancements/backgrounds/end.png")
         )).setContentProvider(new SettlersTab(this, settlement));
 
         // Select first tab
@@ -134,7 +134,7 @@ public class SettlementHubScreen extends HandledScreen<SettlementHubScreenHandle
             // No tabs = draw empty message
             context.fill(x + PAGE_X, y + PAGE_Y, x + PAGE_X + PAGE_WIDTH, y + PAGE_Y + PAGE_HEIGHT, Colors.BLACK);
             int centerX = x + PAGE_X + PAGE_WIDTH / 2;
-            context.drawCenteredTextWithShadow(textRenderer, Text.literal("No Settlement Data"), centerX, y + PAGE_Y + 40, Colors.WHITE);
+            context.drawCenteredTextWithShadow(textRenderer, Component.literal("No Settlement Data"), centerX, y + PAGE_Y + 40, Colors.WHITE);
             return;
         }
 

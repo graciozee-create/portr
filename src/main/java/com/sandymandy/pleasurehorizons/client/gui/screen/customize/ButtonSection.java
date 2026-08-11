@@ -33,18 +33,18 @@ public class ButtonSection<T extends GirlSceneEntity> extends CustomizeSection<T
     public int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY) {
         screen.addWidget(new net.minecraft.client.gui.widget.TextWidget(
                 layout.centerX, currentY, layout.contentWidth, 20,
-                Text.literal(label),
+                Component.literal(label),
                 screen.getTextRenderer()
         ));
         currentY += 20;
 
 
         toggleButton = ButtonWidget.builder(
-                Text.literal(getFirstLetterCapitalized(String.valueOf(this.valueGetter.get()))).formatted(Formatting.BOLD, textColor),
+                Component.literal(getFirstLetterCapitalized(String.valueOf(this.valueGetter.get()))).formatted(Formatting.BOLD, textColor),
                 button -> {
                     this.valueSetter.accept(!this.valueGetter.get());
                     textColor = this.valueGetter.get() ? Formatting.GREEN : Formatting.RED;
-                    button.setMessage(Text.literal(getFirstLetterCapitalized(String.valueOf(this.valueGetter.get()))).formatted(Formatting.BOLD, textColor));
+                    button.setMessage(Component.literal(getFirstLetterCapitalized(String.valueOf(this.valueGetter.get()))).formatted(Formatting.BOLD, textColor));
                 }
         ).dimensions(layout.centerX, currentY, layout.contentWidth, 20).build();
 

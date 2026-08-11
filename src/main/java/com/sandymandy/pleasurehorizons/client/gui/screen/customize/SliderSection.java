@@ -39,13 +39,13 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
 
         SliderWidget slider = new SliderWidget(
                 layout.centerX, currentY, layout.contentWidth, 20,
-                Text.literal(label + ": " + value),
+                Component.literal(label + ": " + value),
                 (value - (float)minValue) / (maxValue - minValue)
         ) {
             @Override
             protected void updateMessage() {
                 int currentValue = minValue + (int)(this.value * (maxValue - minValue));
-                this.setMessage(Text.literal(label + ": " + currentValue));
+                this.setMessage(Component.literal(label + ": " + currentValue));
             }
 
             @Override
@@ -56,7 +56,7 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
         };
 
         if (tooltipText != null) {
-            slider.setTooltip(Tooltip.of(Text.literal(tooltipText)));
+            slider.setTooltip(Tooltip.of(Component.literal(tooltipText)));
         }
 
         screen.addWidget(slider);

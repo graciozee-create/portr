@@ -33,7 +33,7 @@ public class SceneKeyframeEventLoader {
                     // --- Fixed sounds ---
                     if (scene.has("sounds")) {
                         for (String soundId : jsonArrayToList(scene.getAsJsonArray("sounds"))) {
-                            SoundEvent sound = SoundEvent.of(Identifier.of(soundId));
+                            SoundEvent sound = SoundEvent.of(ResourceLocation.fromNamespaceAndPath(soundId));
                             SceneKeyframeEventRegistry.registerSound(girlID, key, sound);
                         }
                     }
@@ -42,7 +42,7 @@ public class SceneKeyframeEventLoader {
                     if (scene.has("random_sounds")) {
                         List<String> randomIds = jsonArrayToList(scene.getAsJsonArray("random_sounds"));
                         List<SoundEvent> soundEvents = randomIds.stream()
-                                .map(idStr -> SoundEvent.of(Identifier.of(idStr)))
+                                .map(idStr -> SoundEvent.of(ResourceLocation.fromNamespaceAndPath(idStr)))
                                 .toList();
                         SceneKeyframeEventRegistry.registerSound(girlID, key, soundEvents);
                     }

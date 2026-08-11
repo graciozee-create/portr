@@ -39,7 +39,7 @@ public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSecti
         // Label
         screen.addWidget(new net.minecraft.client.gui.widget.TextWidget(
                 layout.centerX, currentY, layout.contentWidth, 20,
-                Text.literal(label),
+                Component.literal(label),
                 screen.getTextRenderer()
         ));
         currentY += 20;
@@ -50,23 +50,23 @@ public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSecti
         int startX = layout.centerX  + totalWidth;
 
         // X Field
-        xField = new TextFieldWidget(screen.getTextRenderer(), startX, currentY, fieldWidth, 20, Text.literal("X"));
+        xField = new TextFieldWidget(screen.getTextRenderer(), startX, currentY, fieldWidth, 20, Component.literal("X"));
         xField.setText(String.valueOf(currentValue.getX()));
-        xField.setTooltip(Tooltip.of(Text.literal("X Offset")));
+        xField.setTooltip(Tooltip.of(Component.literal("X Offset")));
         xField.setChangedListener(text -> onValueChanged());
         screen.addWidget(xField);
 
         // Y Field
-        yField = new TextFieldWidget(screen.getTextRenderer(), startX + fieldWidth + fieldGap, currentY, fieldWidth, 20, Text.literal("Y"));
+        yField = new TextFieldWidget(screen.getTextRenderer(), startX + fieldWidth + fieldGap, currentY, fieldWidth, 20, Component.literal("Y"));
         yField.setText(String.valueOf(currentValue.getY()));
-        yField.setTooltip(Tooltip.of(Text.literal("Y Offset")));
+        yField.setTooltip(Tooltip.of(Component.literal("Y Offset")));
         yField.setChangedListener(text -> onValueChanged());
         screen.addWidget(yField);
 
         // Z Field
-        zField = new TextFieldWidget(screen.getTextRenderer(), startX + (fieldWidth + fieldGap) * 2, currentY, fieldWidth, 20, Text.literal("Z"));
+        zField = new TextFieldWidget(screen.getTextRenderer(), startX + (fieldWidth + fieldGap) * 2, currentY, fieldWidth, 20, Component.literal("Z"));
         zField.setText(String.valueOf(currentValue.getZ()));
-        zField.setTooltip(Tooltip.of(Text.literal("Z Offset")));
+        zField.setTooltip(Tooltip.of(Component.literal("Z Offset")));
         zField.setChangedListener(text -> onValueChanged());
         screen.addWidget(zField);
 

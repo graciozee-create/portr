@@ -126,7 +126,7 @@ class DoubleSliderEntry extends TooltipListEntry<Double> {
             fmt.setMinimumIntegerDigits(1);
             fmt.setMinimumFractionDigits(precision);
             fmt.setMaximumFractionDigits(precision);
-            setMessage(Text.literal("Value: " + fmt.format(DoubleSliderEntry.this.value.get())));
+            setMessage(Component.literal("Value: " + fmt.format(DoubleSliderEntry.this.value.get())));
         }
 
         @Override

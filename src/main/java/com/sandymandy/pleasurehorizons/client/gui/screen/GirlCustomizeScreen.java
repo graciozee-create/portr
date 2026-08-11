@@ -19,7 +19,7 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
     private Vec3d breastOffset;
 
     public GirlCustomizeScreen(int entityId, int previewEntityId) {
-        super(Text.literal("Customize Girl"), entityId, previewEntityId, GirlSceneEntity.class);
+        super(Component.literal("Customize Girl"), entityId, previewEntityId, GirlSceneEntity.class);
         entity.setGUIOpenState(true);
 
         if (entity != null) {
@@ -65,7 +65,7 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
             @Override
             public int render(CustomizeScreen<GirlSceneEntity> screen, LayoutConfig layout, int currentY) {
                 ButtonWidget randomizeBtn = ButtonWidget.builder(
-                        Text.literal("Clear").formatted(Formatting.RED, Formatting.BOLD),
+                        Component.literal("Clear").formatted(Formatting.RED, Formatting.BOLD),
                         button -> {
                             onClear();
                             screen.close();

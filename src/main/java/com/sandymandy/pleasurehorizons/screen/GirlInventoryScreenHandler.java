@@ -26,12 +26,12 @@ import static com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenH
 public class GirlInventoryScreenHandler extends ScreenHandler {
     private final Inventory inventory;
     private final TameableGirlEntity girl;
-    public static final Identifier EMPTY_HELMET_SLOT_TEXTURE = Identifier.ofVanilla( "container/slot/helmet");
-    public static final Identifier EMPTY_CHESTPLATE_SLOT_TEXTURE = Identifier.ofVanilla( "container/slot/chestplate");
-    public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = Identifier.ofVanilla( "container/slot/leggings");
-    public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = Identifier.ofVanilla( "container/slot/boots");
-    public static final Identifier EMPTY_SWORD_TEXTURE = Identifier.ofVanilla( "container/slot/sword");
-    public static final Identifier EMPTY_BOW_TEXTURE = Identifier.of(PleasureHorizons.MOD_ID,"container/slot/bow");
+    public static final Identifier EMPTY_HELMET_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/helmet");
+    public static final Identifier EMPTY_CHESTPLATE_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/chestplate");
+    public static final Identifier EMPTY_LEGGINGS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/leggings");
+    public static final Identifier EMPTY_BOOTS_SLOT_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/boots");
+    public static final Identifier EMPTY_SWORD_TEXTURE = ResourceLocation.withDefaultNamespace( "container/slot/sword");
+    public static final Identifier EMPTY_BOW_TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID,"container/slot/bow");
     public static final Map<EquipmentSlot, Identifier> EMPTY_ARMOR_SLOT_TEXTURES = Map.of(
             EquipmentSlot.FEET,
             EMPTY_BOOTS_SLOT_TEXTURE,

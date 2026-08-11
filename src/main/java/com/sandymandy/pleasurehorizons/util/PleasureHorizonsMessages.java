@@ -16,11 +16,11 @@ public class PleasureHorizonsMessages {
     }
 
     public static void GlobleMessage(World world, String message) {
-        GlobleMessage(world, Text.literal(message));
+        GlobleMessage(world, Component.literal(message));
     }
 
     public static void PlayerSpecificMessage(Player playerEntity, String messageContent){
-        Text message = Text.literal(messageContent);
+        Text message = Component.literal(messageContent);
         playerEntity.sendMessage(message,false);
     }
 

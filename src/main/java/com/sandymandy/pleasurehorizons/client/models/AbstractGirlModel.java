@@ -55,7 +55,7 @@ public abstract class AbstractGirlModel<T extends GirlSceneEntity> extends GeoMo
         // Use the model file provided by your getModelFile() method
         String filePath = folder + girlID;
 
-        return Identifier.of(PleasureHorizons.MOD_ID, filePath);
+        return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, filePath);
     }
 
 
@@ -65,12 +65,12 @@ public abstract class AbstractGirlModel<T extends GirlSceneEntity> extends GeoMo
 
         String filePath = "textures/entities/" + girlID + ".png";
 
-        return Identifier.of(PleasureHorizons.MOD_ID, filePath);
+        return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, filePath);
     }
 
     @Override
     public Identifier getAnimationResource(T animatable) {
-        return Identifier.of(PleasureHorizons.MOD_ID, animatable.getGirlID());
+        return ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, animatable.getGirlID());
     }
 
 

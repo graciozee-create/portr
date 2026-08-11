@@ -28,7 +28,7 @@ class ModBindingsConfigImpl {
 
         registry.registerAnnotationProvider(
                 (i18n, field, config, defaults, guiProvider) -> {
-                    ENTRY_BUILDER.startSubCategory(Text.translatable(i18n), modBindingEntries())
+                    ENTRY_BUILDER.startSubCategory(Component.translatable(i18n), modBindingEntries())
                             .setExpanded(field.getDeclaredAnnotation(ConfigEntry.Gui.CollapsibleObject.class).startExpanded())
                             .build();
                     return new ArrayList<>(modBindingEntries());
@@ -43,7 +43,7 @@ class ModBindingsConfigImpl {
      */
     private static List<AbstractConfigListEntry> modBindingEntries() {
         return ModBindings.stream()
-                .map(bind -> ENTRY_BUILDER.fillKeybindingField(Text.translatable(bind.getTranslationKey()), bind))
+                .map(bind -> ENTRY_BUILDER.fillKeybindingField(Component.translatable(bind.getTranslationKey()), bind))
                 .map(KeyCodeBuilder::build)
                 .map(AbstractConfigListEntry.class::cast)
                 .collect(Collectors.toList());

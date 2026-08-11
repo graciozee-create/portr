@@ -26,21 +26,21 @@ public class MultiPlayerGameModeMixin {
     @Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
     private void onInteractBlock(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir) {
         if (freecam$disableInteract()) {
-            cir.setReturnValue(ActionResult.PASS);
+            cir.setReturnValue(InteractionResult.PASS);
         }
     }
 
     @Inject(method = "interactEntity", at = @At("HEAD"), cancellable = true)
     private void onInteractEntity(Player player, Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (entity.equals(MC.player) || freecam$disableInteract()) {
-            cir.setReturnValue(ActionResult.PASS);
+            cir.setReturnValue(InteractionResult.PASS);
         }
     }
 
     @Inject(method = "interactEntityAtLocation", at = @At("HEAD"), cancellable = true)
     private void onInteractEntityAtLocation(Player player, Entity entity, EntityHitResult hitResult, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (entity.equals(MC.player) || freecam$disableInteract()) {
-            cir.setReturnValue(ActionResult.PASS);
+            cir.setReturnValue(InteractionResult.PASS);
         }
     }
 

@@ -87,7 +87,7 @@ public class GirlsCommand {
     private static int refresh(ServerCommandSource source) throws CommandSyntaxException {
         PacketDistributor.sendToPlayer(source.getPlayerOrThrow(), new RefreshModelsS2CPacket());
         source.sendFeedback(() ->
-                        Text.literal("Refreshed All Loaded Girl Models"),
+                        Component.literal("Refreshed All Loaded Girl Models"),
                 false
         );
 
@@ -98,11 +98,11 @@ public class GirlsCommand {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) return 0;
         if(CustomGirlLoader.REGISTERED_PROFILES.isEmpty()) {
-            player.sendMessage(Text.literal("§cYou have no profiles registered."), false);
+            player.sendMessage(Component.literal("§cYou have no profiles registered."), false);
             return 0;
         }
         for (CustomGirlProfile profile : CustomGirlLoader.REGISTERED_PROFILES.values()){
-            player.sendMessage(Text.of("§d"+profile.id() + " → §b" + getReadableItemName(profile.tameItem())), false);
+            player.sendMessage(Component.literal("§d"+profile.id() + " → §b" + getReadableItemName(profile.tameItem())), false);
         }
         return 1;
     }
@@ -116,7 +116,7 @@ public class GirlsCommand {
 
         var owned = manager.getGirlsOwnedBy(player.getUuid());
         if (owned.isEmpty()) {
-            player.sendMessage(Text.literal("§cYou have no tamed girls in this world."), false);
+            player.sendMessage(Component.literal("§cYou have no tamed girls in this world."), false);
             return 0;
         }
 
@@ -129,7 +129,7 @@ public class GirlsCommand {
             String name = girl.getGirlDisplayName();
 
             player.sendMessage(
-                    Text.literal("§d" + name
+                    Component.literal("§d" + name
                             + "§b → X: " + (int) pos.x
                             + " Y: " + (int) pos.y
                             + " Z: " + (int) pos.z),
@@ -137,7 +137,7 @@ public class GirlsCommand {
             );
         }
 
-        player.sendMessage(Text.literal("§aTotal girls found: §e" + found), false);
+        player.sendMessage(Component.literal("§aTotal girls found: §e" + found), false);
         return found;
     }
 
@@ -147,21 +147,21 @@ public class GirlsCommand {
         // Validate profile
         CustomGirlProfile profile = CustomGirlLoader.LOADED_PROFILES.get(id);
         if (profile == null) {
-            source.sendError(Text.literal("Girl profile not found: " + id));
+            source.sendError(Component.literal("Girl profile not found: " + id));
             return 0;
         }
 
         // Validate position
         BlockPos blockPos = BlockPos.ofFloored(pos);
         if (!world.isValid(blockPos)) {
-            source.sendError(Text.literal("Invalid spawn position."));
+            source.sendError(Component.literal("Invalid spawn position."));
             return 0;
         }
 
         // Create entity
         CustomGirlEntity girl = GirlRegistry.CUSTOM_GIRL.create(world, net.minecraft.entity.SpawnReason.COMMAND);
         if (girl == null) {
-            source.sendError(Text.literal("Failed to create girl entity."));
+            source.sendError(Component.literal("Failed to create girl entity."));
             return 0;
         }
 
@@ -177,11 +177,11 @@ public class GirlsCommand {
 
         // Spawn entity
         if (!world.spawnEntity(girl)) {
-            source.sendError(Text.literal("Failed to spawn entity in the world."));
+            source.sendError(Component.literal("Failed to spawn entity in the world."));
             return 0;
         }
 
-        source.sendFeedback(() -> Text.literal("Spawned girl: " + id), true);
+        source.sendFeedback(() -> Component.literal("Spawned girl: " + id), true);
         return 1;
     }
 

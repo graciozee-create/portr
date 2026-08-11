@@ -21,7 +21,7 @@ public class PleasureHorizonsLangUtils {
 
     static {
         try {
-            Identifier id = Identifier.of(PleasureHorizons.MOD_ID, "lang/en_us.json");
+            Identifier id = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "lang/en_us.json");
             try (InputStreamReader reader = new InputStreamReader(
                     Objects.requireNonNull(PleasureHorizonsLangUtils.class.getClassLoader().getResourceAsStream("assets/" + id.getNamespace() + "/" + id.getPath())),
                     StandardCharsets.UTF_8)) {

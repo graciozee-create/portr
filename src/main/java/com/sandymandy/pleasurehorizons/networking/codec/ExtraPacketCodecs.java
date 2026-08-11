@@ -2,8 +2,8 @@ package com.sandymandy.pleasurehorizons.networking.codec;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BlockState;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 
 public class ExtraPacketCodecs {
     public static final PacketCodec<RegistryByteBuf, BlockState> BLOCK_STATE_PACKET_CODEC = PacketCodec.ofStatic(

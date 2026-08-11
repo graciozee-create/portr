@@ -25,7 +25,7 @@ public class GirlSceneScreen extends Screen {
     private final List<Scene> scene;
 
     public GirlSceneScreen(int entityId, int currentRelationshipLevel, ItemStack attractedTo, List<Scene> scene) {
-        super(Text.literal("Scene Options"));
+        super(Component.literal("Scene Options"));
         this.entityId = entityId;
         this.currentRelationshipLevel = currentRelationshipLevel;
         this.attractedTo = attractedTo;
@@ -36,7 +36,7 @@ public class GirlSceneScreen extends Screen {
     protected void init() {
         int y = this.height / 4;
         for (Scene scene : this.scene) {
-            ButtonWidget buttonWidget = ButtonWidget.builder(Text.of(scene.displayName()), button -> {
+            ButtonWidget buttonWidget = ButtonWidget.builder(Component.literal(scene.displayName()), button -> {
                 PacketDistributor.sendToServer(new StartSceneC2SPacket(
                         this.entityId,
                         scene
@@ -49,7 +49,7 @@ public class GirlSceneScreen extends Screen {
             }
 
             if (!buttonWidget.active) {
-                buttonWidget.setTooltip(Tooltip.of(Text.literal("Requires Relationship Level " + scene.requiredRelationshipLevel())));
+                buttonWidget.setTooltip(Tooltip.of(Component.literal("Requires Relationship Level " + scene.requiredRelationshipLevel())));
             }
 
             this.addDrawableChild(buttonWidget);

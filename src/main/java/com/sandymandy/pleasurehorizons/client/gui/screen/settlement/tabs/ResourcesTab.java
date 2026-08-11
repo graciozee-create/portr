@@ -22,7 +22,7 @@ public class ResourcesTab extends SettlementTab {
 
     @Override
     public Text getTitle() {
-        return Text.literal("Resources");
+        return Component.literal("Resources");
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ResourcesTab extends SettlementTab {
         // Header
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("" + this.settlement.getId()).formatted(Formatting.UNDERLINE),
+                Component.literal("" + this.settlement.getId()).formatted(Formatting.UNDERLINE),
                 10, yOffset,
                 Colors.WHITE,
                 true
@@ -43,7 +43,7 @@ public class ResourcesTab extends SettlementTab {
         // Example: Display resources
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Amount Of Buildings"),
+                Component.literal("Amount Of Buildings"),
                 20, yOffset,
                 Colors.LIGHT_GRAY,
                 false
@@ -52,7 +52,7 @@ public class ResourcesTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("" + this.settlement.getBuildingIds().size()),
+                Component.literal("" + this.settlement.getBuildingIds().size()),
                 20, yOffset,
                 Colors.LIGHT_GRAY,
                 false
@@ -61,7 +61,7 @@ public class ResourcesTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Amount Of Settlers"),
+                Component.literal("Amount Of Settlers"),
                 20, yOffset,
                 Colors.LIGHT_GRAY,
                 false
@@ -70,7 +70,7 @@ public class ResourcesTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("" + this.settlement.getMembers().size()),
+                Component.literal("" + this.settlement.getMembers().size()),
                 20, yOffset,
                 Colors.LIGHT_GRAY,
                 false
@@ -85,7 +85,7 @@ public class ResourcesTab extends SettlementTab {
 
         context.drawText(
                 screen.getTextRenderer(),
-                Text.literal("Storage Usage:"),
+                Component.literal("Storage Usage:"),
                 barX, barY - 12,
                 Colors.LIGHT_GRAY,
                 false

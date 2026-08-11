@@ -23,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
 import static com.sandymandy.pleasurehorizons.util.PleasureHorizonsIcons.*;
 
 public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandler> {
-    private static final Identifier TEXTURE = Identifier.of(PleasureHorizons.MOD_ID, "/textures/gui/inventory.png");
+    private static final Identifier TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "/textures/gui/inventory.png");
     private float xMouse;
     private float yMouse;
     private static final int GUI_WIDTH = 176;
@@ -69,10 +69,10 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
         int relX = centerX;
 
         context.drawTexture(RenderPipelines.GUI_TEXTURED, HEART_ICON, relX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
-        context.drawText(this.textRenderer, Text.literal(relText), relX + 20, iconY + 5, Colors.WHITE, true);
+        context.drawText(this.textRenderer, Component.literal(relText), relX + 20, iconY + 5, Colors.WHITE, true);
 
         if (ScreenUtils.isMouseOverHere(mouseX, mouseY, relX, iconY, 18, 18)) {
-            context.drawTooltip(textRenderer, Text.translatable("screen.pleasurehorizons.girl_inventory.relationship_tooltip"), mouseX, mouseY);
+            context.drawTooltip(textRenderer, Component.translatable("screen.pleasurehorizons.girl_inventory.relationship_tooltip"), mouseX, mouseY);
         }
 
         int pregLevel = girl.getPregnancyStage();
@@ -83,10 +83,10 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
 
         if(girl.canGetImpregnated()){
             context.drawTexture(RenderPipelines.GUI_TEXTURED, getPregnancyIcon(pregLevel), pregX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
-            context.drawText(this.textRenderer, Text.literal(pregText), pregX - textWidth - 5, iconY + 5, Colors.WHITE, true);
+            context.drawText(this.textRenderer, Component.literal(pregText), pregX - textWidth - 5, iconY + 5, Colors.WHITE, true);
 
             if (ScreenUtils.isMouseOverHere(mouseX, mouseY, pregX, iconY, 18, 18)) {
-                context.drawTooltip(textRenderer, Text.translatable("screen.pleasurehorizons.girl_inventory.pregnancy_tooltip"), mouseX, mouseY);
+                context.drawTooltip(textRenderer, Component.translatable("screen.pleasurehorizons.girl_inventory.pregnancy_tooltip"), mouseX, mouseY);
             }
         }
 
@@ -136,7 +136,7 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
         }
 
         if (!button.active) {
-            button.setTooltip(Tooltip.of(Text.literal("Requires Relationship Level " + action.requiredRelationshipLevel())));
+            button.setTooltip(Tooltip.of(Component.literal("Requires Relationship Level " + action.requiredRelationshipLevel())));
         }
 
         this.addDrawableChild(button);
@@ -174,14 +174,14 @@ public class GirlInventoryScreen extends HandledScreen<GirlInventoryScreenHandle
                 Text dynamicLabel = action.label();
 
                 if (action.label().getString().equals("Sit") && girl.isSitting()){
-                    dynamicLabel = Text.literal("Stand");
+                    dynamicLabel = Component.literal("Stand");
                 }
                 else if (action.label().getString().equals("Follow Me") && girl.isFollowing()){
-                    dynamicLabel = Text.literal("Stop Following");
+                    dynamicLabel = Component.literal("Stop Following");
                 }
 
                 if (action.label().getString().equals("Strip") && girl.isStripped()) {
-                    dynamicLabel = Text.literal("Dress Up");
+                    dynamicLabel = Component.literal("Dress Up");
                 }
 
                 this.drawButton(dynamicLabel, action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);

@@ -40,7 +40,7 @@ public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSe
     public int render(CustomizeScreen<T> screen, LayoutConfig layout, int currentY) {
         screen.addWidget(new net.minecraft.client.gui.widget.TextWidget(
                 layout.centerX, currentY, layout.contentWidth, 20,
-                Text.literal(title),
+                Component.literal(title),
                 screen.getTextRenderer()
         ));
         currentY += 20;

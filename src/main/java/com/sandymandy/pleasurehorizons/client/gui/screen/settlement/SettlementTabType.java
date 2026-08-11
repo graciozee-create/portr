@@ -11,14 +11,14 @@ import net.minecraft.resources.ResourceLocation;
 public enum SettlementTabType {
     ABOVE(
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_above_left_selected"),
-                    Identifier.ofVanilla("advancements/tab_above_middle_selected"),
-                    Identifier.ofVanilla("advancements/tab_above_right_selected")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_left_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_middle_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_right_selected")
             ),
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_above_left"),
-                    Identifier.ofVanilla("advancements/tab_above_middle"),
-                    Identifier.ofVanilla("advancements/tab_above_right")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_left"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_middle"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_above_right")
             ),
             28,
             32,
@@ -26,14 +26,14 @@ public enum SettlementTabType {
     ),
     BELOW(
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_below_left_selected"),
-                    Identifier.ofVanilla("advancements/tab_below_middle_selected"),
-                    Identifier.ofVanilla("advancements/tab_below_right_selected")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_left_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_middle_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_right_selected")
             ),
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_below_left"),
-                    Identifier.ofVanilla("advancements/tab_below_middle"),
-                    Identifier.ofVanilla("advancements/tab_below_right")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_left"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_middle"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_below_right")
             ),
             28,
             32,
@@ -41,14 +41,14 @@ public enum SettlementTabType {
     ),
     LEFT(
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_left_top_selected"),
-                    Identifier.ofVanilla("advancements/tab_left_middle_selected"),
-                    Identifier.ofVanilla("advancements/tab_left_bottom_selected")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_top_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_middle_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom_selected")
             ),
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_left_top"),
-                    Identifier.ofVanilla("advancements/tab_left_middle"),
-                    Identifier.ofVanilla("advancements/tab_left_bottom")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_top"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_middle"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_left_bottom")
             ),
             32,
             28,
@@ -56,14 +56,14 @@ public enum SettlementTabType {
     ),
     RIGHT(
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_right_top_selected"),
-                    Identifier.ofVanilla("advancements/tab_right_middle_selected"),
-                    Identifier.ofVanilla("advancements/tab_right_bottom_selected")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_top_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_middle_selected"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom_selected")
             ),
             new Textures(
-                    Identifier.ofVanilla("advancements/tab_right_top"),
-                    Identifier.ofVanilla("advancements/tab_right_middle"),
-                    Identifier.ofVanilla("advancements/tab_right_bottom")
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_top"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_middle"),
+                    ResourceLocation.withDefaultNamespace("advancements/tab_right_bottom")
             ),
             32,
             28,
