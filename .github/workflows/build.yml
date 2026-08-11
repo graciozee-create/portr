@@ -25,7 +25,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon --stacktrace
+        env:
+          GRADLE_USER_HOME: .gradle
+          _JAVA_OPTIONS: -XX:+UseParallelGC -Xmx4g -XX:MaxMetaspaceSize=1024m
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
