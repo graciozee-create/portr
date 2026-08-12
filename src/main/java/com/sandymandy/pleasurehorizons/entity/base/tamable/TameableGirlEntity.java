@@ -366,15 +366,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /**
      * Where the carrier's client places her hitbox while she is carried.
      *
-     * <p>The default passenger attachment sits at the vehicle's eye height, which for a player
-     * vehicle puts her floating above his head. This lowers her to chest height and pushes her
-     * slightly forward so the server-side hitbox roughly matches the bridal-carry pose that
-     * {@code GirlRenderer} draws.</p>
+     * <p>The default {@code PASSENGER} attachment falls back to the vehicle's full height, which
+     * for a player vehicle parks her on top of his head. Vanilla positions a passenger at
+     * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}
+     * (see {@code Entity#positionRider}), so a <em>positive</em> Y here moves her down. 0.7
+     * brings her to roughly chest height, matching the bridal-carry pose {@code GirlRenderer}
+     * draws.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
         if (vehicle instanceof Player) {
-            return new net.minecraft.world.phys.Vec3(0.0, -0.7, 0.0);
+            return new net.minecraft.world.phys.Vec3(0.0, 0.7, 0.0);
         }
         return super.getVehicleAttachmentPoint(vehicle);
     }

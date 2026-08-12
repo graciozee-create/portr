@@ -51,17 +51,20 @@ public final class FreecamConfig {
     // ---- spec ----
     public static final ModConfigSpec SPEC;
 
-    private static final ModConfigSpec.DoubleValue HORIZONTAL_SPEED;
-    private static final ModConfigSpec.DoubleValue VERTICAL_SPEED;
+    // Declared with the generic ConfigValue/EnumValue types rather than the IntValue /
+    // DoubleValue / BooleanValue conveniences so this only depends on the ModConfigSpec
+    // overloads that are guaranteed present.
+    private static final ModConfigSpec.ConfigValue<Double> HORIZONTAL_SPEED;
+    private static final ModConfigSpec.ConfigValue<Double> VERTICAL_SPEED;
     private static final ModConfigSpec.EnumValue<Perspective> PERSPECTIVE;
-    private static final ModConfigSpec.BooleanValue HIDE_PLAYER;
-    private static final ModConfigSpec.BooleanValue SHOW_HAND;
-    private static final ModConfigSpec.BooleanValue SHOW_SUBMERSION;
-    private static final ModConfigSpec.BooleanValue DISABLE_ON_DAMAGE;
-    private static final ModConfigSpec.BooleanValue ALLOW_INTERACT;
+    private static final ModConfigSpec.ConfigValue<Boolean> HIDE_PLAYER;
+    private static final ModConfigSpec.ConfigValue<Boolean> SHOW_HAND;
+    private static final ModConfigSpec.ConfigValue<Boolean> SHOW_SUBMERSION;
+    private static final ModConfigSpec.ConfigValue<Boolean> DISABLE_ON_DAMAGE;
+    private static final ModConfigSpec.ConfigValue<Boolean> ALLOW_INTERACT;
     private static final ModConfigSpec.EnumValue<InteractionMode> INTERACTION_MODE;
-    private static final ModConfigSpec.BooleanValue NOTIFY_FREECAM;
-    private static final ModConfigSpec.BooleanValue NOTIFY_TRIPOD;
+    private static final ModConfigSpec.ConfigValue<Boolean> NOTIFY_FREECAM;
+    private static final ModConfigSpec.ConfigValue<Boolean> NOTIFY_TRIPOD;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -69,10 +72,10 @@ public final class FreecamConfig {
         builder.comment("Freecam movement").push("movement");
         HORIZONTAL_SPEED = builder
                 .comment("Horizontal fly speed of the free camera.")
-                .defineInRange("horizontalSpeed", 1.0, 0.0, 10.0);
+                .defineInRange("horizontalSpeed", 1.0, 0.0, 10.0, Double.class);
         VERTICAL_SPEED = builder
                 .comment("Vertical fly speed of the free camera.")
-                .defineInRange("verticalSpeed", 1.0, 0.0, 10.0);
+                .defineInRange("verticalSpeed", 1.0, 0.0, 10.0, Double.class);
         builder.pop();
 
         builder.comment("Freecam visuals").push("visual");
