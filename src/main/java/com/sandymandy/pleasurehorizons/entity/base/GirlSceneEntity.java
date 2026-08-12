@@ -96,6 +96,8 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     public final Queue<String> animationKeyFrameEvent = animationEventQueueServer;
 
     protected String lastSceneAnim = "";
+    private long lastAnimationFinishInputTick = -1L;
+    private long lastAnimationEventInputTick = -1L;
     public String passengerBoneName = "boyCam";
     public Scene stripOptions = Scene.EMPTY;
     @Nullable
@@ -219,6 +221,48 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         return scenePlayer != null && scenePlayer.getUUID().equals(player.getUUID());
     }
 
+    /** Server-side authorization shared by every packet that advances or changes a scene. */
+    public boolean acceptsSceneInputFrom(Player player) {
+        return !this.level().isClientSide()
+                && this.isSceneActive()
+                && this.isCurrentScenePlayer(player);
+    }
+
+    public boolean acceptsAnimationFinishFrom(Player player) {
+        if (!acceptsSceneInputFrom(player)) return false;
+
+        long now = this.level().getGameTime();
+        if (this.lastAnimationFinishInputTick >= 0L
+                && now - this.lastAnimationFinishInputTick < 5L) {
+            return false;
+        }
+        this.lastAnimationFinishInputTick = now;
+        return true;
+    }
+
+    /**
+     * Keyframes may arrive while a requested scene is still running its strip animation, before
+     * {@link #isSceneActive()} becomes true. The selected scene player remains the sole authority.
+     * At most one combined keyframe payload is accepted per server tick.
+     */
+    public boolean acceptsAnimationEventFrom(Player player) {
+        boolean authorized = acceptsSceneInputFrom(player)
+                || (!this.level().isClientSide()
+                && this.isCurrentScenePlayer(player)
+                && this.getCurrentScene() != Scene.EMPTY);
+        if (!authorized) return false;
+
+        long now = this.level().getGameTime();
+        if (now == this.lastAnimationEventInputTick) return false;
+        this.lastAnimationEventInputTick = now;
+        return true;
+    }
+
+    private boolean hasLocalScenePlayer() {
+        Player scenePlayer = getScenePlayer();
+        return scenePlayer != null && scenePlayer.isLocalPlayer();
+    }
+
     public float getPregnancyProgress() {
         if (!isPregnant()) return 0f;
         return 1f - (getPregnancyTicks() / (float) PREGNANCY_MAX_TICKS);
@@ -243,7 +287,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
     public void startScene(Player player, Scene option) {
         if (this.level().isClientSide()) return;
-        if (this.isSceneActive()) return;
+        if (this.isSceneActive() || this.getScenePlayer() != null) return;
         if (player == null) return;
 
         if (this.getCurrentRelationshipLevel() < option.requiredRelationshipLevel()) {
@@ -325,10 +369,15 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         this.setIntroIndex(0);
         this.lastSceneAnim = "";
         this.setSceneState(true);
-        playPhase(ScenePhase.INTRO);
+        playPhase(getCurrentScene().introAnim().isEmpty() ? ScenePhase.HAVING_SEX : ScenePhase.INTRO);
     }
 
     private void startStationaryIntro(Scene option) {
+        if (option.stationaryIntroAnim().isEmpty()) {
+            startStationaryLoop(option);
+            return;
+        }
+
         this.setSceneState(true);
         this.setSceneProgress(0f);
         this.setCurrentScenePhase(ScenePhase.STATIONARY_INTRO);
@@ -351,8 +400,10 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         if (!this.isSceneActive()) return;
 
         if (this.level().isClientSide()) {
-            PacketDistributor.sendToServer(
-                    new com.sandymandy.pleasurehorizons.networking.C2S.StopSceneOnServerC2SPacket(this.getId()));
+            if (hasLocalScenePlayer()) {
+                PacketDistributor.sendToServer(
+                        new com.sandymandy.pleasurehorizons.networking.C2S.StopSceneOnServerC2SPacket(this.getId()));
+            }
             return;
         }
 
@@ -384,22 +435,10 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     public void playPhase(ScenePhase phase) {
-        if (this.level().isClientSide()) {
-            PacketDistributor.sendToServer(
-                    new com.sandymandy.pleasurehorizons.networking.C2S.ScenePhaseSyncC2SPacket(
-                            this.getId(), phase.ordinal()));
-            return;
-        }
+        if (this.level().isClientSide()) return;
         setCurrentScenePhase(phase);
         this.lastSceneAnim = "";
         if (phase != ScenePhase.INTRO) setIntroIndex(0);
-    }
-
-    /** Overload kept for the phase-sync packet, which carries an ordinal. */
-    public void playPhase(int phaseOrdinal) {
-        ScenePhase[] values = ScenePhase.values();
-        if (phaseOrdinal < 0 || phaseOrdinal >= values.length) return;
-        playPhase(values[phaseOrdinal]);
     }
 
     public void tryTriggerCum() {
@@ -678,9 +717,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
                     String key = event.getKeyframeData().getSound().toLowerCase();
                     handleAnimationEventClient(key);
-                    PacketDistributor.sendToServer(
-                            new com.sandymandy.pleasurehorizons.networking.C2S.SoundEventSyncC2SPacket(
-                                    this.getId(), key));
+                    if (hasLocalScenePlayer()) {
+                        PacketDistributor.sendToServer(
+                                new com.sandymandy.pleasurehorizons.networking.C2S.SoundEventSyncC2SPacket(
+                                        this.getId(), key));
+                    }
                 }));
         registrar.add(new AnimationController<>(this, "girl_attack", 4, this::handleAttackAnimations));
         registrar.add(new AnimationController<>(this, "girl_face", 4, this::handleFacialAnimations));
@@ -799,8 +840,10 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         if (this.level().isClientSide()
                 && (controller.hasAnimationFinished() || controller.getAnimationState() == AnimationController.State.PAUSED)
                 && !lastSceneAnim.isEmpty()) {
-            PacketDistributor.sendToServer(
-                    new com.sandymandy.pleasurehorizons.networking.C2S.AnimationFinishC2SPacket(this.getId()));
+            if (hasLocalScenePlayer()) {
+                PacketDistributor.sendToServer(
+                        new com.sandymandy.pleasurehorizons.networking.C2S.AnimationFinishC2SPacket(this.getId()));
+            }
             lastSceneAnim = "";
         }
 
@@ -878,19 +921,6 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     protected String getRandomFromList(List<String> list) {
         if (list == null || list.isEmpty()) return "";
         return list.get(RANDOM.nextInt(list.size()));
-    }
-
-    /** Forces an animation; on the client the request is relayed to the server. */
-    public void playAnimation(String animationName, boolean loop, boolean holdOnLastFrame) {
-        if (!this.level().isClientSide()) {
-            this.setOverrideAnim(animationName != null ? animationName : "");
-            this.setOverrideLoop(loop);
-            this.setOverrideHold(holdOnLastFrame);
-        } else {
-            PacketDistributor.sendToServer(
-                    new com.sandymandy.pleasurehorizons.networking.C2S.AnimationSyncC2SPacket(
-                            this.getId(), animationName != null ? animationName : "", loop, holdOnLastFrame));
-        }
     }
 
     // ---------------------------------------------------------------- requests

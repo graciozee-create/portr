@@ -23,7 +23,7 @@ public record AnimationFinishC2SPacket(int entityId) implements CustomPacketPayl
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (entity instanceof GirlSceneEntity girl) {
+            if (entity instanceof GirlSceneEntity girl && girl.acceptsAnimationFinishFrom(ctx.player())) {
                 girl.animationFinished();
             }
         });

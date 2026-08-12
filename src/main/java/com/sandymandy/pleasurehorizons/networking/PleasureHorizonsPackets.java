@@ -21,9 +21,7 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(ThrustKeybindC2SPacket.TYPE, ThrustKeybindC2SPacket.STREAM_CODEC, ThrustKeybindC2SPacket::handle);
         registrar.playToServer(CumKeybindC2SPacket.TYPE, CumKeybindC2SPacket.STREAM_CODEC, CumKeybindC2SPacket::handle);
         registrar.playToServer(InventoryButtonC2SPacket.TYPE, InventoryButtonC2SPacket.STREAM_CODEC, InventoryButtonC2SPacket::handle);
-        registrar.playToServer(AnimationSyncC2SPacket.TYPE, AnimationSyncC2SPacket.STREAM_CODEC, AnimationSyncC2SPacket::handle);
         registrar.playToServer(AnimationFinishC2SPacket.TYPE, AnimationFinishC2SPacket.STREAM_CODEC, AnimationFinishC2SPacket::handle);
-        registrar.playToServer(ScenePhaseSyncC2SPacket.TYPE, ScenePhaseSyncC2SPacket.STREAM_CODEC, ScenePhaseSyncC2SPacket::handle);
         registrar.playToServer(SetGUIOpenStateC2SPacket.TYPE, SetGUIOpenStateC2SPacket.STREAM_CODEC, SetGUIOpenStateC2SPacket::handle);
         registrar.playToServer(SoundEventSyncC2SPacket.TYPE, SoundEventSyncC2SPacket.STREAM_CODEC, SoundEventSyncC2SPacket::handle);
         registrar.playToServer(StartSceneC2SPacket.TYPE, StartSceneC2SPacket.STREAM_CODEC, StartSceneC2SPacket::handle);

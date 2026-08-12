@@ -23,7 +23,9 @@ public record CumKeybindC2SPacket(boolean pressed) implements CustomPacketPayloa
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Entity vehicle = ctx.player().getVehicle();
-            if (vehicle instanceof GirlSceneEntity girl && this.pressed()) {
+            if (vehicle instanceof GirlSceneEntity girl
+                    && this.pressed()
+                    && girl.acceptsSceneInputFrom(ctx.player())) {
                 girl.tryTriggerCum();
             }
         });

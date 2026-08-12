@@ -23,7 +23,7 @@ public record ThrustKeybindC2SPacket(boolean held) implements CustomPacketPayloa
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Entity vehicle = ctx.player().getVehicle();
-            if (vehicle instanceof GirlSceneEntity girl) {
+            if (vehicle instanceof GirlSceneEntity girl && girl.acceptsSceneInputFrom(ctx.player())) {
                 girl.setThrusting(this.held());
             }
         });
