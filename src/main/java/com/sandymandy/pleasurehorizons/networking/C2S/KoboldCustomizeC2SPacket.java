@@ -55,15 +55,39 @@ public record KoboldCustomizeC2SPacket(
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (entity instanceof KoboldEntity kobold) {
-                kobold.setBodySize(this.bodySize());
-                kobold.setKoboldBreastSize(this.breastSize());
-                kobold.setPrimaryColor(this.primaryColor());
-                kobold.setSecondaryColor(this.secondaryColor());
-                kobold.setIrisColor(this.irisColor());
-                kobold.setTopHornType(this.topHornType());
-                kobold.setBottomHornType(this.bottomHornType());
+            if (!(entity instanceof KoboldEntity kobold)
+                    || !kobold.isOwner(ctx.player())
+                    || !kobold.hasPreviewSession(ctx.player())
+                    || !kobold.isAlive()
+                    || kobold.isDowned()
+                    || kobold.isSceneActive()
+                    || kobold.isPassenger()
+                    || ctx.player().distanceToSqr(kobold) > 64.0D
+                    || this.bodySize() < KoboldEntity.MIN_BODY_SIZE
+                    || this.bodySize() > KoboldEntity.MAX_BODY_SIZE
+                    || this.breastSize() < KoboldEntity.MIN_BREAST_SIZE
+                    || this.breastSize() > KoboldEntity.MAX_BREAST_SIZE
+                    || !isOpaqueColor(this.primaryColor())
+                    || !isOpaqueColor(this.secondaryColor())
+                    || !isOpaqueColor(this.irisColor())
+                    || this.topHornType() < 0
+                    || this.topHornType() > 7
+                    || this.bottomHornType() < 0
+                    || this.bottomHornType() > 2) {
+                return;
             }
+
+            kobold.setBodySize(this.bodySize());
+            kobold.setKoboldBreastSize(this.breastSize());
+            kobold.setPrimaryColor(this.primaryColor());
+            kobold.setSecondaryColor(this.secondaryColor());
+            kobold.setIrisColor(this.irisColor());
+            kobold.setTopHornType(this.topHornType());
+            kobold.setBottomHornType(this.bottomHornType());
         });
+    }
+
+    private static boolean isOpaqueColor(int color) {
+        return (color & 0xFF000000) == 0xFF000000;
     }
 }

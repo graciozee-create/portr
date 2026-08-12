@@ -93,7 +93,13 @@ public class GirlInventoryScreenHandler extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return inventory.stillValid(player);
+        return girl.isAlive()
+                && !girl.isDowned()
+                && !girl.isSceneActive()
+                && !girl.isPassenger()
+                && girl.isOwner(player)
+                && player.distanceToSqr(girl) <= 64.0D
+                && inventory.stillValid(player);
     }
 
     @Override

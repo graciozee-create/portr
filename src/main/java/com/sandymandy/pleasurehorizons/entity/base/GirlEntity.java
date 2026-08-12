@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Base class for every girl entity.
@@ -146,6 +148,16 @@ public abstract class GirlEntity extends PathfinderMob {
     @Nullable
     private Player lookAtTarget = null;
 
+    // Preview authorization is intentionally server-only: clients receive entity ids for rendering,
+    // but may not choose which entity a customization/removal packet is allowed to affect.
+    @Nullable
+    private UUID previewRequesterId;
+    @Nullable
+    private UUID activePreviewId;
+    private int activePreviewEntityId = -1;
+    @Nullable
+    private UUID previewSourceId;
+
     protected GirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
     }
@@ -257,6 +269,14 @@ public abstract class GirlEntity extends PathfinderMob {
     public void setGUIOpenState(boolean state, @Nullable Player lookAt) {
         this.guiOpenState = state;
         this.lookAtTarget = lookAt;
+
+        if (!state && !this.level().isClientSide() && this.activePreviewId != null
+                && this.level() instanceof ServerLevel serverLevel) {
+            if (serverLevel.getEntity(this.activePreviewId) instanceof GirlEntity preview) {
+                preview.discard();
+            }
+            clearPreviewSession();
+        }
     }
 
     public void setGUIOpenState(boolean state) {
@@ -334,6 +354,34 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setTemporaryState(boolean state) {
         this.entityData.set(IS_TEMPORARY, state);
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return !isTemporary() && super.shouldBeSaved();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!this.level().isClientSide() && isTemporary() && this.level() instanceof ServerLevel serverLevel) {
+            GirlEntity source = null;
+            if (this.previewSourceId != null
+                    && serverLevel.getEntity(this.previewSourceId) instanceof GirlEntity sourceGirl) {
+                source = sourceGirl;
+            }
+            boolean validSession = this.previewRequesterId != null
+                    && serverLevel.getPlayerByUUID(this.previewRequesterId) != null
+                    && source != null
+                    && source.referencesPreview(this);
+            if (!validSession) {
+                if (source != null && this.getUUID().equals(source.activePreviewId)) {
+                    source.clearPreviewSession();
+                }
+                this.discard();
+            }
+        }
     }
 
     /**
@@ -590,8 +638,9 @@ public abstract class GirlEntity extends PathfinderMob {
         this.armorVisibility.put(slot, visible);
     }
 
-    public GirlEntity createTempClone() {
-        if (this.level().isClientSide()) return null;
+    @Nullable
+    public GirlEntity createTempClone(Player requester) {
+        if (this.level().isClientSide() || requester == null || createdClone()) return null;
 
         GirlEntity clone = (GirlEntity) this.getType().create(this.level());
         if (clone == null) return null;
@@ -601,10 +650,16 @@ public abstract class GirlEntity extends PathfinderMob {
         clone.setInvisible(true);
         clone.setInvulnerable(true);
         clone.setNoGravity(true);
+        clone.previewRequesterId = requester.getUUID();
+        clone.previewSourceId = this.getUUID();
 
         this.onTempCloneCreation(clone);
 
-        this.level().addFreshEntity(clone);
+        if (!this.level().addFreshEntity(clone)) return null;
+
+        this.previewRequesterId = requester.getUUID();
+        this.activePreviewId = clone.getUUID();
+        this.activePreviewEntityId = clone.getId();
         this.setCreatedCloneState(true);
         return clone;
     }
@@ -619,6 +674,41 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setCreatedCloneState(boolean state) {
         this.entityData.set(CREATED_CLONE, state);
+        if (!state && !this.level().isClientSide()) {
+            clearPreviewSession();
+        }
+    }
+
+    public boolean hasPreviewSession(Player requester) {
+        return !this.level().isClientSide()
+                && createdClone()
+                && this.previewRequesterId != null
+                && this.previewRequesterId.equals(requester.getUUID())
+                && this.lookAtTarget != null
+                && this.lookAtTarget.getUUID().equals(requester.getUUID());
+    }
+
+    public boolean referencesPreview(GirlEntity preview) {
+        return preview != null
+                && preview.isTemporary()
+                && this.activePreviewId != null
+                && this.activePreviewId.equals(preview.getUUID())
+                && this.previewRequesterId != null
+                && this.previewRequesterId.equals(preview.previewRequesterId)
+                && this.getUUID().equals(preview.previewSourceId);
+    }
+
+    public boolean referencesPreviewEntityId(int entityId) {
+        return createdClone() && this.activePreviewEntityId == entityId;
+    }
+
+    public void clearPreviewSession() {
+        this.previewRequesterId = null;
+        this.activePreviewId = null;
+        this.activePreviewEntityId = -1;
+        if (!this.level().isClientSide()) {
+            this.entityData.set(CREATED_CLONE, false);
+        }
     }
 
     public boolean isWaitingForPlayer() {
@@ -715,7 +805,7 @@ public abstract class GirlEntity extends PathfinderMob {
     }
 
     public void setBreastSize(int value) {
-        this.entityData.set(BREAST_SIZE, value);
+        this.entityData.set(BREAST_SIZE, Mth.clamp(value, getBreastMinSize(), getBreastMaxSize()));
     }
 
     public int getBreastSize() {
@@ -731,8 +821,14 @@ public abstract class GirlEntity extends PathfinderMob {
     }
 
     public void setBreastOffset(Vec3 value) {
-        this.entityData.set(BREAST_OFFSET,
-                new Vector3f((float) value.x, (float) value.y, (float) value.z));
+        if (value == null || !Double.isFinite(value.x) || !Double.isFinite(value.y)
+                || !Double.isFinite(value.z)) {
+            return;
+        }
+        this.entityData.set(BREAST_OFFSET, new Vector3f(
+                (float) Mth.clamp(value.x, -16.0D, 16.0D),
+                (float) Mth.clamp(value.y, -16.0D, 16.0D),
+                (float) Mth.clamp(value.z, -16.0D, 16.0D)));
     }
 
     public Vec3 getBreastOffset() {

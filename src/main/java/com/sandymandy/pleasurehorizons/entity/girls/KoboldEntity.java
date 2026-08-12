@@ -40,10 +40,10 @@ public class KoboldEntity extends SettlementGirlEntityAI {
 
     private static final float MIN_HITBOX_HEIGHT = 1.0f;   // at body size 65
     private static final float MAX_HITBOX_HEIGHT = 1.75f;  // at body size 115
-    private static final int MIN_BODY_SIZE = 65;
-    private static final int MAX_BODY_SIZE = 115;
-    private static final int MIN_BREAST_SIZE = 60;
-    private static final int MAX_BREAST_SIZE = 160;
+    public static final int MIN_BODY_SIZE = 65;
+    public static final int MAX_BODY_SIZE = 115;
+    public static final int MIN_BREAST_SIZE = 60;
+    public static final int MAX_BREAST_SIZE = 160;
 
     /** Avoids recomputing dimensions every tick when nothing changed. */
     private float lastHitboxHeight = 1.0f;

@@ -28,9 +28,17 @@ public record SetGUIOpenStateC2SPacket(int entityId, boolean data) implements Cu
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
+            // Opening is exclusively a server-side interaction. Clients may only close the exact
+            // interaction that the server associated with them.
+            if (this.data()) return;
+
             Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (entity instanceof GirlEntity girl) {
-                girl.setGUIOpenState(this.data(), null);
+            if (entity instanceof GirlEntity girl
+                    && girl.isGUIOpen()
+                    && girl.getLookAtTarget() != null
+                    && girl.getLookAtTarget().getUUID().equals(ctx.player().getUUID())) {
+                girl.setGUIOpenState(false, null);
+                ctx.player().closeContainer();
             }
         });
     }

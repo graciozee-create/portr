@@ -1,7 +1,8 @@
 package com.sandymandy.pleasurehorizons.networking.C2S;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
+import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -24,14 +25,22 @@ public record RemovePreviewEntityC2SPacket(int entityId, int previewEntityId) im
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            Entity previewEntity = ctx.player().level().getEntity(this.previewEntityId());
-            if (previewEntity != null) {
-                previewEntity.discard();
-            }
             Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (entity instanceof GirlSceneEntity girl) {
-                girl.setCreatedCloneState(false);
+            if (!(entity instanceof TameableGirlEntity girl)
+                    || !girl.isOwner(ctx.player())
+                    || !girl.hasPreviewSession(ctx.player())
+                    || !girl.referencesPreviewEntityId(this.previewEntityId())) {
+                return;
             }
+
+            Entity claimedPreview = ctx.player().level().getEntity(this.previewEntityId());
+            if (claimedPreview != null) {
+                if (!(claimedPreview instanceof GirlEntity preview) || !girl.referencesPreview(preview)) {
+                    return;
+                }
+                preview.discard();
+            }
+            girl.clearPreviewSession();
         });
     }
 }

@@ -1,7 +1,7 @@
 package com.sandymandy.pleasurehorizons.networking.C2S;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,14 +31,36 @@ public record GirlCustomizeC2SPacket(int entityId, int breastSize, Vec3 breastOf
     @Override
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
+    private static boolean isValidOffset(Vec3 offset) {
+        return offset != null
+                && Double.isFinite(offset.x)
+                && Double.isFinite(offset.y)
+                && Double.isFinite(offset.z)
+                && Math.abs(offset.x) <= 16.0D
+                && Math.abs(offset.y) <= 16.0D
+                && Math.abs(offset.z) <= 16.0D;
+    }
+
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (entity instanceof GirlSceneEntity girl) {
-                girl.setBreastSize(this.breastSize());
-                girl.setBreastOffset(this.breastOffset());
-                girl.canGetImpregnatedState(this.canGetImpregnated());
+            if (!(entity instanceof TameableGirlEntity girl)
+                    || !girl.isOwner(ctx.player())
+                    || !girl.hasPreviewSession(ctx.player())
+                    || !girl.isAlive()
+                    || girl.isDowned()
+                    || girl.isSceneActive()
+                    || girl.isPassenger()
+                    || ctx.player().distanceToSqr(girl) > 64.0D
+                    || this.breastSize() < girl.getBreastMinSize()
+                    || this.breastSize() > girl.getBreastMaxSize()
+                    || !isValidOffset(this.breastOffset())) {
+                return;
             }
+
+            girl.setBreastSize(this.breastSize());
+            girl.setBreastOffset(this.breastOffset());
+            girl.canGetImpregnatedState(this.canGetImpregnated());
         });
     }
 }

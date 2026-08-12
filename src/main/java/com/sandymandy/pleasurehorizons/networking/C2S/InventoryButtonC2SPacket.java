@@ -7,6 +7,7 @@ import com.sandymandy.pleasurehorizons.entity.girls.KoboldEntity;
 import com.sandymandy.pleasurehorizons.networking.S2C.OpenCustomizeScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.networking.S2C.SceneOptionsS2CPacket;
 import com.sandymandy.pleasurehorizons.networking.S2C.OpenKoboldCustomizeScreenS2CPacket;
+import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandler;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -43,13 +44,21 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            Entity entity = ctx.player().level().getEntity(this.entityId());
-            if (!(entity instanceof TameableGirlEntity girl)) {
-                return;
-            }
+            if (this.actionId().length() > 32) return;
 
-            // Only her owner may command her.
-            if (!girl.isOwner(ctx.player())) {
+            Entity entity = ctx.player().level().getEntity(this.entityId());
+            if (!(entity instanceof TameableGirlEntity girl)) return;
+
+            // Bind the claimed id to the menu that produced the click; ownership alone must not
+            // turn an arbitrary entity-id packet into a remote-control API.
+            if (!(ctx.player().containerMenu instanceof GirlInventoryScreenHandler menu)
+                    || menu.getGirl() != girl
+                    || !girl.isOwner(ctx.player())
+                    || !girl.isAlive()
+                    || girl.isDowned()
+                    || girl.isSceneActive()
+                    || girl.isPassenger()
+                    || ctx.player().distanceToSqr(girl) > 64.0D) {
                 return;
             }
 
@@ -86,7 +95,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 }
                 case "customize" -> {
                     if (!(ctx.player() instanceof ServerPlayer serverPlayer)) return;
-                    GirlEntity clone = girl.createTempClone();
+                    GirlEntity clone = girl.createTempClone(ctx.player());
                     if (clone != null) {
                         if (girl instanceof KoboldEntity) {
                             PacketDistributor.sendToPlayer(serverPlayer,
@@ -132,7 +141,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                                     girl.isStayNearBaseEnabled() ? "msg.pleasurehorizons.stayNearBaseEnabled" : "msg.pleasurehorizons.stayNearBaseDisabled",
                                     girl.getGirlDisplayName()), true);
                 }
-                default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId());
+                default -> { /* Unknown actions are untrusted input; ignore without log spam. */ }
             }
         });
     }
