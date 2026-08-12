@@ -173,6 +173,16 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         selectedButtons.put(groupId, button);
     }
 
+    // Public wrapper around protected Screen#addRenderableWidget so that CustomizeSection implementations
+    // (which live in a different package) can add widgets.
+    public <W extends net.minecraft.client.gui.components.events.GuiEventListener & net.minecraft.client.gui.components.Renderable & net.minecraft.client.gui.navigables.Navigable> W addWidget(W widget) {
+        return this.addRenderableWidget(widget);
+    }
+
+    public net.minecraft.client.gui.Font getFont() {
+        return this.font;
+    }
+
     public static class LayoutConfig {
         public int previewWidth;
         public int menuWidth;
