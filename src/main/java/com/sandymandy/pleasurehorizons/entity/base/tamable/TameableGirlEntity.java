@@ -158,6 +158,27 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     protected InteractionResult interactTamed(Player player, ItemStack stack) {
         if (this.isDowned()) {
+            // Allow carrying wounded girl on hands even when downed (rescue)
+            if (player.isShiftKeyDown() && stack.isEmpty() && this.isOwner(player)) {
+                if (this.isPassenger() && this.getVehicle() == player) {
+                    this.stopRiding();
+                    float yawRad = (float) Math.toRadians(player.getYRot());
+                    double forwardX = -Math.sin(yawRad) * 1.0;
+                    double forwardZ = Math.cos(yawRad) * 1.0;
+                    this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
+                    this.setNoGravity(false);
+                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+                } else {
+                    this.getNavigation().stop();
+                    this.setTarget(null);
+                    this.setSitting(false);
+                    this.setNoGravity(true);
+                    this.startRiding(player, true);
+                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
+                }
+                return InteractionResult.SUCCESS;
+            }
+
             boolean isFood = stack.get(DataComponents.FOOD) != null;
             if (stack.is(this.isAttractedTo()) || isFood || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
                 if (!player.getAbilities().instabuild) {
