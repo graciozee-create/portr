@@ -116,7 +116,14 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 btn -> {
                     if (girl != null && minecraft != null && player != null) {
                         action.action().accept(girl, player);
-                        this.onClose();
+                        // Talk and Customize replace this screen asynchronously after the server
+                        // validates the click. Closing here would send both the vanilla container
+                        // close and SetGUIOpenState(false) before the replacement screen can use
+                        // the interaction. That invalidates customization previews/confirmation
+                        // and makes every scene-selection button fail server authorization.
+                        if (!action.opensSubscreen()) {
+                            this.onClose();
+                        }
                     }
                 }
         ).bounds(x, y, buttonWidth, buttonHeight).build();

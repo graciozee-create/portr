@@ -30,7 +30,7 @@ public class InventoryButtonRegistry {
                     (girl, player) -> send(girl.getId(), "goToBase")),
 
             new InventoryButtonAction(
-                    "gui.pleasurehorizons.button.customize", 1,
+                    "gui.pleasurehorizons.button.customize", 1, true,
                     (girl, player) -> send(girl.getId(), "customize")),
 
             new InventoryButtonAction(
@@ -60,7 +60,7 @@ public class InventoryButtonRegistry {
                     (girl, player) -> send(girl.getId(), "stripOrDressup")),
 
             new InventoryButtonAction(
-                    "gui.pleasurehorizons.button.talk", 4,
+                    "gui.pleasurehorizons.button.talk", 4, true,
                     (girl, player) -> send(girl.getId(), "talk")),
 
             new InventoryButtonAction(

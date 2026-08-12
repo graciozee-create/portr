@@ -18,6 +18,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
 
     protected final Component screenTitle;
     protected final int entityId;
+    private final int previewSessionEntityId;
     protected final T previewEntity;
     protected final T entity;
 
@@ -35,15 +36,26 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         super(title);
         this.screenTitle = title;
         this.entityId = entityId;
+        this.previewSessionEntityId = previewEntityId;
 
         net.minecraft.client.multiplayer.ClientLevel world = Minecraft.getInstance().level;
-        this.previewEntity = world != null ? entityClass.cast(world.getEntity(previewEntityId)) : null;
-        this.entity = world != null ? entityClass.cast(world.getEntity(entityId)) : null;
+        net.minecraft.world.entity.Entity source = world != null ? world.getEntity(entityId) : null;
+        this.entity = entityClass.isInstance(source) ? entityClass.cast(source) : null;
 
-        if (this.previewEntity != null) {
-            this.previewEntity.setInvisible(false);
-            this.previewEntity.setNoGravity(false);
+        // The server-side temporary entity is an authorization/session marker, not the model
+        // rendered in this screen. Waiting for its vanilla spawn packet raced the custom open-
+        // screen payload, and changing its SynchedEntityData here also wrote server-owned state
+        // from the client. A detached entity of the same type is deterministic, immediately
+        // available and safe to mutate exclusively for the local preview.
+        T localPreview = null;
+        if (world != null && this.entity != null) {
+            net.minecraft.world.entity.Entity created = this.entity.getType().create(world);
+            if (entityClass.isInstance(created)) {
+                localPreview = entityClass.cast(created);
+                this.entity.onTempCloneCreation(localPreview);
+            }
         }
+        this.previewEntity = localPreview;
     }
 
     protected abstract void addSections();
@@ -137,15 +149,27 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (this.previewEntity != null) {
+            // Detached preview entities are not part of ClientLevel's tick list. Advancing their
+            // age keeps GeckoLib idle animations moving without running mob AI or touching any
+            // tracked world entity.
+            this.previewEntity.tickCount++;
+        }
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }
 
     @Override
     public void onClose() {
-        if (previewEntity != null) {
-            PacketDistributor.sendToServer(new RemovePreviewEntityC2SPacket(entityId, previewEntity.getId()));
-        }
+        // This id belongs to the server-owned preview session marker. The detached local model
+        // intentionally has no network identity and must never be sent to the server.
+        PacketDistributor.sendToServer(
+                new RemovePreviewEntityC2SPacket(entityId, this.previewSessionEntityId));
         super.onClose();
         PacketDistributor.sendToServer(new SetGUIOpenStateC2SPacket(this.entityId, false));
     }
