@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.entity.girls;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -62,6 +63,24 @@ public class MikaEntity extends SettlementGirlEntityAI {
     @Override
     public float getWeaponBoneXRotation() {
         return -80.0F;
+    }
+
+    @Override
+    public List<Component> giftRepliesLike() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.mika.gift_like.1"),
+                Component.translatable("chat.pleasurehorizons.mika.gift_like.2"),
+                Component.translatable("chat.pleasurehorizons.mika.gift_like.3")
+        );
+    }
+
+    @Override
+    public List<Component> giftRepliesLove() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.mika.gift_love.1"),
+                Component.translatable("chat.pleasurehorizons.mika.gift_love.2"),
+                Component.translatable("chat.pleasurehorizons.mika.gift_love.3")
+        );
     }
 
     @Override
