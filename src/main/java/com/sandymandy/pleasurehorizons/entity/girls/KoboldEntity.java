@@ -65,7 +65,10 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createDefaultAttributes();
+        return createDefaultAttributes()
+                .add(Attributes.MAX_HEALTH, 15.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.12)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 
     /**

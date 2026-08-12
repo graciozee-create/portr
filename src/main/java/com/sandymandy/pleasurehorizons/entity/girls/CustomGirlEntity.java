@@ -14,7 +14,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -58,11 +57,7 @@ public class CustomGirlEntity extends SettlementGirlEntityAI {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Mob.createLivingAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.3)
-                .add(Attributes.FOLLOW_RANGE, 32.0)
-                .add(Attributes.ATTACK_DAMAGE, 2.0);
+        return createDefaultAttributes();
     }
 
     @Override

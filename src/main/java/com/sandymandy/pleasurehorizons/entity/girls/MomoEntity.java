@@ -32,7 +32,7 @@ public class MomoEntity extends SettlementGirlEntityAI {
 
     @Override
     public int getSizeGUI() {
-        return 20;
+        return 35;
     }
 
     @Override

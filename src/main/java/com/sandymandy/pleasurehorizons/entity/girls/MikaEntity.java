@@ -5,6 +5,7 @@ import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -17,7 +18,10 @@ public class MikaEntity extends SettlementGirlEntityAI {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createDefaultAttributes();
+        return createDefaultAttributes()
+                .add(Attributes.MAX_HEALTH, 30.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.18)
+                .add(Attributes.ATTACK_DAMAGE, 5.0);
     }
 
     @Override
@@ -47,12 +51,17 @@ public class MikaEntity extends SettlementGirlEntityAI {
 
     @Override
     public int getSizeGUI() {
-        return 20;
+        return 25;
     }
 
     @Override
     public float getYAxisGUI() {
         return 0.0625F;
+    }
+
+    @Override
+    public float getWeaponBoneXRotation() {
+        return -80.0F;
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -17,7 +18,10 @@ public class CoppieEntity extends SettlementGirlEntityAI {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createDefaultAttributes();
+        return createDefaultAttributes()
+                .add(Attributes.MAX_HEALTH, 15.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 
     @Override
@@ -32,7 +36,7 @@ public class CoppieEntity extends SettlementGirlEntityAI {
 
     @Override
     public int getSizeGUI() {
-        return 20;
+        return 35;
     }
 
     @Override
