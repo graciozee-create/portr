@@ -167,6 +167,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public void setTamedBy(Player player) {
         this.setTamed(true);
         this.setOwnerUUID(player.getUUID());
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            com.sandymandy.pleasurehorizons.advancement.criterion.PleasureHorizonsCriteria
+                    .TAME_GIRL.get().trigger(serverPlayer, this);
+        }
     }
 
     // ------------------------------------------------------------ interaction

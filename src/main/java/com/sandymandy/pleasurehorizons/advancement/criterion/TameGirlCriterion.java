@@ -3,6 +3,7 @@ package com.sandymandy.pleasurehorizons.advancement.criterion;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
+import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
@@ -20,7 +21,7 @@ public class TameGirlCriterion extends SimpleCriterionTrigger<TameGirlCriterion.
         return Conditions.CODEC;
     }
 
-    public void trigger(ServerPlayer player, Object entity) {
+    public void trigger(ServerPlayer player, GirlEntity entity) {
         this.trigger(player, conditions -> true);
     }
 
