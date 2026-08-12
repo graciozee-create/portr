@@ -57,10 +57,33 @@ public class PleasureHorizonsClientEvents {
         com.sandymandy.pleasurehorizons.util.SceneKeyframeEventReloader.registerClient(event);
     }
 
+    /**
+     * Mirrors the freecam config into its plain fields whenever it is loaded or edited.
+     *
+     * <p>Both events are handled so changing the toml while the game is running takes effect
+     * without a restart.</p>
+     */
+    @SubscribeEvent
+    public static void onConfigLoad(net.neoforged.fml.event.config.ModConfigEvent.Loading event) {
+        if (event.getConfig().getSpec() == com.sandymandy.pleasurehorizons.freecam.FreecamConfig.SPEC) {
+            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.sync();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onConfigReload(net.neoforged.fml.event.config.ModConfigEvent.Reloading event) {
+        if (event.getConfig().getSpec() == com.sandymandy.pleasurehorizons.freecam.FreecamConfig.SPEC) {
+            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.sync();
+        }
+    }
+
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(PleasureHorizonsKeybinds.THRUST_KEY);
         event.register(PleasureHorizonsKeybinds.CUM_KEY);
+        event.register(PleasureHorizonsKeybinds.FREECAM_TOGGLE_KEY);
+        event.register(PleasureHorizonsKeybinds.FREECAM_PLAYER_CONTROL_KEY);
+        event.register(PleasureHorizonsKeybinds.FREECAM_TRIPOD_RESET_KEY);
     }
 
     /**

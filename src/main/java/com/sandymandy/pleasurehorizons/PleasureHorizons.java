@@ -75,6 +75,9 @@ public class PleasureHorizons {
 
         if (dist == Dist.CLIENT) {
             modEventBus.addListener(PleasureHorizonsClient::onClientSetup);
+            // Freecam settings live in a CLIENT config; registering it here (rather than in
+            // client setup) is required because NeoForge reads the spec during mod loading.
+            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.register(container);
         }
     }
 

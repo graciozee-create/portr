@@ -18,6 +18,7 @@ import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -185,23 +186,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (this.isDowned()) {
             // Allow carrying wounded girl on hands even when downed (rescue)
             if (player.isShiftKeyDown() && stack.isEmpty() && this.isOwner(player)) {
-                if (this.isPassenger() && this.getVehicle() == player) {
-                    this.stopRiding();
-                    float yawRad = (float) Math.toRadians(player.getYRot());
-                    double forwardX = -Math.sin(yawRad) * 1.0;
-                    double forwardZ = Math.cos(yawRad) * 1.0;
-                    this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
-                    this.setNoGravity(false);
-                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
-                } else {
-                    this.getNavigation().stop();
-                    this.setTarget(null);
-                    this.setSitting(false);
-                    this.setNoGravity(true);
-                    this.startRiding(player, true);
-                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
-                }
-                return InteractionResult.SUCCESS;
+                return this.toggleCarry(player);
             }
 
             boolean isFood = stack.get(DataComponents.FOOD) != null;
@@ -248,35 +233,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
-            // Improved carry: check if already riding this player
-            if (this.isPassenger() && this.getVehicle() == player) {
-                // Put down - place her slightly in front of player
-                this.stopRiding();
-                // Place in front of player to avoid suffocation
-                float yawRad = (float) Math.toRadians(player.getYRot());
-                double forwardX = -Math.sin(yawRad) * 1.0;
-                double forwardZ = Math.cos(yawRad) * 1.0;
-                this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
-                this.setNoGravity(false);
-                this.setSitting(false);
-                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
-            } else {
-                // Pick up - only owner can carry, and not if already in scene
-                if (this.isVehicle()) {
-                    // If she is carrying someone (should not happen), dismount them
-                    this.ejectPassengers();
-                }
-                this.getNavigation().stop();
-                this.setTarget(null);
-                this.setSitting(false);
-                this.setNoGravity(true);
-                // Force riding with proper positioning
-                this.startRiding(player, true);
-                // Ensure she is positioned correctly relative to player
-                // In first person she will be rendered on right side via GirlRenderer
-                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
-            }
-            return InteractionResult.SUCCESS;
+            return this.toggleCarry(player);
         }
 
         if (!this.isSceneActive() && player.isShiftKeyDown()) {
@@ -322,6 +279,81 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return super.hurt(source, amount);
     }
 
+    /**
+     * Picks the girl up onto the player's hands, or puts her down if already carried.
+     *
+     * <p>This used to look like it worked but froze the girl on the carrying player's own
+     * screen. The cause is vanilla entity tracking, not the mount itself:</p>
+     *
+     * <ul>
+     *   <li>{@code ChunkMap.TrackedEntity#updatePlayer} opens with {@code if (player != this.entity)},
+     *       so a player is never sent tracking updates about <em>themselves</em>. When the vehicle
+     *       is a player, the {@link ClientboundSetPassengersPacket} that vanilla would normally
+     *       broadcast from {@code ServerEntity#sendChanges} is therefore never delivered to the
+     *       carrier's own client.</li>
+     *   <li>Meanwhile {@code ServerEntity#sendChanges} stops sending position updates for an
+     *       entity that {@code isPassenger()}, because passengers are positioned client-side by
+     *       their vehicle.</li>
+     * </ul>
+     *
+     * <p>So the carrier's client kept the girl at her last broadcast position with no vehicle link
+     * and no further movement packets - a girl frozen in mid-air. Other players saw her carried
+     * correctly, which matches the reported symptom exactly.</p>
+     *
+     * <p>The fix is to explicitly send the passenger list to the carrying player, since the server
+     * will not do it for them. Everything else (goal suppression, gravity) already worked.</p>
+     */
+    protected InteractionResult toggleCarry(Player player) {
+        if (this.isPassenger() && this.getVehicle() == player) {
+            this.stopRiding();
+            // Place her in front of the player so she does not spawn inside him.
+            float yawRad = (float) Math.toRadians(player.getYRot());
+            double forwardX = -Math.sin(yawRad);
+            double forwardZ = Math.cos(yawRad);
+            this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ,
+                    this.getYRot(), this.getXRot());
+            this.setNoGravity(false);
+            this.setSitting(false);
+            this.syncCarryState(player);
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isVehicle()) {
+            // She must not be carrying anyone while being carried herself.
+            this.ejectPassengers();
+        }
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setSitting(false);
+
+        // startRiding(force = true) skips canRide()/canAddPassenger(); it only fails on a
+        // ride cycle. Bail out without touching gravity if the mount did not take, otherwise
+        // she would float in place - the previous behaviour.
+        if (!this.startRiding(player, true)) {
+            return InteractionResult.FAIL;
+        }
+
+        this.setNoGravity(true);
+        this.syncCarryState(player);
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
+        return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * Sends the vehicle's passenger list to the vehicle player themselves.
+     *
+     * <p>Required because vanilla entity tracking never informs a player about their own entity,
+     * so a player-as-vehicle mount is invisible to the carrier without this.</p>
+     */
+    private void syncCarryState(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetPassengersPacket(player));
+        }
+    }
+
     @Override
     protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
         // Girls should not carry other entities while being carried themselves
@@ -331,32 +363,51 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return super.canAddPassenger(passenger);
     }
 
+    /**
+     * Where the carrier's client places her hitbox while she is carried.
+     *
+     * <p>The default passenger attachment sits at the vehicle's eye height, which for a player
+     * vehicle puts her floating above his head. This lowers her to chest height and pushes her
+     * slightly forward so the server-side hitbox roughly matches the bridal-carry pose that
+     * {@code GirlRenderer} draws.</p>
+     */
+    @Override
+    public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+        if (vehicle instanceof Player) {
+            return new net.minecraft.world.phys.Vec3(0.0, -0.7, 0.0);
+        }
+        return super.getVehicleAttachmentPoint(vehicle);
+    }
+
+    /** She is baggage while carried - no collision pushing against the carrier. */
+    @Override
+    public boolean canBeCollidedWith() {
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            return false;
+        }
+        return super.canBeCollidedWith();
+    }
+
     @Override
     public void tick() {
         super.tick();
         // While being carried, ensure she stays nicely positioned and doesn't suffocate
         if (this.isPassenger() && this.getVehicle() instanceof Player player) {
-            // Keep her looking at player or forward with cute pose
-            // Slightly adjust eye height to prevent camera clipping in first person for other players
             this.setNoGravity(true);
-            // Prevent her from being pushed out by blocks while carried
-            this.noPhysics = false; // keep physics but no gravity
+            // Suppress leftover AI motion; the vehicle positions her every tick.
+            this.getNavigation().stop();
+            this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
 
-            // If player is in water, dismount to prevent drowning
-            if (player.isInWater() && player.tickCount % 20 == 0) {
-                // Optional: auto-dismount in water? Keep for now
-            }
-
-            // If player dies or disconnects, dismount safely
+            // Drop her safely if the carrier dies or leaves, otherwise she would be stuck
+            // riding a removed entity.
             if (!player.isAlive() || player.isRemoved()) {
                 this.stopRiding();
                 this.setNoGravity(false);
+                this.syncCarryState(player);
             }
-        } else {
-            // Not being carried, restore gravity if not already
-            if (!this.isNoGravity() && this.isInWater()) {
-                // water logic handled by FloatGoal
-            }
+        } else if (this.isNoGravity() && !this.isSceneActive() && !this.level().isClientSide()) {
+            // Failsafe: never leave her weightless once the carry has ended.
+            this.setNoGravity(false);
         }
     }
 

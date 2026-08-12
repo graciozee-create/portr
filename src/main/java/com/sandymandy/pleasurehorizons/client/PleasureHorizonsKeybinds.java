@@ -28,6 +28,31 @@ public class PleasureHorizonsKeybinds {
             org.lwjgl.glfw.GLFW.GLFW_KEY_V,
             CATEGORY);
 
+    /**
+     * Freecam controls, mirroring upstream's {@code ModBindings}.
+     *
+     * <p>Upstream defaults the toggle to F4 and leaves the other two unbound; the same is done
+     * here. Holding the toggle and tapping a hotbar number addresses tripod 1-9, which is the
+     * "combo key" behaviour of {@code FreecamComboKeyMapping}.</p>
+     */
+    public static final KeyMapping FREECAM_TOGGLE_KEY = new KeyMapping(
+            "key.pleasurehorizons.freecam.toggle",
+            InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_F4,
+            CATEGORY);
+
+    public static final KeyMapping FREECAM_PLAYER_CONTROL_KEY = new KeyMapping(
+            "key.pleasurehorizons.freecam.player_control",
+            InputConstants.Type.KEYSYM,
+            InputConstants.UNKNOWN.getValue(),
+            CATEGORY);
+
+    public static final KeyMapping FREECAM_TRIPOD_RESET_KEY = new KeyMapping(
+            "key.pleasurehorizons.freecam.tripod_reset",
+            InputConstants.Type.KEYSYM,
+            InputConstants.UNKNOWN.getValue(),
+            CATEGORY);
+
     /** Kept for the old call sites that referenced the lowercase names. */
     public static KeyMapping thrustKey = THRUST_KEY;
     public static KeyMapping cumKey = CUM_KEY;
