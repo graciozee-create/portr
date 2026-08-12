@@ -1,6 +1,6 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
-import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
+import com.sandymandy.pleasurehorizons.entity.base.wild.WildGirlEntity;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-public class SlimeEntity extends SettlementGirlEntityAI {
+public class SlimeEntity extends WildGirlEntity {
     public SlimeEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
     }
