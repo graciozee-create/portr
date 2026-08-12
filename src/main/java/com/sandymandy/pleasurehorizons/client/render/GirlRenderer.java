@@ -68,6 +68,13 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, colour);
 
+        boolean carriedByLocalPlayer = animatable.getVehicle() != null
+                && animatable.getVehicle().is(net.minecraft.client.Minecraft.getInstance().player)
+                && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        if (carriedByLocalPlayer) {
+            poseStack.scale(0.0F, 0.0F, 0.0F);
+        }
+
         // The partner rig is scene-only; keep the whole sub-tree hidden otherwise.
         boolean sceneActive = animatable.isSceneActive();
         model.getBone(PARTNER_BONE).ifPresent(bone -> bone.setHidden(!sceneActive));

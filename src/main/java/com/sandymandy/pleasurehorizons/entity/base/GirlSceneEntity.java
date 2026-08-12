@@ -102,7 +102,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
                     RawAnimation.begin().then(getAnimationPath(sceneAnim), Animation.LoopType.LOOP));
         }
 
-        if (isSitting()) {
+        if (isSitting() || (isPassenger() && getVehicle() instanceof net.minecraft.world.entity.player.Player)) {
             return state.setAndContinue(
                     RawAnimation.begin().then(getAnimationPath("sit"), Animation.LoopType.LOOP));
         }

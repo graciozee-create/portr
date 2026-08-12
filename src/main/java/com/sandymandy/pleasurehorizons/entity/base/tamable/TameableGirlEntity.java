@@ -158,7 +158,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     protected InteractionResult interactTamed(Player player, ItemStack stack) {
         if (this.isDowned()) {
-            if (stack.is(this.isAttractedTo()) || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
+            boolean isFood = stack.get(DataComponents.FOOD) != null;
+            if (stack.is(this.isAttractedTo()) || isFood || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
@@ -168,7 +169,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 player.displayClientMessage(Component.literal("§a§l" + this.getGirlDisplayName() + " пришла в себя и полностью исцелена!"), true);
                 return InteractionResult.SUCCESS;
             } else {
-                player.displayClientMessage(Component.literal("§e§l" + this.getGirlDisplayName() + " без сознания. Дайте ей её любимый предмет, золотое яблоко или золотую морковь, чтобы помочь ей!"), true);
+                player.displayClientMessage(Component.literal("§e§l" + this.getGirlDisplayName() + " без сознания. Дайте ей любую еду или её любимый предмет, чтобы помочь ей!"), true);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -197,6 +198,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
             this.setCurrentRelationshipLevel(this.getCurrentRelationshipLevel() + 1);
             this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
+            return InteractionResult.SUCCESS;
+        }
+
+        if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
+            if (this.isPassengerOfSameVehicle(player) || this.getVehicle() == player) {
+                this.stopRiding();
+                player.displayClientMessage(Component.literal("§e" + this.getGirlDisplayName() + " опущена на землю."), true);
+            } else {
+                this.startRiding(player, true);
+                player.displayClientMessage(Component.literal("§a" + this.getGirlDisplayName() + " взята на руки! (Shift + ПКМ пустой рукой, чтобы опустить)"), true);
+            }
             return InteractionResult.SUCCESS;
         }
 
