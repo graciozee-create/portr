@@ -33,7 +33,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -85,7 +84,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(0, new StopMovementGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
+        // Combat goal is added by SettlementGirlEntityAI, which is the level that can
+        // actually fire a bow (it implements RangedAttackMob).
+        this.registerCombatGoals();
         this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
         this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
@@ -99,6 +100,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
         this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
+    }
+
+    /** Overridden by weapon-capable subclasses; plain melee by default. */
+    protected void registerCombatGoals() {
+        this.goalSelector.addGoal(2,
+                new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2D, true));
     }
 
     // ------------------------------------------------------------ ownership
