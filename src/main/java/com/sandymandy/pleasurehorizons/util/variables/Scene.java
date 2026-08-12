@@ -17,9 +17,9 @@ import java.util.List;
  * {@code StreamCodec.composite}. {@code PacketCodecs.collection(ArrayList::new, X)} maps to
  * {@code ByteBufCodecs.collection(ArrayList::new, X)}.</p>
  *
- * <p>The nested {@code SceneAnimations} record has eight fields, one more than
- * {@code StreamCodec.composite} supports, so its stream codec is written out by hand -
- * the same workaround already used by {@code KoboldCustomizeC2SPacket}.</p>
+ * <p>{@code StreamCodec.composite} only goes up to six fields on 1.21.1, so the nested
+ * {@code SceneAnimations} (eight) and {@code SceneOptions} (seven) records get hand-written
+ * stream codecs - the same workaround already used by {@code KoboldCustomizeC2SPacket}.</p>
  */
 public class Scene {
 
@@ -260,16 +260,32 @@ public class Scene {
                 Codec.INT.fieldOf("amountOfLoops").forGetter(SceneOptions::amountOfLoops)
         ).apply(instance, SceneOptions::new));
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, SceneOptions> PACKET_CODEC = StreamCodec.composite(
-                ByteBufCodecs.FLOAT, SceneOptions::cumThreshold,
-                ByteBufCodecs.BOOL, SceneOptions::needsToStrip,
-                ByteBufCodecs.BOOL, SceneOptions::useKeyFrameEvents,
-                ByteBufCodecs.BOOL, SceneOptions::countTowardsImpregnation,
-                ByteBufCodecs.BOOL, SceneOptions::hidePlayer,
-                ByteBufCodecs.FLOAT, SceneOptions::bedAlignmentOffset,
-                ByteBufCodecs.VAR_INT, SceneOptions::amountOfLoops,
-                SceneOptions::new
-        );
+        /** Hand-written too: {@code StreamCodec.composite} tops out at six fields on 1.21.1. */
+        public static final StreamCodec<RegistryFriendlyByteBuf, SceneOptions> PACKET_CODEC =
+                new StreamCodec<>() {
+                    @Override
+                    public SceneOptions decode(RegistryFriendlyByteBuf buf) {
+                        return new SceneOptions(
+                                buf.readFloat(),
+                                buf.readBoolean(),
+                                buf.readBoolean(),
+                                buf.readBoolean(),
+                                buf.readBoolean(),
+                                buf.readFloat(),
+                                buf.readVarInt());
+                    }
+
+                    @Override
+                    public void encode(RegistryFriendlyByteBuf buf, SceneOptions value) {
+                        buf.writeFloat(value.cumThreshold());
+                        buf.writeBoolean(value.needsToStrip());
+                        buf.writeBoolean(value.useKeyFrameEvents());
+                        buf.writeBoolean(value.countTowardsImpregnation());
+                        buf.writeBoolean(value.hidePlayer());
+                        buf.writeFloat(value.bedAlignmentOffset());
+                        buf.writeVarInt(value.amountOfLoops());
+                    }
+                };
 
         public static SceneOptions of(float cumThreshold, boolean needsToStrip, boolean useKeyFrameEvents,
                                       boolean countTowardsImpregnation, float bedAlignmentOffset) {

@@ -10,7 +10,8 @@ import java.util.EnumSet;
 /**
  * Pins a movement-locked girl in place.
  *
- * <p>Yarn to Mojang: {@code getBodyYaw}/{@code bodyYaw} → {@code getYBodyRot}/{@code setYBodyRot},
+ * <p>Yarn to Mojang: {@code getBodyYaw}/{@code bodyYaw} → the public {@code yBodyRot} field
+ * ({@code LivingEntity} exposes {@code setYBodyRot} but has no getter in 1.21.1),
  * {@code setVelocity} → {@code setDeltaMovement}, {@code setJumping} → {@code setJumping} (unchanged),
  * {@code MoveControl.moveTo} → {@code MoveControl.setWantedPosition}.</p>
  */
@@ -35,7 +36,7 @@ public class StopMovementGoal extends Goal {
 
     @Override
     public void start() {
-        bodyYaw = entity.getYBodyRot();
+        bodyYaw = entity.yBodyRot;
         haltMovement();
     }
 
