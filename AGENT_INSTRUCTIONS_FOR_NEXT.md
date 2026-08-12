@@ -109,7 +109,7 @@ gh api repos/graciozee-create/portr/check-runs/$ID/annotations \
   В оригинале это отдельная подсистема с миксинами в камеру; на NeoForge потребуется
   `ViewportEvent`/`ComputeCameraAngles` вместо миксинов Fabric.
 - **Конфиг** (`ModConfig`, `ModBindings`, `config/gui/*`) — в оригинале AutoConfig + Cloth Config
-  (Fabric-only). Сейчас `ModConfig` этоハードкод-дефолты в памяти: настройки не сохраняются и
+  (Fabric-only). Сейчас `ModConfig` это хардкод-дефолты в памяти: настройки не сохраняются и
   не редактируются. Нужен `neoforge.common.ModConfigSpec`.
 - **JigglePhysics** и `BoneOverrideRenderLayer` — физика груди/волос не портирована.
 - **Текстурные оверрайды костей** (`overrideBoneTexture`, скин игрока на кость `steve`,
