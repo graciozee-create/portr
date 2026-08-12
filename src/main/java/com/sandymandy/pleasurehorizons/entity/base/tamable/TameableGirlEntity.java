@@ -1,6 +1,8 @@
 package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
 import com.sandymandy.pleasurehorizons.entity.ai.goal.BedGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlAttackWithOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTrackOwnerAttackerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
@@ -92,6 +94,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // Defend the owner: retaliate against whoever hurt them, and join their fights.
+        this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
+        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
         this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
     }

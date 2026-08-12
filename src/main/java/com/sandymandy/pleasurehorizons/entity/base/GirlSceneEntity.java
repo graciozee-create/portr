@@ -620,6 +620,26 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         return true;
     }
 
+    /** Set by {@code PlayAttackAnimationS2CPacket} so remote clients see her swing too. */
+    public void triggerSwing() {
+        this.swinging = true;
+        this.swingTime = 0;
+    }
+
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        boolean hit = super.doHurtTarget(target);
+
+        if (hit && this.level() instanceof ServerLevel serverLevel) {
+            for (ServerPlayer player : serverLevel.players()) {
+                PacketDistributor.sendToPlayer(player,
+                        new com.sandymandy.pleasurehorizons.networking.S2C.PlayAttackAnimationS2CPacket(this.getId()));
+            }
+        }
+
+        return hit;
+    }
+
     private PlayState handleAttackAnimations(AnimationState<GirlSceneEntity> state) {
         AnimationController<?> controller = state.getController();
 
