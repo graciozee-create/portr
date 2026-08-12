@@ -13,11 +13,18 @@ import java.util.function.Supplier;
 
 public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSection<T> {
 
-    private final String label;
+    private final Component label;
     private final Supplier<Vec3> valueGetter;
     private final Consumer<Vec3> valueSetter;
 
+    /** String overload kept for call sites that still pass a raw literal. */
     public Vec3dInputSection(T entity, T previewEntity, String label,
+                             Supplier<Vec3> valueGetter,
+                             Consumer<Vec3> valueSetter) {
+        this(entity, previewEntity, Component.literal(label), valueGetter, valueSetter);
+    }
+
+    public Vec3dInputSection(T entity, T previewEntity, Component label,
                              Supplier<Vec3> valueGetter,
                              Consumer<Vec3> valueSetter) {
         super(entity, previewEntity);
@@ -35,7 +42,7 @@ public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSecti
         Vec3 current = valueGetter.get();
 
         StringWidget labelWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
-                Component.literal(label), Minecraft.getInstance().font);
+                label, Minecraft.getInstance().font);
         screen.addWidget(labelWidget);
         currentY += 20;
 

@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSection<T> {
 
-    private final String title;
+    private final Component title;
     private final String groupId;
     private final V[] options;
     private final int columns;
@@ -22,7 +22,14 @@ public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSe
     private final Consumer<V> onSelect;
     private final Supplier<V> currentValue;
 
+    /** String overload kept for call sites that still pass a raw literal. */
     public ButtonGridSection(T entity, T previewEntity, String title, String groupId, V[] options, int columns,
+                             Function<V, Component> labelProvider, Consumer<V> onSelect, Supplier<V> currentValue) {
+        this(entity, previewEntity, Component.literal(title), groupId, options, columns,
+                labelProvider, onSelect, currentValue);
+    }
+
+    public ButtonGridSection(T entity, T previewEntity, Component title, String groupId, V[] options, int columns,
                              Function<V, Component> labelProvider, Consumer<V> onSelect, Supplier<V> currentValue) {
         super(entity, previewEntity);
         this.title = title;
@@ -41,7 +48,7 @@ public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSe
     @Override
     public int render(CustomizeScreen<T> screen, LayoutConfig layout, int currentY) {
         StringWidget titleWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
-                Component.literal(title), Minecraft.getInstance().font);
+                title, Minecraft.getInstance().font);
         screen.addWidget(titleWidget);
         currentY += 20;
 
