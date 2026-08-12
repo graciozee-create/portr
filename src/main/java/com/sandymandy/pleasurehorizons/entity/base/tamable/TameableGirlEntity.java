@@ -65,8 +65,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    private static final double CARRY_RIGHT_OFFSET = 0.50D;
-    private static final double CARRY_FORWARD_OFFSET = 0.16D;
+    private static final double CARRY_RIGHT_OFFSET = 0.36D;
+    private static final double CARRY_FORWARD_OFFSET = 0.03D;
+    private static final double CARRY_VERTICAL_OFFSET = -0.12D;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -416,10 +417,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * translation, a {@code 0.62} scale and render-time entity movement; those overlapping
      * coordinate systems caused the reported hovering and shrinking.</p>
      *
-     * <p>The vertical component centers both full-size hitboxes. The horizontal component places
-     * her just in front of the carrier's right side and rotates with the carrier's body. Because
-     * this is the sole positional calculation, normal passenger ticking keeps the server, the
-     * carrier and every observer on the same coordinates.</p>
+     * <p>The vertical component aligns the full-size hitboxes, then lowers her slightly into a
+     * supported hip-height hold. The much smaller horizontal offsets place her against the
+     * carrier's right/front side instead of leaving a visible body gap. Because this is the sole
+     * positional calculation, normal passenger ticking keeps the server, carrier and observers on
+     * the same coordinates.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
@@ -433,8 +435,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             double offsetZ = rightZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
             double centeredHeight = (vehicle.getBbHeight() + this.getBbHeight()) * 0.5D;
 
-            // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset.
-            return new net.minecraft.world.phys.Vec3(-offsetX, centeredHeight, -offsetZ);
+            // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset
+            // and subtraction of the desired (negative/downward) vertical offset.
+            return new net.minecraft.world.phys.Vec3(
+                    -offsetX, centeredHeight - CARRY_VERTICAL_OFFSET, -offsetZ);
         }
         return super.getVehicleAttachmentPoint(vehicle);
     }

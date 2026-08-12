@@ -72,25 +72,67 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
             currentRenderModel = model;
         }
 
-        boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
-
-        if (isCarried) {
-            // The passenger attachment owns the complete world position. The renderer only
-            // adds a slight lean and movement sway; it must never move or resize the entity.
-            poseStack.mulPose(Axis.ZP.rotationDegrees(-8.0F));
-
-            if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
-                float walk = player.walkAnimation.position(partialTick);
-                float sway = net.minecraft.util.Mth.sin(walk * 0.6F) * 3.0F
-                        * player.walkAnimation.speed(partialTick);
-                poseStack.mulPose(Axis.XP.rotationDegrees(sway));
-            }
+        if (!isReRender
+                && animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player carrier) {
+            applyFirstPersonCarryFraming(poseStack, carrier);
         }
 
         // GeckoLib applies controller animations in actuallyRender, after preRender. Bone
         // changes made here would therefore be overwritten. They are applied lazily from the
         // first renderRecursively call instead, then restored in postRender.
         updatePartnerSkin(animatable);
+    }
+
+    /**
+     * Keeps the full-size carried model out of the centre of the local carrier's first-person
+     * view. This is deliberately a camera-only translation: observers still see the authoritative
+     * close attachment, and the model is never shrunk into a miniature passenger.
+     */
+    private void applyFirstPersonCarryFraming(PoseStack poseStack,
+                                               net.minecraft.world.entity.player.Player carrier) {
+        net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+        if (minecraft.player != carrier
+                || minecraft.getCameraEntity() != carrier
+                || minecraft.options.getCameraType() != net.minecraft.client.CameraType.FIRST_PERSON) {
+            return;
+        }
+
+        // Use the camera basis rather than body yaw so the framing stays low and toward the
+        // outside of the viewport even while the player looks around independently of their body.
+        net.minecraft.client.Camera camera = minecraft.gameRenderer.getMainCamera();
+        org.joml.Vector3f outside = camera.getLeftVector();
+        org.joml.Vector3f forward = camera.getLookVector();
+        org.joml.Vector3f up = camera.getUpVector();
+
+        poseStack.translate(
+                outside.x() * FIRST_PERSON_OUTWARD_SHIFT
+                        + forward.x() * FIRST_PERSON_FORWARD_SHIFT
+                        + up.x() * FIRST_PERSON_DOWN_SHIFT,
+                outside.y() * FIRST_PERSON_OUTWARD_SHIFT
+                        + forward.y() * FIRST_PERSON_FORWARD_SHIFT
+                        + up.y() * FIRST_PERSON_DOWN_SHIFT,
+                outside.z() * FIRST_PERSON_OUTWARD_SHIFT
+                        + forward.z() * FIRST_PERSON_FORWARD_SHIFT
+                        + up.z() * FIRST_PERSON_DOWN_SHIFT);
+    }
+
+    /**
+     * Applies the lean after GeckoLib rotates the model to entity yaw. Doing this in preRender
+     * rotates around world Z instead, so the girl leans away whenever the carrier changes facing.
+     */
+    @Override
+    protected void applyRotations(T animatable, PoseStack poseStack, float ageInTicks,
+                                  float rotationYaw, float partialTick, float nativeScale) {
+        super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
+
+        if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player carrier) {
+            poseStack.mulPose(Axis.ZP.rotationDegrees(CARRY_INWARD_LEAN));
+
+            float walk = carrier.walkAnimation.position(partialTick);
+            float sway = net.minecraft.util.Mth.sin(walk * 0.6F) * CARRY_SWAY_DEGREES
+                    * carrier.walkAnimation.speed(partialTick);
+            poseStack.mulPose(Axis.XP.rotationDegrees(sway));
+        }
     }
 
     /**
@@ -130,25 +172,42 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     }
 
     /**
-     * Tucks the knees and arms into a compact carried pose instead of leaving her standing.
-     * The pose is applied after the normal animation and restored after this render pass.
+     * Folds both knees toward the carrier and brings both forearms around the carrier's upper
+     * body. The pose is applied after the neutral animation and restored after this render pass.
      */
     private void applyCarryPose(BakedGeoModel model) {
-        setBoneRotation(model, "legL", CARRY_THIGH_PITCH, 0.0F, CARRY_THIGH_SPREAD);
-        setBoneRotation(model, "legR", CARRY_THIGH_PITCH, 0.0F, -CARRY_THIGH_SPREAD);
-        setBoneRotation(model, "shinL", CARRY_SHIN_PITCH, 0.0F, 0.0F);
-        setBoneRotation(model, "shinR", CARRY_SHIN_PITCH, 0.0F, 0.0F);
-        setBoneRotation(model, "armL", CARRY_ARM_PITCH, 0.0F, CARRY_ARM_SPREAD);
-        setBoneRotation(model, "armR", CARRY_ARM_PITCH, 0.0F, -CARRY_ARM_SPREAD);
+        setCarryBoneRotation(model, "legL",
+                CARRY_THIGH_PITCH, -CARRY_THIGH_WRAP, CARRY_THIGH_SPLAY);
+        setCarryBoneRotation(model, "legR",
+                CARRY_THIGH_PITCH, CARRY_THIGH_WRAP, -CARRY_THIGH_SPLAY);
+        setCarryBoneRotation(model, "shinL", CARRY_SHIN_PITCH, 0.0F, 0.0F);
+        setCarryBoneRotation(model, "shinR", CARRY_SHIN_PITCH, 0.0F, 0.0F);
+
+        setCarryBoneRotation(model, "armL",
+                CARRY_LEFT_UPPER_ARM_PITCH, CARRY_LEFT_UPPER_ARM_YAW,
+                CARRY_LEFT_UPPER_ARM_ROLL);
+        setCarryBoneRotation(model, "armR",
+                CARRY_RIGHT_UPPER_ARM_PITCH, CARRY_RIGHT_UPPER_ARM_YAW,
+                CARRY_RIGHT_UPPER_ARM_ROLL);
+        setCarryBoneRotation(model, "lowerArmL", CARRY_LEFT_ELBOW_PITCH, 0.0F, 0.0F);
+        setCarryBoneRotation(model, "lowerArmR", CARRY_RIGHT_ELBOW_PITCH, 0.0F, 0.0F);
     }
 
-    private void setBoneRotation(BakedGeoModel model, String boneName,
-                                 float xDeg, float yDeg, float zDeg) {
+    /**
+     * Accepts the same Blockbench degrees used by the animation JSON files. GeckoLib negates
+     * animation X/Y while baking but keeps Z unchanged; writing those JSON values directly into
+     * GeoBone was what made the old knees bend backwards. Initial rig rotation is retained just
+     * as it is for a normally evaluated GeckoLib animation.
+     */
+    private void setCarryBoneRotation(BakedGeoModel model, String boneName,
+                                      float xDeg, float yDeg, float zDeg) {
         model.getBone(boneName).ifPresent(bone -> {
             rememberBone(bone);
-            bone.setRotX(xDeg * ((float) Math.PI / 180F));
-            bone.setRotY(yDeg * ((float) Math.PI / 180F));
-            bone.setRotZ(zDeg * ((float) Math.PI / 180F));
+            software.bernie.geckolib.animation.state.BoneSnapshot initial = bone.getInitialSnapshot();
+            float radians = (float) Math.PI / 180F;
+            bone.setRotX(initial.getRotX() - xDeg * radians);
+            bone.setRotY(initial.getRotY() - yDeg * radians);
+            bone.setRotZ(initial.getRotZ() + zDeg * radians);
         });
     }
 
@@ -476,10 +535,24 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     /** Root bone of the embedded partner skeleton, present in every girl rig. */
     private static final String PARTNER_BONE = "steve";
 
-    // ---- carried pose ----
-    private static final float CARRY_THIGH_PITCH = -95.0F;
-    private static final float CARRY_THIGH_SPREAD = 12.0F;
-    private static final float CARRY_SHIN_PITCH = 105.0F;
-    private static final float CARRY_ARM_PITCH = -12.0F;
-    private static final float CARRY_ARM_SPREAD = 8.0F;
+    // ---- carried pose (Blockbench animation degrees) ----
+    private static final float CARRY_INWARD_LEAN = -8.0F;
+    private static final float CARRY_SWAY_DEGREES = 1.5F;
+    private static final float CARRY_THIGH_PITCH = -82.0F;
+    private static final float CARRY_THIGH_WRAP = 16.0F;
+    private static final float CARRY_THIGH_SPLAY = 5.0F;
+    private static final float CARRY_SHIN_PITCH = 72.0F;
+    private static final float CARRY_LEFT_UPPER_ARM_PITCH = -87.0F;
+    private static final float CARRY_LEFT_UPPER_ARM_YAW = -10.0F;
+    private static final float CARRY_LEFT_UPPER_ARM_ROLL = 8.0F;
+    private static final float CARRY_RIGHT_UPPER_ARM_PITCH = -85.0F;
+    private static final float CARRY_RIGHT_UPPER_ARM_YAW = 10.0F;
+    private static final float CARRY_RIGHT_UPPER_ARM_ROLL = -12.0F;
+    private static final float CARRY_LEFT_ELBOW_PITCH = -84.0F;
+    private static final float CARRY_RIGHT_ELBOW_PITCH = -93.0F;
+
+    // Local first-person framing only; third-person and remote observers retain world attachment.
+    private static final double FIRST_PERSON_OUTWARD_SHIFT = 0.32D;
+    private static final double FIRST_PERSON_FORWARD_SHIFT = 0.24D;
+    private static final double FIRST_PERSON_DOWN_SHIFT = -0.24D;
 }
