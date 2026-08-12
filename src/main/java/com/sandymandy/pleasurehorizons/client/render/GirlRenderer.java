@@ -490,11 +490,19 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     // Local offsets in entity space. The entity itself is already placed at the carrier by
     // TameableGirlEntity#getVehicleAttachmentPoint, so these only fine-tune the seat.
     /** Positive X is the carrier's right, so she sits on the right shoulder. */
-    private static final float SHOULDER_RIGHT = 0.32F;
-    /** Lifts her from chest height (where the hitbox sits) up onto the shoulder. */
-    private static final float SHOULDER_UP = 0.62F;
-    /** Slightly behind the shoulder line so she does not clip through the chest. */
-    private static final float SHOULDER_FORWARD = -0.08F;
+    private static final float SHOULDER_RIGHT = 0.28F;
+    /**
+     * Fine-tuning only. The height now comes from the vehicle attachment point in
+     * TameableGirlEntity, which already seats her origin at shoulder level; lifting her
+     * again here is what made her float above the carrier's head.
+     */
+    private static final float SHOULDER_UP = 0.0F;
+    /**
+     * Nudges her forward onto the front of the shoulder. The sign is taken from the reported
+     * behaviour: the previous -0.08 visibly placed her behind the carrier's back, so positive
+     * Z is forward here.
+     */
+    private static final float SHOULDER_FORWARD = 0.12F;
     /** Scaled down a little so a full-size girl does not dwarf the player. */
     private static final float CARRY_SCALE = 0.62F;
 

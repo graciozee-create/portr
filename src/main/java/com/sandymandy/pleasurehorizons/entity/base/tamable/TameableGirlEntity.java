@@ -397,14 +397,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * <p>The default {@code PASSENGER} attachment falls back to the vehicle's full height, which
      * for a player vehicle parks her on top of his head. Vanilla positions a passenger at
      * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}
-     * (see {@code Entity#positionRider}), so a <em>positive</em> Y here moves her down. 0.7
-     * brings her to roughly chest height, matching the bridal-carry pose {@code GirlRenderer}
-     * draws.</p>
+     * (see {@code Entity#positionRider}), so a <em>positive</em> Y here moves her down.</p>
+     *
+     * <p>A player's passenger position is his eye height, 1.62. Subtracting 0.42 seats her
+     * origin at 1.2 - shoulder level - so the renderer no longer has to lift her at all.
+     * Previously this returned 0.7 <em>and</em> the renderer added another 0.62 on top, which
+     * stacked up to 1.72 and left her floating above the carrier's head.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
         if (vehicle instanceof Player) {
-            return new net.minecraft.world.phys.Vec3(0.0, 0.7, 0.0);
+            return new net.minecraft.world.phys.Vec3(0.0, 0.42, 0.0);
         }
         return super.getVehicleAttachmentPoint(vehicle);
     }
@@ -432,11 +435,18 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // leftover look target spins her around on the player's shoulder. All four
             // rotation fields have to be written, including the "O" (previous tick) ones,
             // or the renderer interpolates between the old and new yaw and she jitters.
-            float carrierYaw = player.getYRot();
+            //
+            // This follows the carrier's BODY yaw, not getYRot(). For a player getYRot() is
+            // the head/look yaw, so using it turned her whole body every time the carrier
+            // moved the mouse - she swung around to face wherever he glanced. yBodyRot only
+            // changes when he actually turns his body, which is what a passenger rides with.
+            float carrierYaw = player.yBodyRot;
             this.setYRot(carrierYaw);
             this.yRotO = carrierYaw;
             this.setYBodyRot(carrierYaw);
             this.yBodyRotO = carrierYaw;
+            // Head follows the body, but GirlRenderer's head tracking is free to turn it
+            // within its own limits, so she can still glance around while being carried.
             this.setYHeadRot(carrierYaw);
             this.yHeadRotO = carrierYaw;
             this.setXRot(0.0F);
