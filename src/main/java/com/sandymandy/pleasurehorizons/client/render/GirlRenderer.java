@@ -141,10 +141,17 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
      * value is captured first and restored from {@link #postRender} after all render layers.
      */
     private void applyBoneOverrides(T animatable, BakedGeoModel model) {
-        model.getBone(PARTNER_BONE).ifPresent(bone -> {
-            rememberBone(bone);
-            bone.setHidden(!animatable.isSceneActive());
-        });
+        boolean showPartner = shouldRenderPartner(animatable);
+
+        // The partner must never be drawn in the main girl's-texture pass. Its dedicated skin
+        // layer temporarily reveals this tree only when the current scene actually uses it.
+        setBoneTreeHidden(model, PARTNER_BONE, true);
+
+        if (showPartner) {
+            boolean slim = animatable.isPlayerModelSlim();
+            PARTNER_SLIM_ARMS.forEach(name -> setBoneHidden(model, name, !slim));
+            PARTNER_WIDE_ARMS.forEach(name -> setBoneHidden(model, name, slim));
+        }
 
         Map<String, Boolean> visibility = animatable.boneVisibility;
         if (visibility != null) {
@@ -169,6 +176,31 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
 
     private void rememberBone(GeoBone bone) {
         renderedBoneStates.computeIfAbsent(bone, BoneRenderState::capture);
+    }
+
+    private void setBoneHidden(BakedGeoModel model, String name, boolean hidden) {
+        model.getBone(name).ifPresent(bone -> {
+            rememberBone(bone);
+            bone.setHidden(hidden);
+        });
+    }
+
+    private void setBoneTreeHidden(BakedGeoModel model, String name, boolean hidden) {
+        model.getBone(name).ifPresent(bone -> {
+            rememberBone(bone);
+            bone.setHidden(hidden);
+            bone.setChildrenHidden(hidden);
+        });
+    }
+
+    private boolean shouldRenderPartner(T animatable) {
+        boolean activePartnerPhase = switch (animatable.getCurrentScenePhase()) {
+            case NONE, BED_IDLE, LAYING_DOWN, DIALOG -> false;
+            default -> true;
+        };
+        return animatable.isSceneActive()
+                && activePartnerPhase
+                && !animatable.getCurrentScene().hidePlayer();
     }
 
     /**
@@ -224,8 +256,9 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
      * rather than once at scene start - the first frames would otherwise use the fallback.</p>
      */
     private void updatePartnerSkin(T animatable) {
-        if (!animatable.isSceneActive()) {
-            if (!animatable.boneTextureOverrides.isEmpty()) {
+        if (!shouldRenderPartner(animatable)) {
+            if (!animatable.boneTextureOverrides.isEmpty()
+                    || !animatable.boneTextureOverridesLayer2.isEmpty()) {
                 animatable.boneTextureOverrides.clear();
                 animatable.boneTextureOverridesLayer2.clear();
             }
@@ -534,6 +567,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
 
     /** Root bone of the embedded partner skeleton, present in every girl rig. */
     private static final String PARTNER_BONE = "steve";
+    private static final List<String> PARTNER_SLIM_ARMS = List.of(
+            "rightArmAlex", "rightLowerArmAlex", "leftLowerArmAlex", "leftArmAlex");
+    private static final List<String> PARTNER_WIDE_ARMS = List.of(
+            "rightArmSteve", "rightLowerArmSteve", "leftLowerArmSteve", "leftArmSteve");
 
     // ---- carried pose (Blockbench animation degrees) ----
     private static final float CARRY_INWARD_LEAN = -8.0F;
