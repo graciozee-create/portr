@@ -101,6 +101,20 @@ public abstract class GirlEntity extends PathfinderMob {
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Vector3f> BREAST_OFFSET =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
+    private static final EntityDataAccessor<Boolean> IS_DOWNED =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+
+    // --- AI Task toggles (new advanced AI system) ---
+    private static final EntityDataAccessor<Boolean> AI_GUARD_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GUARD_OWNER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GATHER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_HARVEST =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_STAY_NEAR_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
 
     public static final Random RANDOM = new Random();
 
@@ -166,6 +180,12 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(OVERRIDE_ANIM, "");
         builder.define(SCENE_ANIM, "");
         builder.define(CONSUMING_STACK, Items.COOKED_BEEF.getDefaultInstance());
+        builder.define(IS_DOWNED, false);
+        builder.define(AI_GUARD_BASE, false);
+        builder.define(AI_GUARD_OWNER, false);
+        builder.define(AI_GATHER, true); // gather by default is useful and non-intrusive
+        builder.define(AI_HARVEST, false);
+        builder.define(AI_STAY_NEAR_BASE, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -178,6 +198,22 @@ public abstract class GirlEntity extends PathfinderMob {
         return this.entityData.get(FOLLOWING);
     }
 
+    // --- AI toggles ---
+    public void setGuardBaseEnabled(boolean enabled) { this.entityData.set(AI_GUARD_BASE, enabled); }
+    public boolean isGuardBaseEnabled() { return this.entityData.get(AI_GUARD_BASE); }
+
+    public void setGuardOwnerEnabled(boolean enabled) { this.entityData.set(AI_GUARD_OWNER, enabled); }
+    public boolean isGuardOwnerEnabled() { return this.entityData.get(AI_GUARD_OWNER); }
+
+    public void setGatherEnabled(boolean enabled) { this.entityData.set(AI_GATHER, enabled); }
+    public boolean isGatherEnabled() { return this.entityData.get(AI_GATHER); }
+
+    public void setHarvestEnabled(boolean enabled) { this.entityData.set(AI_HARVEST, enabled); }
+    public boolean isHarvestEnabled() { return this.entityData.get(AI_HARVEST); }
+
+    public void setStayNearBaseEnabled(boolean enabled) { this.entityData.set(AI_STAY_NEAR_BASE, enabled); }
+    public boolean isStayNearBaseEnabled() { return this.entityData.get(AI_STAY_NEAR_BASE); }
+
     public void setStripped(boolean stripped) {
         this.entityData.set(STRIPPED, stripped);
     }
@@ -188,6 +224,14 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setFreeze(boolean locked) {
         this.entityData.set(FROZEN_STATE, locked);
+    }
+
+    public boolean isDowned() {
+        return this.entityData.get(IS_DOWNED);
+    }
+
+    public void setDowned(boolean downed) {
+        this.entityData.set(IS_DOWNED, downed);
     }
 
     public boolean isFrozenInPlace() {
@@ -282,6 +326,40 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setTemporaryState(boolean state) {
         this.entityData.set(IS_TEMPORARY, state);
+    }
+
+    public void applyClothingAndArmor() {
+    }
+
+    public boolean isArmorVisible(EquipmentSlot slot) {
+        return this.armorVisibility.getOrDefault(slot, true);
+    }
+
+    public void setArmorVisible(EquipmentSlot slot, boolean visible) {
+        this.armorVisibility.put(slot, visible);
+    }
+
+    public GirlEntity createTempClone() {
+        if (this.level().isClientSide()) return null;
+
+        GirlEntity clone = (GirlEntity) this.getType().create(this.level());
+        if (clone == null) return null;
+
+        clone.setTemporaryState(true);
+        clone.setPos(this.getX(), 800, this.getZ());
+        clone.setInvisible(true);
+        clone.setInvulnerable(true);
+        clone.setNoGravity(true);
+
+        this.onTempCloneCreation(clone);
+
+        this.level().addFreshEntity(clone);
+        this.setCreatedCloneState(true);
+        return clone;
+    }
+
+    public void onTempCloneCreation(GirlEntity clone) {
+        clone.setStripped(this.isStripped());
     }
 
     public boolean createdClone() {
@@ -478,6 +556,20 @@ public abstract class GirlEntity extends PathfinderMob {
         return true;
     }
 
+    public boolean hasHugAnimation() {
+        return false;
+    }
+
+    public boolean hasCarryAnimation() {
+        return false;
+    }
+
+    public String getCarryAnimation() {
+        if (hasCarryAnimation()) return "carry_slow1";
+        if (hasHugAnimation()) return "hugidle";
+        return "sit";
+    }
+
     public int maxRelationshipLevel() {
         return this.entityData.get(MAX_RELATIONSHIP_LEVEL);
     }
@@ -508,6 +600,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("Stripped", isStripped());
+        compound.putBoolean("Downed", isDowned());
         compound.putBoolean("Following", isFollowing());
         compound.putBoolean("Pregnant", isPregnant());
         compound.putBoolean("CanGetImpregnated", canGetImpregnated());
@@ -517,6 +610,12 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
         compound.putInt("BreastSize", getBreastSize());
         compound.putInt("MilkedAmount", getMilkedAmount());
+        // AI toggles
+        compound.putBoolean("AIGuardBase", isGuardBaseEnabled());
+        compound.putBoolean("AIGuardOwner", isGuardOwnerEnabled());
+        compound.putBoolean("AIGather", isGatherEnabled());
+        compound.putBoolean("AIHarvest", isHarvestEnabled());
+        compound.putBoolean("AIStayNearBase", isStayNearBaseEnabled());
 
         CompoundTag inventoryTag = new CompoundTag();
         ContainerHelper.saveAllItems(inventoryTag, this.inventory.getItems(), this.registryAccess());
@@ -527,6 +626,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         setStripped(compound.getBoolean("Stripped"));
+        setDowned(compound.getBoolean("Downed"));
         setFollowing(compound.getBoolean("Following"));
         setPregnantState(compound.getBoolean("Pregnant"));
         canGetImpregnatedState(compound.getBoolean("CanGetImpregnated"));
@@ -538,6 +638,11 @@ public abstract class GirlEntity extends PathfinderMob {
             setBreastSize(compound.getInt("BreastSize"));
         }
         setMilkedAmount(compound.getInt("MilkedAmount"));
+        if (compound.contains("AIGuardBase")) setGuardBaseEnabled(compound.getBoolean("AIGuardBase"));
+        if (compound.contains("AIGuardOwner")) setGuardOwnerEnabled(compound.getBoolean("AIGuardOwner"));
+        if (compound.contains("AIGather")) setGatherEnabled(compound.getBoolean("AIGather"));
+        if (compound.contains("AIHarvest")) setHarvestEnabled(compound.getBoolean("AIHarvest"));
+        if (compound.contains("AIStayNearBase")) setStayNearBaseEnabled(compound.getBoolean("AIStayNearBase"));
 
         if (compound.contains("Inventory")) {
             ContainerHelper.loadAllItems(

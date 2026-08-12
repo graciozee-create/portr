@@ -1,5 +1,6 @@
 package com.sandymandy.pleasurehorizons.screen;
 
+import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -10,7 +11,7 @@ public class SettlementHubScreenHandler extends AbstractContainerMenu {
     private final Settlement settlement;
 
     public SettlementHubScreenHandler(int syncId, Inventory playerInventory, Settlement data) {
-        super(null, syncId);
+        super(PleasureHorizonsScreenHandlerRegistry.SETTLEMENT_HUB_HOLDER.get(), syncId);
         this.settlement = data;
     }
 

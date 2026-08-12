@@ -1,7 +1,13 @@
 package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +17,9 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -62,14 +71,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(0, new StripGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
         this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
+        this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
+        this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
+        this.goalSelector.addGoal(5, new GirlStayNearBaseGoal(this, 1.0D, 3.0F, 10.0F)); // toggleable
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
+        this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
     }
 
     // ------------------------------------------------------------ ownership
@@ -146,6 +161,44 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     protected InteractionResult interactTamed(Player player, ItemStack stack) {
+        if (this.isDowned()) {
+            // Allow carrying wounded girl on hands even when downed (rescue)
+            if (player.isShiftKeyDown() && stack.isEmpty() && this.isOwner(player)) {
+                if (this.isPassenger() && this.getVehicle() == player) {
+                    this.stopRiding();
+                    float yawRad = (float) Math.toRadians(player.getYRot());
+                    double forwardX = -Math.sin(yawRad) * 1.0;
+                    double forwardZ = Math.cos(yawRad) * 1.0;
+                    this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
+                    this.setNoGravity(false);
+                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+                } else {
+                    this.getNavigation().stop();
+                    this.setTarget(null);
+                    this.setSitting(false);
+                    this.setNoGravity(true);
+                    this.startRiding(player, true);
+                    player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
+                }
+                return InteractionResult.SUCCESS;
+            }
+
+            boolean isFood = stack.get(DataComponents.FOOD) != null;
+            if (stack.is(this.isAttractedTo()) || isFood || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+                this.setDowned(false);
+                this.setHealth(this.getMaxHealth());
+                this.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.0F);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_revived", this.getGirlDisplayName()), true);
+                return InteractionResult.SUCCESS;
+            } else {
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_downed_need_food", this.getGirlDisplayName()), true);
+                return InteractionResult.SUCCESS;
+            }
+        }
+
         if (!this.isOwner(player)) {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.alreadyInRelationship"), true);
@@ -161,7 +214,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.likedGift"), true);
 
-            List<String> replies = this.getCurrentRelationshipLevel() < 4
+            List<Component> replies = this.getCurrentRelationshipLevel() < 4
                     ? this.giftRepliesLike()
                     : this.giftRepliesLove();
             if (!replies.isEmpty()) {
@@ -173,6 +226,38 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
+        if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
+            // Improved carry: check if already riding this player
+            if (this.isPassenger() && this.getVehicle() == player) {
+                // Put down - place her slightly in front of player
+                this.stopRiding();
+                // Place in front of player to avoid suffocation
+                float yawRad = (float) Math.toRadians(player.getYRot());
+                double forwardX = -Math.sin(yawRad) * 1.0;
+                double forwardZ = Math.cos(yawRad) * 1.0;
+                this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
+                this.setNoGravity(false);
+                this.setSitting(false);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+            } else {
+                // Pick up - only owner can carry, and not if already in scene
+                if (this.isVehicle()) {
+                    // If she is carrying someone (should not happen), dismount them
+                    this.ejectPassengers();
+                }
+                this.getNavigation().stop();
+                this.setTarget(null);
+                this.setSitting(false);
+                this.setNoGravity(true);
+                // Force riding with proper positioning
+                this.startRiding(player, true);
+                // Ensure she is positioned correctly relative to player
+                // In first person she will be rendered on right side via GirlRenderer
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         if (!this.isSceneActive() && player.isShiftKeyDown()) {
             this.setSitting(!this.isSitting());
             this.jumping = false;
@@ -181,17 +266,88 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         if (!this.isSceneActive()) {
-            // The full inventory/scene GUI is not ported yet; toggling following keeps her useful.
-            this.setFollowing(!this.isFollowing());
-            player.displayClientMessage(Component.translatable(
-                    this.isFollowing()
-                            ? "msg.pleasurehorizons.nowFollowing"
-                            : "msg.pleasurehorizons.nowStaying",
-                    this.getGirlDisplayName()), true);
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(new GirlInventoryScreenHandlerFactory(this), buf -> buf.writeVarInt(this.getId()));
+                this.setGUIOpenState(true, player);
+            }
             return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.FAIL;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isDowned()) {
+            return false;
+        }
+        // No fall damage while being carried on hands - princess carry should be safe
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            if (source.type().msgId().equals("fall") || source.type().msgId().equals("inWall")) {
+                return false;
+            }
+        }
+        float currentHealth = this.getHealth();
+        if (amount >= currentHealth) {
+            this.setDowned(true);
+            this.setHealth(1.0F);
+            this.getNavigation().stop();
+            this.setTarget(null);
+            if (this.getOwner() instanceof Player owner) {
+                owner.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_heavily_wounded", this.getGirlDisplayName()), true);
+            }
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
+    @Override
+    protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        // Girls should not carry other entities while being carried themselves
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            return false;
+        }
+        return super.canAddPassenger(passenger);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // While being carried, ensure she stays nicely positioned and doesn't suffocate
+        if (this.isPassenger() && this.getVehicle() instanceof Player player) {
+            // Keep her looking at player or forward with cute pose
+            // Slightly adjust eye height to prevent camera clipping in first person for other players
+            this.setNoGravity(true);
+            // Prevent her from being pushed out by blocks while carried
+            this.noPhysics = false; // keep physics but no gravity
+
+            // If player is in water, dismount to prevent drowning
+            if (player.isInWater() && player.tickCount % 20 == 0) {
+                // Optional: auto-dismount in water? Keep for now
+            }
+
+            // If player dies or disconnects, dismount safely
+            if (!player.isAlive() || player.isRemoved()) {
+                this.stopRiding();
+                this.setNoGravity(false);
+            }
+        } else {
+            // Not being carried, restore gravity if not already
+            if (!this.isNoGravity() && this.isInWater()) {
+                // water logic handled by FloatGoal
+            }
+        }
+    }
+
+    public void talkToPlayer(Player player) {
+        if (this.level().isClientSide()) return;
+        List<Component> replies = this.getCurrentRelationshipLevel() < 4
+                ? this.giftRepliesLike()
+                : this.giftRepliesLove();
+        if (!replies.isEmpty()) {
+            this.messageAsEntity(player, replies.get(RANDOM.nextInt(replies.size())));
+        }
+        this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
     }
 
     protected InteractionResult interactNotTamed(Player player, ItemStack stack) {
@@ -203,9 +359,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
-        player.displayClientMessage(Component.literal(
-                "She ignores you. Maybe try giving her "
-                        + this.isAttractedTo().getDescription().getString() + "."), true);
+        player.displayClientMessage(Component.translatable(
+                "msg.pleasurehorizons.girl_ignores",
+                this.isAttractedTo().getDescription().getString()), true);
         return InteractionResult.FAIL;
     }
 
@@ -216,8 +372,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.setTarget(null);
             this.setBasePos(this.blockPosition());
             this.playSound(SoundEvents.PLAYER_LEVELUP, 0.8F, 1.6F);
-            player.displayClientMessage(Component.literal(
-                    "You asked " + this.getGirlDisplayName() + " out and she said §aYes"), true);
+            player.displayClientMessage(Component.translatable(
+                    "msg.pleasurehorizons.tame_success", this.getGirlDisplayName()), true);
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,
                         this.getX(), this.getY() + 1.5D, this.getZ(), 7, 0.4D, 0.4D, 0.4D, 0.1D);
@@ -261,6 +417,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
     }
 
+    protected void messageAsEntity(Player player, Component message) {
+        player.displayClientMessage(
+                Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
+    }
+
     public String getGirlDisplayName() {
         if (this.hasCustomName()) {
             return this.getCustomName().getString();
@@ -269,13 +430,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return id.isEmpty() ? "Girl" : Character.toUpperCase(id.charAt(0)) + id.substring(1);
     }
 
-    public List<String> giftRepliesLike() {
-        return List.of("Wow, for me? Thanks!", "That's so nice of you...!", "Ahah, this is great!");
+    public List<Component> giftRepliesLike() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_like.1"),
+                Component.translatable("chat.pleasurehorizons.gift_like.2"),
+                Component.translatable("chat.pleasurehorizons.gift_like.3")
+        );
     }
 
-    public List<String> giftRepliesLove() {
-        return List.of("Oh, another one? Well, you're the real gift here~.",
-                "Babe, you're too nice.", "You always know what I like~.");
+    public List<Component> giftRepliesLove() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_love.1"),
+                Component.translatable("chat.pleasurehorizons.gift_love.2"),
+                Component.translatable("chat.pleasurehorizons.gift_love.3")
+        );
     }
 
     // ------------------------------------------------------------ misc
