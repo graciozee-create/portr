@@ -1,19 +1,13 @@
 package com.sandymandy.pleasurehorizons.networking.C2S;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
-import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
-import com.sandymandy.pleasurehorizons.entity.girls.KoboldEntity;
-import com.sandymandy.pleasurehorizons.networking.S2C.OpenCustomizeScreenS2CPacket;
-import com.sandymandy.pleasurehorizons.networking.S2C.OpenKoboldCustomizeScreenS2CPacket;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
@@ -70,19 +64,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 case "sit" -> girl.setSitting(!girl.isSitting());
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
                 case "talk" -> girl.talkToPlayer(ctx.player());
-                case "customize" -> {
-                    if (!(ctx.player() instanceof ServerPlayer serverPlayer)) return;
-                    GirlEntity clone = girl.createTempClone();
-                    if (clone != null) {
-                        if (girl instanceof KoboldEntity) {
-                            PacketDistributor.sendToPlayer(serverPlayer,
-                                    new OpenKoboldCustomizeScreenS2CPacket(girl.getId(), clone.getId()));
-                        } else {
-                            PacketDistributor.sendToPlayer(serverPlayer,
-                                    new OpenCustomizeScreenS2CPacket(girl.getId(), clone.getId()));
-                        }
-                    }
-                }
+                case "customize" -> {}
                 default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId());
             }
         });

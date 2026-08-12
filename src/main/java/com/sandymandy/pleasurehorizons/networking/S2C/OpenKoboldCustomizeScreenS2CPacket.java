@@ -23,14 +23,6 @@ public record OpenKoboldCustomizeScreenS2CPacket(int entityId, int previewEntity
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            try {
-                Class<?> handler = Class.forName("com.sandymandy.pleasurehorizons.client.networking.ClientPacketHandlers");
-                handler.getMethod("handleOpenKoboldCustomizeScreen", int.class, int.class)
-                        .invoke(null, this.entityId(), this.previewEntityId());
-            } catch (Exception e) {
-                PleasureHorizons.LOGGER.debug("OpenKoboldCustomizeScreen packet received on non-client side");
-            }
-        });
+        ctx.enqueueWork(() -> {});
     }
 }
