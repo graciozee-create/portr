@@ -1,12 +1,15 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
+import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+
+import java.util.List;
 
 public class LucyEntity extends SettlementGirlEntityAI {
     public LucyEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
@@ -35,5 +38,31 @@ public class LucyEntity extends SettlementGirlEntityAI {
     @Override
     public float getYAxisGUI() {
         return 0.0525F;
+    }
+
+    @Override
+    public List<Scene> getScenes() {
+        return List.of(
+                Scene.stationary("Masturbation", 4, "masturbating", 4, true, true),
+
+                Scene.onPlayer("Paizuri", 6,
+                        List.of("paizuri_intro"),
+                        List.of("paizuri_slow"),
+                        List.of("paizuri_fast"),
+                        "paizuri_cum", 4f, true, false, false),
+
+                Scene.onPlayer("Blow Job", 8,
+                        List.of("blowjob_intro"),
+                        List.of("blowjob_slow"),
+                        List.of("blowjob_fast"),
+                        "blowjob_cum", 2.5f, false, false, false),
+
+                Scene.onBed("Doggy", 10,
+                        List.of("doggy_intro"),
+                        List.of("doggy_slow"),
+                        List.of("doggy_fast1", "doggy_fast2"),
+                        "doggy_cum", 4.5f, true, true, true,
+                        0f, "doggy_lay_on_bed", "doggy_bed_idle")
+        );
     }
 }

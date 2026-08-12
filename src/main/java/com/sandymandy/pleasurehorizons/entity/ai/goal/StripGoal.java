@@ -8,6 +8,17 @@ import java.util.EnumSet;
 
 import static com.sandymandy.pleasurehorizons.util.Utils.isStringInQueue;
 
+/**
+ * Plays the strip/dress animation and flips the stripped flag.
+ *
+ * <p>Two differences from the Fabric original, both fixing a hard freeze:</p>
+ * <ul>
+ *     <li>{@link #stop()} always clears the freeze flag. Upstream only cleared it when the rig had
+ *     a strip animation, so a girl without one stayed frozen forever.</li>
+ *     <li>A tick-based fallback flips the flag if the {@code becomeNude} keyframe never arrives -
+ *     the event only reaches the server when a client is rendering her.</li>
+ * </ul>
+ */
 public class StripGoal extends Goal {
     private final GirlSceneEntity girl;
     private boolean stripTrigged = false;
@@ -29,6 +40,13 @@ public class StripGoal extends Goal {
     public void start() {
         girl.setFreeze(true);
         if (girl.hasStripAnim()) girl.setOverrideAnim("strip");
+
+        // A scene that required stripping parked itself here; resume it in stop().
+        if (girl.stripOptions != null && girl.stripOptions != Scene.EMPTY) {
+            this.scene = girl.stripOptions;
+            girl.stripOptions = Scene.EMPTY;
+        }
+
         stripTrigged = false;
         started = true;
         ticksInGoal = 0;
@@ -39,34 +57,27 @@ public class StripGoal extends Goal {
         ticksInGoal++;
 
         if (!girl.hasStripAnim()) {
-            // No animation - goal will stop immediately via canContinueToUse()==false,
-            // the toggle+unfreeze happens in stop(). Nothing to do here.
+            // No animation - the goal ends immediately, toggle + unfreeze happen in stop().
             return;
         }
 
         if (started) {
             if (!girl.isFrozenInPlace()) girl.setFreeze(true);
 
-            // Original logic: toggle when keyframe \"becomeNude\" fires
-            if (!stripTrigged && isStringInQueue(girl.animationKeyFrameEvent, "becomeNude".toLowerCase())) {
+            if (!stripTrigged
+                    && isStringInQueue(girl.getAnimationKeyFrameEvent(), "becomeNude".toLowerCase())) {
                 girl.setStripped(!girl.isStripped());
                 stripTrigged = true;
             }
 
-            // Fallback for NeoForge port where animation keyframe queue is not populated
-            // and/or client never sends becomeNude: toggle after ~0.5s
+            // Fallback: no client rendering her means no keyframe ever arrives.
             if (!stripTrigged && ticksInGoal >= 10) {
                 girl.setStripped(!girl.isStripped());
                 stripTrigged = true;
             }
 
-            // After toggle, keep animation playing a bit then clear override so goal can finish.
-            // Original Fabric cleared override via client packet when animation finished.
-            if (stripTrigged && ticksInGoal >= 30) {
-                // Clear override anim to let canContinueToUse() become false
-                if (!girl.getOverrideAnim().isEmpty()) {
-                    girl.setOverrideAnim("");
-                }
+            if (stripTrigged && ticksInGoal >= 30 && !girl.getOverrideAnim().isEmpty()) {
+                girl.setOverrideAnim("");
             }
         }
     }
@@ -74,31 +85,31 @@ public class StripGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (!girl.hasStripAnim()) return false;
-        // Keep running until stripped flag flipped and override anim cleared (or timed out)
         if (ticksInGoal > 60) return false; // hard timeout - never freeze forever
         return !stripTrigged || !girl.getOverrideAnim().isEmpty();
     }
 
     @Override
     public void stop() {
-        // Always unfreeze - fixes permanent freeze when hasStripAnim() == false or animation never ends
+        // Always unfreeze - this is what fixes the permanent freeze after pressing Strip.
         girl.setFreeze(false);
-        // Ensure override anim is cleared if we were the ones who set it
+
         if (girl.hasStripAnim() && "strip".equals(girl.getOverrideAnim())) {
             girl.setOverrideAnim("");
         }
         if (!girl.hasStripAnim() && started) {
-            // started==true ensures we only toggle once even if stop() called multiple times
             girl.setStripped(!girl.isStripped());
         }
+
         started = false;
         ticksInGoal = 0;
 
-        // If original code had a pending scene to resume after stripping, handle is stubbed in port
-        // (GirlSceneEntity no longer stores stripOptions). Keep hook for future.
-        if (scene != null && !scene.equals(Scene.EMPTY)) {
-            // In full port this would restart scene; in stub we just clear
-            scene = Scene.EMPTY;
+        // Resume the scene that asked her to strip first.
+        if (this.scene != null && this.scene != Scene.EMPTY) {
+            Scene pending = this.scene;
+            this.scene = Scene.EMPTY;
+            girl.stripOptions = pending;
+            girl.resumeAfterStrip();
         }
     }
 }

@@ -524,6 +524,16 @@ public abstract class GirlEntity extends PathfinderMob {
     /** Identifier used to pick models, textures and animations. */
     public abstract String getGirlID();
 
+    /**
+     * Scenes this girl offers in the "Talk" menu.
+     *
+     * <p>Every girl overrides this with her own list; the base returns an empty list so a rig
+     * without animations simply shows no options instead of crashing.</p>
+     */
+    public List<com.sandymandy.pleasurehorizons.util.variables.Scene> getScenes() {
+        return List.of();
+    }
+
     public int getBreastMinSize() {
         return 25;
     }

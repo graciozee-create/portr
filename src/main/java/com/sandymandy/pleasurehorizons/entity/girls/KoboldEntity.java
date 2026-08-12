@@ -6,12 +6,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+
+import java.util.List;
 
 public class KoboldEntity extends SettlementGirlEntityAI {
 
@@ -179,5 +182,21 @@ public class KoboldEntity extends SettlementGirlEntityAI {
             this.secondary = secondary;
         }
     }
-}
 
+    @Override
+    public List<Scene> getScenes() {
+        return List.of(
+                Scene.onPlayer("Blow Job", 4,
+                        List.of("blowjob_intro"),
+                        List.of("blowjob_slow_R", "blowjob_slow_L"),
+                        List.of("blowjob_fast"),
+                        "blowjob_cum", 2.5f, false, false, false),
+
+                Scene.onPlayer("Anal", 6,
+                        List.of("anal_intro"),
+                        List.of("anal_slow"),
+                        List.of("anal_fast"),
+                        "anal_cum", 4.5f, true, true, false)
+        );
+    }
+}

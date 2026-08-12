@@ -1,12 +1,15 @@
 package com.sandymandy.pleasurehorizons.entity.girls;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
+import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+
+import java.util.List;
 
 public class MikaEntity extends SettlementGirlEntityAI {
     public MikaEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
@@ -50,5 +53,30 @@ public class MikaEntity extends SettlementGirlEntityAI {
     @Override
     public float getYAxisGUI() {
         return 0.0625F;
+    }
+
+    @Override
+    public List<Scene> getScenes() {
+        return List.of(
+                Scene.onPlayer("Face fuck", 6,
+                        List.of("carry_intro"),
+                        List.of("carry_slow1"),
+                        List.of("carry_fast"),
+                        "carry_cum", 2.5f, false, false, false),
+
+                Scene.onBed("Missionary", 8,
+                        List.of("missionary_intro"),
+                        List.of("missionary_slow"),
+                        List.of("missionary_fast"),
+                        "missionary_cum", 3f, true, false, true,
+                        0.5f, "sit_down", "sit_down_idle"),
+
+                Scene.onBed("Cowgirl", 10,
+                        List.of("cowgirl_intro"),
+                        List.of("cowgirl_slow"),
+                        List.of("cowgirl_fast"),
+                        "cowgirl_cum", 3f, true, false, true,
+                        0.5f, "sit_down", "sit_down_idle")
+        );
     }
 }

@@ -1,5 +1,6 @@
 package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
+import com.sandymandy.pleasurehorizons.entity.ai.goal.BedGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
@@ -7,6 +8,9 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.MoveToPlayerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StationaryContactGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
@@ -71,7 +75,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     @Override
     protected void registerGoals() {
+        // Scene goals run before everything else so a scene cannot be interrupted by idle AI.
+        this.goalSelector.addGoal(0, new StationaryContactGoal(this));
+        this.goalSelector.addGoal(0, new MoveToPlayerGoal(this, 1.25D));
+        this.goalSelector.addGoal(0, new BedGoal(this, 1.25D));
         this.goalSelector.addGoal(0, new StripGoal(this));
+        this.goalSelector.addGoal(0, new StopMovementGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
