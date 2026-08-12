@@ -399,15 +399,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}
      * (see {@code Entity#positionRider}), so a <em>positive</em> Y here moves her down.</p>
      *
-     * <p>A player's passenger position is his eye height, 1.62. Subtracting 0.42 seats her
-     * origin at 1.2 - shoulder level - so the renderer no longer has to lift her at all.
-     * Previously this returned 0.7 <em>and</em> the renderer added another 0.62 on top, which
-     * stacked up to 1.72 and left her floating above the carrier's head.</p>
+     * <p>{@code Player} declares no {@code PASSENGER} attachment, so it falls back to
+     * {@code AT_HEIGHT}, i.e. the full standing height of <b>1.8</b> - not the 1.62 eye height
+     * an earlier version of this comment assumed. Subtracting 0.6 seats her origin at 1.2,
+     * which is shoulder level, so the renderer does not have to lift her at all.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
         if (vehicle instanceof Player) {
-            return new net.minecraft.world.phys.Vec3(0.0, 0.42, 0.0);
+            return new net.minecraft.world.phys.Vec3(0.0, 0.6, 0.0);
         }
         return super.getVehicleAttachmentPoint(vehicle);
     }

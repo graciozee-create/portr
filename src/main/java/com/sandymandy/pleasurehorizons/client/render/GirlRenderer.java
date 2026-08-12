@@ -80,6 +80,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
 
         if (isCarried) {
+            // Client-side ticking does not reliably reach passengers, so her world position
+            // and rotation are recomputed here rather than in tick(). See snapToCarrier.
+            snapToCarrier(animatable);
+
             // Sat on the carrier's shoulder.
             //
             // The previous version placed her out in front of the player and, in first
@@ -136,6 +140,62 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         applyJigglePhysics(animatable, model);
         applyBoneScales(animatable, model);
         applyBonePositions(animatable, model);
+    }
+
+    /**
+     * Forces a carried girl to the carrier's position every frame.
+     *
+     * <p>This is the reason she appeared to levitate in place while the carrier walked and
+     * turned around her. Positioning a passenger is done by {@code Entity#rideTick}, which
+     * calls {@code vehicle.positionRider(this)} - but {@code ClientLevel#tickEntities} skips
+     * every entity for which {@code isPassenger()} is true, and only reaches passengers
+     * through {@code tickPassenger}, which in turn requires the passenger to be present in
+     * the client's {@code tickingEntities} set. A girl who was already loaded before she was
+     * mounted, or whose chunk stops ticking, never gets there, so {@code positionRider} is
+     * never called on the client and she simply stays at the last position the server sent -
+     * which is also why she stayed put while the player rotated, and turned up behind him.</p>
+     *
+     * <p>Rather than depend on that, the position is recomputed here from the vehicle itself.
+     * Rendering happens every frame regardless of ticking, so this cannot be missed. The
+     * previous-frame position is written too, otherwise the renderer interpolates from her
+     * stale world position and she visibly streaks across the screen.</p>
+     */
+    private void snapToCarrier(T animatable) {
+        net.minecraft.world.entity.Entity vehicle = animatable.getVehicle();
+        if (vehicle == null) {
+            return;
+        }
+
+        // Same maths as Entity#positionRider: where the vehicle wants the rider, minus the
+        // rider's own attachment offset.
+        net.minecraft.world.phys.Vec3 seat = vehicle.getPassengerRidingPosition(animatable);
+        net.minecraft.world.phys.Vec3 attachment = animatable.getVehicleAttachmentPoint(vehicle);
+        double x = seat.x - attachment.x;
+        double y = seat.y - attachment.y;
+        double z = seat.z - attachment.z;
+
+        animatable.setPos(x, y, z);
+        animatable.xo = x;
+        animatable.yo = y;
+        animatable.zo = z;
+        animatable.xOld = x;
+        animatable.yOld = y;
+        animatable.zOld = z;
+
+        // Rotation is pinned in TameableGirlEntity#tick, which is skipped for the same
+        // reason, so it is mirrored here. Body yaw follows the carrier's body - not his
+        // look yaw, or she would swing around whenever he moved the mouse.
+        if (vehicle instanceof net.minecraft.world.entity.LivingEntity carrier) {
+            float bodyYaw = carrier.yBodyRot;
+            animatable.setYRot(bodyYaw);
+            animatable.yRotO = bodyYaw;
+            animatable.setYBodyRot(bodyYaw);
+            animatable.yBodyRotO = bodyYaw;
+            animatable.setYHeadRot(bodyYaw);
+            animatable.yHeadRotO = bodyYaw;
+            animatable.setXRot(0.0F);
+            animatable.xRotO = 0.0F;
+        }
     }
 
     /**
