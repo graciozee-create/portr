@@ -78,49 +78,42 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                 partialTick, packedLight, packedOverlay, colour);
 
         boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
-        boolean carriedByLocalPlayer = isCarried
-                && animatable.getVehicle().is(net.minecraft.client.Minecraft.getInstance().player);
 
-        if (carriedByLocalPlayer && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-            // First-person carry: show her on the right side in arms instead of hiding.
+        if (isCarried) {
+            // Sat on the carrier's shoulder.
+            //
+            // The previous version placed her out in front of the player and, in first
+            // person, off to the side at half scale - which read as "floating a couple of
+            // blocks away" rather than being carried. She is now parked directly on the
+            // right shoulder, close in, and the knees are tucked up by the bone pose below.
+            //
+            // Everything here is in the entity's own space, and the entity is already
+            // positioned at the carrier by the vehicle attachment point, so these are small
+            // local offsets rather than world coordinates. Because tick() pins her yaw to
+            // the carrier's, no yaw compensation is needed - she turns with him.
+            poseStack.translate(SHOULDER_RIGHT, SHOULDER_UP, SHOULDER_FORWARD);
+            poseStack.scale(CARRY_SCALE, CARRY_SCALE, CARRY_SCALE);
+
+            // Slight inward lean so she rests against the head instead of sitting bolt
+            // upright, plus a gentle sway driven by the carrier's walk cycle.
+            poseStack.mulPose(Axis.ZP.rotationDegrees(-8.0F));
             if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
-                float yaw = player.getYRot();
-                double rad = Math.toRadians(yaw);
-                double rightOffset = 0.6;
-                double forwardOffset = 0.5;
-                double downOffset = -0.4;
+                float walk = player.walkAnimation.position(partialTick);
+                float sway = net.minecraft.util.Mth.sin(walk * 0.6F) * 3.0F
+                        * player.walkAnimation.speed(partialTick);
+                poseStack.mulPose(Axis.XP.rotationDegrees(sway));
+            }
 
-                double offsetX = rightOffset * Math.cos(rad) + forwardOffset * (-Math.sin(rad));
-                double offsetZ = rightOffset * Math.sin(rad) + forwardOffset * Math.cos(rad);
-
-                poseStack.translate(offsetX, downOffset, offsetZ);
-                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw + 30.0F));
-                poseStack.scale(0.5F, 0.5F, 0.5F);
-
-                // Add subtle sway based on player movement for natural feel
-                float sway = (float) Math.sin(player.tickCount * 0.1f) * 2.0f;
-                poseStack.mulPose(Axis.ZP.rotationDegrees(sway));
+            // Mika has a real carry animation, so let it own the pose rather than
+            // overwriting the very bones it is animating.
+            if (!animatable.hasCarryAnimation()) {
+                applyCarryPose(model);
             } else {
-                poseStack.translate(0.6, -0.4, -0.6);
-                poseStack.scale(0.5F, 0.5F, 0.5F);
+                clearCarryPose(model);
             }
-        } else if (isCarried) {
-            // Third-person carry: princess carry in front of player, slightly elevated
-            if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
-                float yaw = player.getYRot();
-                double rad = Math.toRadians(yaw);
-                double forwardOffset = 0.4;
-                double upOffset = 0.2;
-
-                double offsetX = forwardOffset * (-Math.sin(rad));
-                double offsetZ = forwardOffset * Math.cos(rad);
-
-                poseStack.translate(offsetX, upOffset, offsetZ);
-                // Face same direction as player but slightly tilted for bridal carry
-                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
-                poseStack.mulPose(Axis.XP.rotationDegrees(-15.0F)); // slight backward lean
-                poseStack.scale(0.85F, 0.85F, 0.85F);
-            }
+        } else {
+            // Baked bones are shared, so the pose must be cleared for everyone else.
+            clearCarryPose(model);
         }
 
         // The partner rig is scene-only; keep the whole sub-tree hidden otherwise.
@@ -143,6 +136,48 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         applyJigglePhysics(animatable, model);
         applyBoneScales(animatable, model);
         applyBonePositions(animatable, model);
+    }
+
+    /**
+     * Tucks the knees up so she sits on the shoulder instead of standing rigid in mid-air.
+     *
+     * <p>None of the rigs ship a real carry animation - only Mika has {@code carry_slow1},
+     * and that one belongs to a scene - so the pose is posed by hand here. Hips bend forward,
+     * shins fold back under the thighs and the arms come down, which reads as sitting with
+     * the knees drawn up.</p>
+     *
+     * <p>These bones are also driven by the walk/idle animation that just ran, so the values
+     * are assigned rather than added; and since baked GeckoLib bones are shared between every
+     * girl using the rig, {@link #CARRY_POSE_BONES} is reset on any girl that is not being
+     * carried, otherwise one carried girl would leave every other girl in a sitting pose.</p>
+     */
+    private void applyCarryPose(BakedGeoModel model) {
+        setBoneRotation(model, "legL", CARRY_THIGH_PITCH, 0.0F, CARRY_THIGH_SPREAD);
+        setBoneRotation(model, "legR", CARRY_THIGH_PITCH, 0.0F, -CARRY_THIGH_SPREAD);
+        setBoneRotation(model, "shinL", CARRY_SHIN_PITCH, 0.0F, 0.0F);
+        setBoneRotation(model, "shinR", CARRY_SHIN_PITCH, 0.0F, 0.0F);
+        setBoneRotation(model, "armL", CARRY_ARM_PITCH, 0.0F, CARRY_ARM_SPREAD);
+        setBoneRotation(model, "armR", CARRY_ARM_PITCH, 0.0F, -CARRY_ARM_SPREAD);
+    }
+
+    /** Puts the carry-pose bones back to their animated rotation for girls on the ground. */
+    private void clearCarryPose(BakedGeoModel model) {
+        for (String boneName : CARRY_POSE_BONES) {
+            model.getBone(boneName).ifPresent(bone -> {
+                bone.setRotX(0.0F);
+                bone.setRotY(0.0F);
+                bone.setRotZ(0.0F);
+            });
+        }
+    }
+
+    private static void setBoneRotation(BakedGeoModel model, String boneName,
+                                        float xDeg, float yDeg, float zDeg) {
+        model.getBone(boneName).ifPresent(bone -> {
+            bone.setRotX(xDeg * ((float) Math.PI / 180F));
+            bone.setRotY(yDeg * ((float) Math.PI / 180F));
+            bone.setRotZ(zDeg * ((float) Math.PI / 180F));
+        });
     }
 
     /**
@@ -450,4 +485,26 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
 
     /** Root bone of the embedded partner skeleton, present in every girl rig. */
     private static final String PARTNER_BONE = "steve";
+
+    // ---- shoulder carry ----
+    // Local offsets in entity space. The entity itself is already placed at the carrier by
+    // TameableGirlEntity#getVehicleAttachmentPoint, so these only fine-tune the seat.
+    /** Positive X is the carrier's right, so she sits on the right shoulder. */
+    private static final float SHOULDER_RIGHT = 0.32F;
+    /** Lifts her from chest height (where the hitbox sits) up onto the shoulder. */
+    private static final float SHOULDER_UP = 0.62F;
+    /** Slightly behind the shoulder line so she does not clip through the chest. */
+    private static final float SHOULDER_FORWARD = -0.08F;
+    /** Scaled down a little so a full-size girl does not dwarf the player. */
+    private static final float CARRY_SCALE = 0.62F;
+
+    private static final float CARRY_THIGH_PITCH = -95.0F;
+    private static final float CARRY_THIGH_SPREAD = 12.0F;
+    private static final float CARRY_SHIN_PITCH = 105.0F;
+    private static final float CARRY_ARM_PITCH = -12.0F;
+    private static final float CARRY_ARM_SPREAD = 8.0F;
+
+    /** Every bone the carry pose touches, so it can be undone on non-carried girls. */
+    private static final String[] CARRY_POSE_BONES =
+            {"legL", "legR", "shinL", "shinR", "armL", "armR"};
 }

@@ -93,8 +93,31 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
         this.goalSelector.addGoal(5, new GirlStayNearBaseGoal(this, 1.0D, 3.0F, 10.0F)); // toggleable
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
-        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        // These two are the reason a carried girl kept spinning on the spot: the vanilla
+        // look goals do not know about being a passenger, so they carried on picking new
+        // look targets and rotating her while she sat on the player's shoulder.
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+            @Override
+            public boolean canUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canContinueToUse();
+            }
+        });
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         // Defend the owner: retaliate against whoever hurt them, and join their fights.
         this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
@@ -342,6 +365,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return InteractionResult.SUCCESS;
     }
 
+    /** True while she is riding a player, i.e. being carried. */
+    public boolean isCarried() {
+        return this.isPassenger() && this.getVehicle() instanceof Player;
+    }
+
     /**
      * Sends the vehicle's passenger list to the vehicle player themselves.
      *
@@ -399,6 +427,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // Suppress leftover AI motion; the vehicle positions her every tick.
             this.getNavigation().stop();
             this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+
+            // Lock her rotation to the carrier. Without this she keeps her own yaw and any
+            // leftover look target spins her around on the player's shoulder. All four
+            // rotation fields have to be written, including the "O" (previous tick) ones,
+            // or the renderer interpolates between the old and new yaw and she jitters.
+            float carrierYaw = player.getYRot();
+            this.setYRot(carrierYaw);
+            this.yRotO = carrierYaw;
+            this.setYBodyRot(carrierYaw);
+            this.yBodyRotO = carrierYaw;
+            this.setYHeadRot(carrierYaw);
+            this.yHeadRotO = carrierYaw;
+            this.setXRot(0.0F);
+            this.xRotO = 0.0F;
 
             // Drop her safely if the carrier dies or leaves, otherwise she would be stuck
             // riding a removed entity.
