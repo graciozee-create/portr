@@ -36,7 +36,14 @@ public class FreecamHandler {
         boolean playerControl = PleasureHorizonsKeybinds.FREECAM_PLAYER_CONTROL_KEY.consumeClick();
         boolean tripodReset = PleasureHorizonsKeybinds.FREECAM_TRIPOD_RESET_KEY.consumeClick();
 
-        if (mc.level == null || mc.player == null || mc.screen != null) {
+        if (mc.level == null || mc.player == null) {
+            return;
+        }
+
+        // Keys are ignored while a screen is open, but the camera must still be ticked or it
+        // would stop dead (and stop being disable-able) whenever the inventory is opened.
+        if (mc.screen != null) {
+            Freecam.onClientTick();
             return;
         }
 
@@ -68,6 +75,16 @@ public class FreecamHandler {
         }
         if (tripodReset && !hotbarCombo && Freecam.isTripodEnabled()) {
             Freecam.resetCamera(Freecam.getActiveTripod());
+        }
+
+        // The frame handler below transfers mouse movement to the camera and rewinds the
+        // player. Re-pin it here too: rotation is sent to the server on the tick, so this
+        // guarantees the server never sees the player spinning while the camera moves.
+        if (Freecam.isEnabled() && !Freecam.isPlayerControlEnabled() && rotationTracked) {
+            mc.player.setYRot(lastPlayerYaw);
+            mc.player.setXRot(lastPlayerPitch);
+            mc.player.setYHeadRot(lastPlayerYaw);
+            mc.player.yBodyRot = lastPlayerYaw;
         }
 
         Freecam.onClientTick();
@@ -102,6 +119,8 @@ public class FreecamHandler {
         }
 
         if (!rotationTracked) {
+            // Anchor on the rotation the player had when freecam started; every mouse delta
+            // from here on belongs to the camera, and the player is pinned to this value.
             lastPlayerYaw = mc.player.getYRot();
             lastPlayerPitch = mc.player.getXRot();
             rotationTracked = true;
