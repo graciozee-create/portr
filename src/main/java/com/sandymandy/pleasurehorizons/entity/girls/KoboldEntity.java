@@ -3,7 +3,6 @@ package com.sandymandy.pleasurehorizons.entity.girls;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
 import com.sandymandy.pleasurehorizons.util.Colors;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevelAccessor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -23,6 +22,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
