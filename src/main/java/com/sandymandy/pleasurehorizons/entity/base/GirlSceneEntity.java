@@ -103,8 +103,10 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
 
         if (isSitting() || (isPassenger() && getVehicle() instanceof net.minecraft.world.entity.player.Player)) {
+            // When carried on hands, use dedicated carry animation if available (hugidle / carry_slow)
+            String carryAnim = getCarryAnimation();
             return state.setAndContinue(
-                    RawAnimation.begin().then(getAnimationPath("sit"), Animation.LoopType.LOOP));
+                    RawAnimation.begin().then(getAnimationPath(carryAnim), Animation.LoopType.LOOP));
         }
 
         if (state.isMoving()) {

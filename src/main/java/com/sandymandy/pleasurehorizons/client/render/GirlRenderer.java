@@ -68,11 +68,50 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, colour);
 
-        boolean carriedByLocalPlayer = animatable.getVehicle() != null
-                && animatable.getVehicle().is(net.minecraft.client.Minecraft.getInstance().player)
-                && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson();
-        if (carriedByLocalPlayer) {
-            poseStack.scale(0.0F, 0.0F, 0.0F);
+        boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
+        boolean carriedByLocalPlayer = isCarried
+                && animatable.getVehicle().is(net.minecraft.client.Minecraft.getInstance().player);
+
+        if (carriedByLocalPlayer && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            // First-person carry: show her on the right side in arms instead of hiding.
+            if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
+                float yaw = player.getYRot();
+                double rad = Math.toRadians(yaw);
+                double rightOffset = 0.6;
+                double forwardOffset = 0.5;
+                double downOffset = -0.4;
+
+                double offsetX = rightOffset * Math.cos(rad) + forwardOffset * (-Math.sin(rad));
+                double offsetZ = rightOffset * Math.sin(rad) + forwardOffset * Math.cos(rad);
+
+                poseStack.translate(offsetX, downOffset, offsetZ);
+                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw + 30.0F));
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+
+                // Add subtle sway based on player movement for natural feel
+                float sway = (float) Math.sin(player.tickCount * 0.1f) * 2.0f;
+                poseStack.mulPose(Axis.ZP.rotationDegrees(sway));
+            } else {
+                poseStack.translate(0.6, -0.4, -0.6);
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+            }
+        } else if (isCarried) {
+            // Third-person carry: princess carry in front of player, slightly elevated
+            if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
+                float yaw = player.getYRot();
+                double rad = Math.toRadians(yaw);
+                double forwardOffset = 0.4;
+                double upOffset = 0.2;
+
+                double offsetX = forwardOffset * (-Math.sin(rad));
+                double offsetZ = forwardOffset * Math.cos(rad);
+
+                poseStack.translate(offsetX, upOffset, offsetZ);
+                // Face same direction as player but slightly tilted for bridal carry
+                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
+                poseStack.mulPose(Axis.XP.rotationDegrees(-15.0F)); // slight backward lean
+                poseStack.scale(0.85F, 0.85F, 0.85F);
+            }
         }
 
         // The partner rig is scene-only; keep the whole sub-tree hidden otherwise.

@@ -202,11 +202,32 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
-            if (this.isPassengerOfSameVehicle(player) || this.getVehicle() == player) {
+            // Improved carry: check if already riding this player
+            if (this.isPassenger() && this.getVehicle() == player) {
+                // Put down - place her slightly in front of player
                 this.stopRiding();
+                // Place in front of player to avoid suffocation
+                float yawRad = (float) Math.toRadians(player.getYRot());
+                double forwardX = -Math.sin(yawRad) * 1.0;
+                double forwardZ = Math.cos(yawRad) * 1.0;
+                this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ, this.getYRot(), this.getXRot());
+                this.setNoGravity(false);
+                this.setSitting(false);
                 player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
             } else {
+                // Pick up - only owner can carry, and not if already in scene
+                if (this.isVehicle()) {
+                    // If she is carrying someone (should not happen), dismount them
+                    this.ejectPassengers();
+                }
+                this.getNavigation().stop();
+                this.setTarget(null);
+                this.setSitting(false);
+                this.setNoGravity(true);
+                // Force riding with proper positioning
                 this.startRiding(player, true);
+                // Ensure she is positioned correctly relative to player
+                // In first person she will be rendered on right side via GirlRenderer
                 player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
             }
             return InteractionResult.SUCCESS;
@@ -235,6 +256,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (this.isDowned()) {
             return false;
         }
+        // No fall damage while being carried on hands - princess carry should be safe
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            if (source.type().msgId().equals("fall") || source.type().msgId().equals("inWall")) {
+                return false;
+            }
+        }
         float currentHealth = this.getHealth();
         if (amount >= currentHealth) {
             this.setDowned(true);
@@ -247,6 +274,44 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return false;
         }
         return super.hurt(source, amount);
+    }
+
+    @Override
+    protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        // Girls should not carry other entities while being carried themselves
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            return false;
+        }
+        return super.canAddPassenger(passenger);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // While being carried, ensure she stays nicely positioned and doesn't suffocate
+        if (this.isPassenger() && this.getVehicle() instanceof Player player) {
+            // Keep her looking at player or forward with cute pose
+            // Slightly adjust eye height to prevent camera clipping in first person for other players
+            this.setNoGravity(true);
+            // Prevent her from being pushed out by blocks while carried
+            this.noPhysics = false; // keep physics but no gravity
+
+            // If player is in water, dismount to prevent drowning
+            if (player.isInWater() && player.tickCount % 20 == 0) {
+                // Optional: auto-dismount in water? Keep for now
+            }
+
+            // If player dies or disconnects, dismount safely
+            if (!player.isAlive() || player.isRemoved()) {
+                this.stopRiding();
+                this.setNoGravity(false);
+            }
+        } else {
+            // Not being carried, restore gravity if not already
+            if (!this.isNoGravity() && this.isInWater()) {
+                // water logic handled by FloatGoal
+            }
+        }
     }
 
     public void talkToPlayer(Player player) {

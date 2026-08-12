@@ -28,6 +28,21 @@ public class MikaEntity extends SettlementGirlEntityAI {
     }
 
     @Override
+    public boolean hasHugAnimation() {
+        return true;
+    }
+
+    @Override
+    public boolean hasCarryAnimation() {
+        return true;
+    }
+
+    @Override
+    public String getCarryAnimation() {
+        return "carry_slow1";
+    }
+
+    @Override
     public int getSizeGUI() {
         return 20;
     }
