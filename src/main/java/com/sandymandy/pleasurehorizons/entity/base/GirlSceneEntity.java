@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.entity.base;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.networking.S2C.PlayCumHudAnimationS2CPacket;
+import com.sandymandy.pleasurehorizons.networking.S2C.RunAnimEventsS2CPacket;
 import com.sandymandy.pleasurehorizons.registries.SceneKeyframeEventRegistry;
 import com.sandymandy.pleasurehorizons.util.Utils;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
@@ -468,22 +469,22 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     /**
-     * Plays the keyframe's sounds for everyone except the scene player.
+     * Replays the keyframe for everyone except the scene player.
      *
-     * <p>The scene player already played them locally the instant the frame fired, which keeps
-     * them tight to the animation; replaying server-side would double them up for that one
-     * player.</p>
+     * <p>The scene player already handled it locally the instant the frame fired, which keeps it
+     * tight to the animation; replaying it for them would double the sound.</p>
      */
     private void relayKeyframeSounds(String key) {
         if (!(this.level() instanceof ServerLevel serverLevel)) return;
-
-        List<SoundEvent> sounds = SceneKeyframeEventRegistry.getSound(getGirlID(), key);
-        if (sounds.isEmpty()) return;
+        if (SceneKeyframeEventRegistry.getSound(getGirlID(), key).isEmpty()) return;
 
         ServerPlayer scenePlayer = getScenePlayerServer();
-        for (SoundEvent sound : sounds) {
-            serverLevel.playSound(scenePlayer, this.getX(), this.getY(), this.getZ(),
-                    sound, this.getSoundSource(), 1.0f, 1.0f);
+        RunAnimEventsS2CPacket packet = new RunAnimEventsS2CPacket(this.getId(), key);
+
+        for (ServerPlayer player : serverLevel.players()) {
+            if (player == scenePlayer) continue;
+            if (player.distanceToSqr(this) > 32 * 32) continue;
+            PacketDistributor.sendToPlayer(player, packet);
         }
     }
 
