@@ -9,6 +9,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -48,8 +49,6 @@ public abstract class GirlEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> IS_TEMPORARY =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> CREATED_CLONE =
-            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> LOCKED_STATE =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> WAITING_FOR_PLAYER =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
@@ -135,8 +134,6 @@ public abstract class GirlEntity extends PathfinderMob {
     public Map<String, Vec3> bonePositionOffset = new HashMap<>();
     public final Map<EquipmentSlot, Boolean> armorVisibility = new EnumMap<>(EquipmentSlot.class);
 
-    public Vec3 previousVelocity = Vec3.ZERO;
-    public float previousYaw = 0;
     public float passengerYOffset = -1f;
     public boolean currentLoopState = false;
     public boolean currentHoldState = false;
@@ -176,7 +173,6 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(WAITING_AT_BED, false);
         builder.define(IS_TEMPORARY, false);
         builder.define(CREATED_CLONE, false);
-        builder.define(LOCKED_STATE, false);
         builder.define(FROZEN_STATE, false);
         builder.define(WAITING_FOR_PLAYER, false);
         builder.define(STRIPPED, false);
@@ -258,12 +254,45 @@ public abstract class GirlEntity extends PathfinderMob {
         return this.entityData.get(FROZEN_STATE);
     }
 
-    public void setMovementLockedState(boolean locked) {
-        this.entityData.set(LOCKED_STATE, locked);
+    /**
+     * Movement lock is derived from its already-synchronised source states. Keeping a second
+     * tracked flag here previously left it permanently false because nothing updated it; deriving
+     * the value also makes transitions visible immediately on both logical sides without any
+     * client-side tracked-data writes.
+     */
+    public boolean isMovementLocked() {
+        return this.isFrozenInPlace()
+                || this.isWaitingAtBed()
+                || this.isSceneActive()
+                || this.isWaitingForPlayer();
     }
 
-    public boolean isMovementLocked() {
-        return this.entityData.get(LOCKED_STATE);
+    @Override
+    public boolean isPushable() {
+        return !this.isMovementLocked() && super.isPushable();
+    }
+
+    @Override
+    public void push(Entity entity) {
+        if (!this.isMovementLocked()) {
+            super.push(entity);
+        }
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
+        if (!this.isMovementLocked()) {
+            super.push(x, y, z);
+        }
+    }
+
+    @Override
+    public void knockback(double strength, double x, double z) {
+        if (this.isMovementLocked()) {
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        super.knockback(strength, x, z);
     }
 
     public void setGUIOpenState(boolean state, @Nullable Player lookAt) {

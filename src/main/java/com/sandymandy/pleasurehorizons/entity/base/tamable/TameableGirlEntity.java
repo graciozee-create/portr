@@ -27,6 +27,7 @@ import net.minecraft.sounds.SoundEvents;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -283,7 +284,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (this.isDowned()) {
+        // Administrative removal and falling out of the world must remain able to remove a girl;
+        // neither movement lock nor the downed-state substitution should intercept them.
+        if (source.is(DamageTypes.GENERIC_KILL) || source.is(DamageTypes.FELL_OUT_OF_WORLD)) {
+            return super.hurt(source, amount);
+        }
+        if (this.isDowned() || this.isMovementLocked()) {
             return false;
         }
         // No fall damage while being carried on hands - princess carry should be safe
