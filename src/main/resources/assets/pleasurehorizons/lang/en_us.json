@@ -58,6 +58,8 @@
   "gui.pleasurehorizons.customize.titleKobold": "Kobold Customization",
   "gui.pleasurehorizons.customize.topHorns": "Top Horns:",
   "gui.pleasurehorizons.requires_relationship": "Requires Relationship Level %s",
+  "gui.pleasurehorizons.scene.none": "No scenes available",
+  "gui.pleasurehorizons.scene.title": "Scene Options",
   "gui.pleasurehorizons.settlement.buildings": "Buildings: %s",
   "gui.pleasurehorizons.settlement.core_pos": "Core: %s, %s, %s",
   "gui.pleasurehorizons.settlement.food": "Food: %s",
