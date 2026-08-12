@@ -26,8 +26,4 @@ public class PleasureHorizonsScreenHandlerRegistry {
     public static void register(IEventBus bus) {
         MENU_TYPES.register(bus);
     }
-
-    public static void registerScreenHandlers() {
-        PleasureHorizons.LOGGER.info("Registering screen handlers for " + PleasureHorizons.MOD_NAME);
-    }
 }

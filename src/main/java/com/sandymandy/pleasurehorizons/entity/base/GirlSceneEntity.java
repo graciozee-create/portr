@@ -92,8 +92,6 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     /** Keyframe events observed this tick. Cleared at the end of every tick, like upstream. */
     public final Queue<String> animationEventQueueClient = new LinkedList<>();
     public final Queue<String> animationEventQueueServer = new LinkedList<>();
-    /** Kept for source compatibility with goals written against the old stub. */
-    public final Queue<String> animationKeyFrameEvent = animationEventQueueServer;
 
     protected String lastSceneAnim = "";
     private long lastAnimationFinishInputTick = -1L;

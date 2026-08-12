@@ -1,6 +1,5 @@
 package com.sandymandy.pleasurehorizons.registries;
 
-import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import net.minecraft.sounds.SoundEvent;
 
 import java.util.ArrayList;
@@ -26,10 +25,6 @@ public class SceneKeyframeEventRegistry {
     private static final Map<SceneKey, List<String>> CHAT_MESSAGES = new HashMap<>();
     private static final Map<String, List<String>> PLAYER_MESSAGES = new HashMap<>();
     private static final Random RANDOM = new Random();
-
-    public static void registerSoundEvents() {
-        PleasureHorizons.LOGGER.info("Registering Scene Keyframe Events for " + PleasureHorizons.MOD_NAME);
-    }
 
     /** Wipes every entry; called before each resource reload so entries do not pile up. */
     public static void clear() {

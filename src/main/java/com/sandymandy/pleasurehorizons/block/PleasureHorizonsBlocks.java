@@ -41,8 +41,4 @@ public class PleasureHorizonsBlocks {
     public static void register(IEventBus bus) {
         BLOCKS.register(bus);
     }
-
-    public static void registerBlocks() {
-        PleasureHorizons.LOGGER.info("Registering blocks for " + PleasureHorizons.MOD_NAME);
-    }
 }

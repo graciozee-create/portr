@@ -53,11 +53,4 @@ public class PleasureHorizonsKeybinds {
             InputConstants.UNKNOWN.getValue(),
             CATEGORY);
 
-    /** Kept for the old call sites that referenced the lowercase names. */
-    public static KeyMapping thrustKey = THRUST_KEY;
-    public static KeyMapping cumKey = CUM_KEY;
-
-    public static void register() {
-        // Actual registration happens in PleasureHorizonsClientEvents#registerKeyMappings.
-    }
 }

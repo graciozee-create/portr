@@ -11,9 +11,7 @@ import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
-import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsEntities;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
-import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsSoundEventRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import net.minecraft.core.BlockPos;
@@ -49,8 +47,7 @@ public class PleasureHorizons {
         PleasureHorizonsSpawnEggs.register(modEventBus);
         PleasureHorizonsBlocks.register(modEventBus);
         PleasureHorizonsBlockEntities.register(modEventBus);
-        PleasureHorizonsEntities.register(modEventBus);
-        PleasureHorizonsSoundEventRegistry.register(modEventBus);
+        GirlRegistry.register(modEventBus);
         PleasureHorizonsScreenHandlerRegistry.register(modEventBus);
         PleasureHorizonsDataComponentTypes.register(modEventBus);
 
@@ -71,9 +68,8 @@ public class PleasureHorizons {
         NeoForge.EVENT_BUS.register(this);
 
         if (dist == Dist.CLIENT) {
-            modEventBus.addListener(PleasureHorizonsClient::onClientSetup);
-            // Freecam settings live in a CLIENT config; registering it here (rather than in
-            // client setup) is required because NeoForge reads the spec during mod loading.
+            // Freecam settings live in a CLIENT config; registering it during mod loading is
+            // required because NeoForge reads the spec before client setup events run.
             com.sandymandy.pleasurehorizons.freecam.FreecamConfig.register(container);
         }
     }
