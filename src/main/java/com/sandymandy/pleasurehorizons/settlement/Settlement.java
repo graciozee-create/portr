@@ -55,6 +55,29 @@ public class Settlement {
         if (girl != null) members.add(girl.getUUID());
     }
 
+    /**
+     * Registers a scanned building.
+     *
+     * <p>{@code buildingIds} holds door positions; the building itself lives in the per-level
+     * {@link com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager}. Keeping the
+     * position list here is what makes the hub GUI's building count real rather than always 0.</p>
+     */
+    public void addBuilding(BlockPos doorPos,
+                            com.sandymandy.pleasurehorizons.settlement.building.SettlementBuilding building,
+                            net.minecraft.server.level.ServerLevel level) {
+        if (!buildingIds.contains(doorPos)) {
+            buildingIds.add(doorPos);
+        }
+        com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager
+                .get(level).addBuilding(this.id, building);
+    }
+
+    public void removeBuilding(BlockPos doorPos, net.minecraft.server.level.ServerLevel level) {
+        buildingIds.remove(doorPos);
+        com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager
+                .get(level).removeBuilding(doorPos);
+    }
+
     public void removeMember(com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI girl) {
         if (girl != null) members.remove(girl.getUUID());
     }
