@@ -12,6 +12,21 @@ public class GirlMeleeAttackGoal extends MeleeAttackGoal {
         this.girl = girl;
     }
 
+    private boolean isUnavailable() {
+        return this.girl.isSceneActive() || this.girl.isDowned()
+                || this.girl.isPassenger() || this.girl.isSitting();
+    }
+
+    @Override
+    public boolean canUse() {
+        return !isUnavailable() && super.canUse();
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        return !isUnavailable() && super.canContinueToUse();
+    }
+
     @Override
     public void start() {
         super.start();

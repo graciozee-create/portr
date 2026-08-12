@@ -32,6 +32,8 @@ public class GirlStayNearBaseGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (!girl.isStayNearBaseEnabled()) return false;
+        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive()
+                || girl.isDowned() || girl.isPassenger()) return false;
         BlockPos base = girl.getBasePos();
         if (BlockPos.ZERO.equals(base)) return false;
         return girl.distanceToSqr(base.getX() + 0.5, base.getY(), base.getZ() + 0.5) > (minDist * minDist);
