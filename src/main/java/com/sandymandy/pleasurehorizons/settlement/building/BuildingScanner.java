@@ -50,35 +50,39 @@ public class BuildingScanner {
     private static final int MIN_CLEARANCE = 2;
     private static final int MIN_VALID_QUADRANTS = 9;
     private static final int MAX_GROUND_SEARCH = 20;
+    private static final int MAX_SCAN_VISITS = 10_000;
     private static final int MAX_VERIFY_VISITS = 400;
 
     public BuildingScanner(Settlement settlement) {
         this.settlement = settlement;
     }
 
-    public void scanForBuilding(Level world, BlockPos origin, BlockPos doorPos, BlockPos tagPos,
-                                BuildingType type, Player player) {
-        if (world.isClientSide()) return;
+    public boolean scanForBuilding(Level world, BlockPos origin, BlockPos doorPos, BlockPos tagPos,
+                                   BuildingType type, Player player) {
+        if (world.isClientSide()) return false;
 
         BlockPos groundAligned = findGroundLevel(world, origin);
         if (groundAligned == null) {
             message(player, "msg.pleasurehorizons.building.no_ground");
-            return;
+            return false;
         }
 
-        Set<BlockPos> validQuadrants = floodFill(world, groundAligned, Integer.MAX_VALUE);
+        Set<BlockPos> validQuadrants = floodFill(world, groundAligned, MAX_SCAN_VISITS);
         List<BlockEntry> structureBlocks = captureStructure(world, validQuadrants);
 
         boolean hasSize = validQuadrants.size() >= MIN_VALID_QUADRANTS;
         boolean hasRequirements = checkRequirements(type, structureBlocks, player);
 
         if (hasSize && hasRequirements) {
-            registerBuilding(world, doorPos, tagPos, type, structureBlocks, validQuadrants.size(), player);
-        } else if (!hasSize && player != null) {
+            return registerBuilding(world, doorPos, tagPos, type, structureBlocks,
+                    validQuadrants.size(), player);
+        }
+        if (!hasSize && player != null) {
             player.displayClientMessage(Component.translatable(
                             "msg.pleasurehorizons.building.too_small", validQuadrants.size(), MIN_VALID_QUADRANTS)
                     .withStyle(net.minecraft.ChatFormatting.RED), false);
         }
+        return false;
     }
 
     /** Re-checks a previously registered building; used to invalidate broken structures. */
@@ -235,16 +239,29 @@ public class BuildingScanner {
         return airHeight >= MIN_CLEARANCE - 1 && hasRoof;
     }
 
-    private void registerBuilding(Level world, BlockPos doorPos, BlockPos tagPos, BuildingType type,
-                                  List<BlockEntry> structureBlocks, int quadrants, @Nullable Player player) {
-        if (!(world instanceof ServerLevel serverLevel)) return;
-
-        SettlementBuilding building = new SettlementBuilding(doorPos, tagPos, type, structureBlocks);
+    private boolean registerBuilding(Level world, BlockPos doorPos, BlockPos tagPos, BuildingType type,
+                                     List<BlockEntry> structureBlocks, int quadrants,
+                                     @Nullable Player player) {
+        if (!(world instanceof ServerLevel serverLevel)) return false;
 
         SettlementBuildingManager manager = SettlementBuildingManager.get(serverLevel);
-        if (manager.getBuilding(doorPos) != null) {
-            settlement.removeBuilding(doorPos, serverLevel);
+        SettlementBuilding existing = manager.getBuilding(doorPos);
+        if (existing != null) {
+            Settlement registeredTo = Utils.findSettlementByBuilding(serverLevel, doorPos);
+            if (!existing.tagPos().equals(tagPos)
+                    || (registeredTo != null && !registeredTo.getId().equals(settlement.getId()))) {
+                message(player, "msg.pleasurehorizons.building.already_registered");
+                return false;
+            }
+            if (registeredTo != null) {
+                registeredTo.removeBuilding(doorPos, serverLevel);
+            } else {
+                // Repair an orphaned index entry left by an older or damaged save.
+                manager.removeBuilding(doorPos);
+            }
         }
+
+        SettlementBuilding building = new SettlementBuilding(doorPos, tagPos, type, structureBlocks);
         settlement.addBuilding(doorPos, building, serverLevel);
 
         PleasureHorizons.LOGGER.info("[BuildingScanner] Registered {} with {} valid quadrants.",
@@ -256,6 +273,7 @@ public class BuildingScanner {
                             Component.translatable(type.getTranslationKey()), quadrants)
                     .withStyle(net.minecraft.ChatFormatting.GREEN), false);
         }
+        return true;
     }
 
     private void message(@Nullable Player player, String key) {

@@ -8,7 +8,9 @@ import com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager;
 import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -83,6 +85,21 @@ public class Settlement {
             girl.setSettlement(null);
         }
         if (removed) {
+            markDirty();
+        }
+    }
+
+    /** Clears this settlement UUID from every currently loaded girl before the settlement is deleted. */
+    public void invalidateLoadedMembers(MinecraftServer server) {
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (entity instanceof SettlementGirlEntityAI girl && id.equals(girl.getSettlementId())) {
+                    girl.setSettlement(null);
+                }
+            }
+        }
+        if (!members.isEmpty()) {
+            members.clear();
             markDirty();
         }
     }

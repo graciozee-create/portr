@@ -4,31 +4,41 @@ import com.mojang.serialization.MapCodec;
 import com.sandymandy.pleasurehorizons.block.entity.entities.AbstractBuildingTagBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+/** A wall tag that registers and continuously validates one settlement building. */
 public abstract class AbstractBuildingTagBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    public static final VoxelShape NORTH_SHAPE = Shapes.box(0.0, 3.0/16.0, 14.0/16.0, 1.0, 13.0/16.0, 1.0);
-    public static final VoxelShape SOUTH_SHAPE = Shapes.box(0.0, 3.0/16.0, 0.0, 1.0, 13.0/16.0, 2.0/16.0);
-    public static final VoxelShape EAST_SHAPE  = Shapes.box(0.0, 3.0/16.0, 0.0, 2.0/16.0, 13.0/16.0, 1.0);
-    public static final VoxelShape WEST_SHAPE  = Shapes.box(14.0/16.0, 3.0/16.0, 0.0, 1.0, 13.0/16.0, 1.0);
+    public static final VoxelShape NORTH_SHAPE = Shapes.box(0.0, 3.0 / 16.0, 14.0 / 16.0, 1.0, 13.0 / 16.0, 1.0);
+    public static final VoxelShape SOUTH_SHAPE = Shapes.box(0.0, 3.0 / 16.0, 0.0, 1.0, 13.0 / 16.0, 2.0 / 16.0);
+    public static final VoxelShape EAST_SHAPE = Shapes.box(0.0, 3.0 / 16.0, 0.0, 2.0 / 16.0, 13.0 / 16.0, 1.0);
+    public static final VoxelShape WEST_SHAPE = Shapes.box(14.0 / 16.0, 3.0 / 16.0, 0.0, 1.0, 13.0 / 16.0, 1.0);
 
-    public AbstractBuildingTagBlock(Properties properties) {
+    protected AbstractBuildingTagBlock(Properties properties) {
         super(properties);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
@@ -37,8 +47,8 @@ public abstract class AbstractBuildingTagBlock extends BaseEntityBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
@@ -56,59 +66,51 @@ public abstract class AbstractBuildingTagBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
-    /**
-     * Placing a tag next to a door triggers a building scan.
-     *
-     * <p>Nothing called {@code BuildingScanner} before, so the hub GUI always reported zero
-     * buildings no matter what the player built.</p>
-     */
     @Override
-    public void setPlacedBy(net.minecraft.world.level.Level level, BlockPos pos, BlockState state,
-                            @Nullable net.minecraft.world.entity.LivingEntity placer,
-                            net.minecraft.world.item.ItemStack stack) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
-        if (!(placer instanceof net.minecraft.world.entity.player.Player player)) return;
-
-        Direction facing = state.getValue(FACING);
-        BlockPos doorPos = com.sandymandy.pleasurehorizons.util.Utils.findNearbyDoor(level, pos, facing);
-        if (doorPos == null) {
-            player.displayClientMessage(net.minecraft.network.chat.Component
-                    .translatable("msg.pleasurehorizons.building.no_door")
-                    .withStyle(net.minecraft.ChatFormatting.RED), false);
-            return;
+        if (level instanceof ServerLevel serverLevel
+                && placer instanceof Player player
+                && level.getBlockEntity(pos) instanceof AbstractBuildingTagBlockEntity tag) {
+            tag.registerBuilding(serverLevel, player, state);
         }
+    }
 
-        com.sandymandy.pleasurehorizons.settlement.Settlement settlement =
-                com.sandymandy.pleasurehorizons.util.Utils.findNearestSettlement(level, pos);
-        if (settlement == null) {
-            player.displayClientMessage(net.minecraft.network.chat.Component
-                    .translatable("msg.pleasurehorizons.building.no_settlement")
-                    .withStyle(net.minecraft.ChatFormatting.RED), false);
-            return;
+    /** Allows a failed or invalidated tag to be registered again after the room is repaired. */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                               Player player, BlockHitResult hit) {
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
+        if (level instanceof ServerLevel serverLevel
+                && level.getBlockEntity(pos) instanceof AbstractBuildingTagBlockEntity tag) {
+            return tag.registerBuilding(serverLevel, player, state);
+        }
+        return InteractionResult.FAIL;
+    }
 
-        com.sandymandy.pleasurehorizons.settlement.building.BuildingType type =
-                level.getBlockEntity(pos) instanceof AbstractBuildingTagBlockEntity tag
-                        ? tag.getBuildingType()
-                        : com.sandymandy.pleasurehorizons.settlement.building.BuildingType.NONE;
-
-        // Scan starts from the block on the inside of the door.
-        BlockPos origin = com.sandymandy.pleasurehorizons.util.Utils.getBlockBehind(doorPos, facing);
-
-        new com.sandymandy.pleasurehorizons.settlement.building.BuildingScanner(settlement)
-                .scanForBuilding(serverLevel, origin, doorPos, pos, type, player);
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())
+                && level instanceof ServerLevel serverLevel
+                && level.getBlockEntity(pos) instanceof AbstractBuildingTagBlockEntity tag) {
+            tag.removeRegisteredBuilding(serverLevel);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Nullable
     @Override
-    public abstract BlockEntity newBlockEntity(BlockPos pos, BlockState state);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> type) {
+        return level.isClientSide() ? null : (tickerLevel, tickerPos, tickerState, blockEntity) -> {
+            if (blockEntity instanceof AbstractBuildingTagBlockEntity tag) {
+                AbstractBuildingTagBlockEntity.tick(tickerLevel, tickerPos, tickerState, tag);
+            }
+        };
+    }
 
     @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return simpleCodec(props -> {
-            // This will be overridden by subclasses
-            throw new UnsupportedOperationException();
-        });
-    }
+    protected abstract MapCodec<? extends BaseEntityBlock> codec();
 }

@@ -82,6 +82,7 @@ public class SettlementHubBlock extends BaseEntityBlock {
                     .filter(s -> s.getCorePos().equals(pos))
                     .findFirst()
                     .ifPresent(settlement -> {
+                        settlement.invalidateLoadedMembers(serverLevel.getServer());
                         SettlementBuildingManager buildings = SettlementBuildingManager.get(serverLevel);
                         settlement.getBuildingIds().forEach(buildings::removeBuilding);
                         manager.removeSettlement(settlement.getId());
