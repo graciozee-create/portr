@@ -97,8 +97,6 @@ public abstract class GirlEntity extends PathfinderMob {
     // NOTE: deliberately uses the vanilla VECTOR3 serializer rather than a custom one.
     // defineId() runs during class initialisation, which can happen before a modded
     // serializer registry is populated - that would hard-crash on startup.
-    private static final EntityDataAccessor<Vector3f> PASSENGER_BONE_POSITION =
-            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Vector3f> BREAST_OFFSET =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Boolean> IS_DOWNED =
@@ -186,7 +184,6 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(BREAST_SIZE, 100);
         builder.define(MILKED_AMOUNT, 0);
         builder.define(BREAST_OFFSET, new Vector3f());
-        builder.define(PASSENGER_BONE_POSITION, new Vector3f());
         builder.define(BASE_POS, BlockPos.ZERO);
         builder.define(OVERRIDE_ANIM, "");
         builder.define(SCENE_ANIM, "");
@@ -686,16 +683,6 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setCurrentRelationshipLevel(int value) {
         this.entityData.set(RELATIONSHIP_LEVEL, value);
-    }
-
-    public void setPassengerBonePosition(Vec3 position) {
-        this.entityData.set(PASSENGER_BONE_POSITION,
-                new Vector3f((float) position.x, (float) position.y, (float) position.z));
-    }
-
-    public Vec3 getPassengerBonePosition() {
-        Vector3f v = this.entityData.get(PASSENGER_BONE_POSITION);
-        return new Vec3(v.x(), v.y(), v.z());
     }
 
     public void setBasePos(BlockPos pos) {
