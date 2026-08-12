@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -156,6 +157,22 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     protected InteractionResult interactTamed(Player player, ItemStack stack) {
+        if (this.isDowned()) {
+            if (stack.is(this.isAttractedTo()) || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+                this.setDowned(false);
+                this.setHealth(this.getMaxHealth());
+                this.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.0F);
+                player.displayClientMessage(Component.literal("§a§l" + this.getGirlDisplayName() + " пришла в себя и полностью исцелена!"), true);
+                return InteractionResult.SUCCESS;
+            } else {
+                player.displayClientMessage(Component.literal("§e§l" + this.getGirlDisplayName() + " без сознания. Дайте ей её любимый предмет, золотое яблоко или золотую морковь, чтобы помочь ей!"), true);
+                return InteractionResult.SUCCESS;
+            }
+        }
+
         if (!this.isOwner(player)) {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.alreadyInRelationship"), true);
@@ -199,6 +216,25 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         return InteractionResult.FAIL;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isDowned()) {
+            return false;
+        }
+        float currentHealth = this.getHealth();
+        if (amount >= currentHealth) {
+            this.setDowned(true);
+            this.setHealth(1.0F);
+            this.getNavigation().stop();
+            this.setTarget(null);
+            if (this.getOwner() instanceof Player owner) {
+                owner.displayClientMessage(Component.literal("§c§l" + this.getGirlDisplayName() + " тяжело ранена и потеряла сознание! Подойдите и вылечите её едой или зельем, чтобы помочь!"), true);
+            }
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     public void talkToPlayer(Player player) {

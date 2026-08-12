@@ -80,6 +80,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     private PlayState handleAnimations(AnimationState<GirlSceneEntity> state) {
+        if (isDowned()) {
+            return state.setAndContinue(
+                    RawAnimation.begin().then(getAnimationPath("downed"), Animation.LoopType.LOOP));
+        }
+
         // An explicitly requested animation always wins.
         String override = getOverrideAnim();
         if (!override.isEmpty()) {
