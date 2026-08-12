@@ -83,7 +83,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         int actionButtonWidth = (layout.contentWidth - 5) / 2;
 
         Button confirmBtn = Button.builder(
-                Component.literal("§a§lConfirm"),
+                Component.translatable("gui.pleasurehorizons.button.confirm"),
                 button -> {
                     onConfirm();
                     this.onClose();
@@ -92,7 +92,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         this.addRenderableWidget(confirmBtn);
 
         Button cancelBtn = Button.builder(
-                Component.literal("§c§lCancel"),
+                Component.translatable("gui.pleasurehorizons.button.cancel"),
                 button -> this.onClose()
         ).bounds(layout.centerX + actionButtonWidth + 5, currentY, actionButtonWidth, 20).build();
         this.addRenderableWidget(cancelBtn);

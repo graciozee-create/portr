@@ -48,8 +48,15 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
 
             switch (this.actionId()) {
                 case "stripOrDressup" -> {
+                    // Original Fabric implementation only requests strip - the StripGoal
+                    // handles the actual toggle + freeze/unfreeze. Immediate toggle here
+                    // caused double-toggle and permanent freeze.
                     girl.requestStrip();
-                    girl.setStripped(!girl.isStripped());
+                    // Safety: ensure freeze flag is cleared if goal never starts (e.g. no anim)
+                    // - StripGoal.stop() also clears it, but this covers manual call path.
+                    if (!girl.hasStripAnim()) {
+                        girl.setFreeze(false);
+                    }
                 }
                 case "breakUp" -> girl.breakUpParticles(ctx.player());
                 case "setBase" -> girl.setBasePosHere();

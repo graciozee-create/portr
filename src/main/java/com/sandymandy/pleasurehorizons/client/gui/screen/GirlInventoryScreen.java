@@ -126,7 +126,7 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         }
 
         if (!button.active) {
-            button.setTooltip(Tooltip.create(Component.literal("Requires Relationship Level " + action.requiredRelationshipLevel())));
+            button.setTooltip(Tooltip.create(Component.translatable("gui.pleasurehorizons.requires_relationship", action.requiredRelationshipLevel())));
         }
 
         this.addRenderableWidget(button);

@@ -166,10 +166,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.setDowned(false);
                 this.setHealth(this.getMaxHealth());
                 this.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.0F);
-                player.displayClientMessage(Component.literal("§a§l" + this.getGirlDisplayName() + " пришла в себя и полностью исцелена!"), true);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_revived", this.getGirlDisplayName()), true);
                 return InteractionResult.SUCCESS;
             } else {
-                player.displayClientMessage(Component.literal("§e§l" + this.getGirlDisplayName() + " без сознания. Дайте ей любую еду или её любимый предмет, чтобы помочь ей!"), true);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_downed_need_food", this.getGirlDisplayName()), true);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -189,7 +189,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.likedGift"), true);
 
-            List<String> replies = this.getCurrentRelationshipLevel() < 4
+            List<Component> replies = this.getCurrentRelationshipLevel() < 4
                     ? this.giftRepliesLike()
                     : this.giftRepliesLove();
             if (!replies.isEmpty()) {
@@ -204,10 +204,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
             if (this.isPassengerOfSameVehicle(player) || this.getVehicle() == player) {
                 this.stopRiding();
-                player.displayClientMessage(Component.literal("§e" + this.getGirlDisplayName() + " опущена на землю."), true);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
             } else {
                 this.startRiding(player, true);
-                player.displayClientMessage(Component.literal("§a" + this.getGirlDisplayName() + " взята на руки! (Shift + ПКМ пустой рукой, чтобы опустить)"), true);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
             }
             return InteractionResult.SUCCESS;
         }
@@ -242,7 +242,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.getNavigation().stop();
             this.setTarget(null);
             if (this.getOwner() instanceof Player owner) {
-                owner.displayClientMessage(Component.literal("§c§l" + this.getGirlDisplayName() + " тяжело ранена и потеряла сознание! Подойдите и вылечите её едой или зельем, чтобы помочь!"), true);
+                owner.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_heavily_wounded", this.getGirlDisplayName()), true);
             }
             return false;
         }
@@ -251,7 +251,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     public void talkToPlayer(Player player) {
         if (this.level().isClientSide()) return;
-        List<String> replies = this.getCurrentRelationshipLevel() < 4
+        List<Component> replies = this.getCurrentRelationshipLevel() < 4
                 ? this.giftRepliesLike()
                 : this.giftRepliesLove();
         if (!replies.isEmpty()) {
@@ -269,9 +269,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
-        player.displayClientMessage(Component.literal(
-                "She ignores you. Maybe try giving her "
-                        + this.isAttractedTo().getDescription().getString() + "."), true);
+        player.displayClientMessage(Component.translatable(
+                "msg.pleasurehorizons.girl_ignores",
+                this.isAttractedTo().getDescription().getString()), true);
         return InteractionResult.FAIL;
     }
 
@@ -282,8 +282,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.setTarget(null);
             this.setBasePos(this.blockPosition());
             this.playSound(SoundEvents.PLAYER_LEVELUP, 0.8F, 1.6F);
-            player.displayClientMessage(Component.literal(
-                    "You asked " + this.getGirlDisplayName() + " out and she said §aYes"), true);
+            player.displayClientMessage(Component.translatable(
+                    "msg.pleasurehorizons.tame_success", this.getGirlDisplayName()), true);
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,
                         this.getX(), this.getY() + 1.5D, this.getZ(), 7, 0.4D, 0.4D, 0.4D, 0.1D);
@@ -327,6 +327,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
     }
 
+    protected void messageAsEntity(Player player, Component message) {
+        player.displayClientMessage(
+                Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
+    }
+
     public String getGirlDisplayName() {
         if (this.hasCustomName()) {
             return this.getCustomName().getString();
@@ -335,13 +340,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return id.isEmpty() ? "Girl" : Character.toUpperCase(id.charAt(0)) + id.substring(1);
     }
 
-    public List<String> giftRepliesLike() {
-        return List.of("Wow, for me? Thanks!", "That's so nice of you...!", "Ahah, this is great!");
+    public List<Component> giftRepliesLike() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_like.1"),
+                Component.translatable("chat.pleasurehorizons.gift_like.2"),
+                Component.translatable("chat.pleasurehorizons.gift_like.3")
+        );
     }
 
-    public List<String> giftRepliesLove() {
-        return List.of("Oh, another one? Well, you're the real gift here~.",
-                "Babe, you're too nice.", "You always know what I like~.");
+    public List<Component> giftRepliesLove() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_love.1"),
+                Component.translatable("chat.pleasurehorizons.gift_love.2"),
+                Component.translatable("chat.pleasurehorizons.gift_love.3")
+        );
     }
 
     // ------------------------------------------------------------ misc

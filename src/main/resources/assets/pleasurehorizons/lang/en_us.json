@@ -218,5 +218,21 @@
   "text.autoconfig.pleasurehorizons.option.visual.showPlayer.@Tooltip": "Hides your player model.",
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion": "Show Submersion Fog",
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion.@Tooltip": "Whether you see a fog overlay underwater, in lava, or powdered snow.",
-  "text.autoconfig.pleasurehorizons.title": "Pleasure Horizons Options"
+  "text.autoconfig.pleasurehorizons.title": "Pleasure Horizons Options",
+  "msg.pleasurehorizons.girl_revived": "§a§l%s has recovered and is fully healed!",
+  "msg.pleasurehorizons.girl_downed_need_food": "§e§l%s is unconscious. Give her any food or her favorite item to help her!",
+  "msg.pleasurehorizons.girl_put_down": "§e%s has been put down.",
+  "msg.pleasurehorizons.girl_picked_up": "§a%s picked up! (Shift + RMB with empty hand to put down)",
+  "msg.pleasurehorizons.girl_heavily_wounded": "§c§l%s is heavily wounded and unconscious! Come and heal her with food or potion!",
+  "msg.pleasurehorizons.girl_ignores": "She ignores you. Maybe try giving her %s.",
+  "msg.pleasurehorizons.tame_success": "You asked %s out and she said §aYes",
+  "gui.pleasurehorizons.button.confirm": "Confirm",
+  "gui.pleasurehorizons.button.cancel": "Cancel",
+  "gui.pleasurehorizons.requires_relationship": "Requires Relationship Level %s",
+  "chat.pleasurehorizons.gift_like.1": "Wow, for me? Thanks!",
+  "chat.pleasurehorizons.gift_like.2": "That's so nice of you...!",
+  "chat.pleasurehorizons.gift_like.3": "Ahah, this is great!",
+  "chat.pleasurehorizons.gift_love.1": "Oh, another one? Well, you're the real gift here~.",
+  "chat.pleasurehorizons.gift_love.2": "Babe, you're too nice.",
+  "chat.pleasurehorizons.gift_love.3": "You always know what I like~."
 }

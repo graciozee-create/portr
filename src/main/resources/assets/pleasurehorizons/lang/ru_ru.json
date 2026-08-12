@@ -220,5 +220,21 @@
   "text.autoconfig.pleasurehorizons.option.visual.showPlayer.@Tooltip": "Скрывает модель вашего персонажа.",
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion": "Показывать эффект погружения",
   "text.autoconfig.pleasurehorizons.option.visual.showSubmersion.@Tooltip": "Включает туман под водой, в лаве или в рыхлом снегу.",
-  "text.autoconfig.pleasurehorizons.title": "Настройки Pleasure Horizons"
+  "text.autoconfig.pleasurehorizons.title": "Настройки Pleasure Horizons",
+  "msg.pleasurehorizons.girl_revived": "§a§l%s пришла в себя и полностью исцелена!",
+  "msg.pleasurehorizons.girl_downed_need_food": "§e§l%s без сознания. Дайте ей любую еду или её любимый предмет, чтобы помочь ей!",
+  "msg.pleasurehorizons.girl_put_down": "§e%s опущена на землю.",
+  "msg.pleasurehorizons.girl_picked_up": "§a%s взята на руки! (Shift + ПКМ пустой рукой, чтобы опустить)",
+  "msg.pleasurehorizons.girl_heavily_wounded": "§c§l%s тяжело ранена и потеряла сознание! Подойдите и вылечите её едой или зельем, чтобы помочь!",
+  "msg.pleasurehorizons.girl_ignores": "Она игнорирует вас. Попробуйте дать ей %s.",
+  "msg.pleasurehorizons.tame_success": "Вы предложили %s встречаться, и она сказала §aДа",
+  "gui.pleasurehorizons.button.confirm": "Подтвердить",
+  "gui.pleasurehorizons.button.cancel": "Отмена",
+  "gui.pleasurehorizons.requires_relationship": "Требуется уровень отношений %s",
+  "chat.pleasurehorizons.gift_like.1": "Ого, для меня? Спасибо!",
+  "chat.pleasurehorizons.gift_like.2": "Это так мило с твоей стороны...!",
+  "chat.pleasurehorizons.gift_like.3": "Ахаха, это великолепно!",
+  "chat.pleasurehorizons.gift_love.1": "О, ещё один? Вообще-то ты и есть мой подарок~.",
+  "chat.pleasurehorizons.gift_love.2": "Милый, ты слишком добр.",
+  "chat.pleasurehorizons.gift_love.3": "Ты всегда знаешь, что мне нравится~."
 }
