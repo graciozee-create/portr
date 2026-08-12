@@ -128,6 +128,94 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                 model.getBone(entry.getKey()).ifPresent(bone -> bone.setHidden(!visible));
             }
         }
+
+        applyBoneScales(animatable, model);
+        applyBonePositions(animatable, model);
+    }
+
+    /**
+     * Per-bone scale overrides (kobold body/breast size, pregnancy belly).
+     *
+     * <p>Bones are shared baked-model state, so the previous frame's values must be undone.
+     * Every bone we ever touched is reset to 1.0 first, then the current overrides applied -
+     * otherwise a resized kobold would permanently resize every other girl on the same rig.</p>
+     */
+    private void applyBoneScales(T animatable, BakedGeoModel model) {
+        Map<String, net.minecraft.world.phys.Vec3> sizes = animatable.boneSizeOverrides;
+        if (sizes == null) return;
+
+        for (String boneName : touchedScaleBones) {
+            if (!sizes.containsKey(boneName)) {
+                model.getBone(boneName).ifPresent(bone -> {
+                    bone.setScaleX(1.0F);
+                    bone.setScaleY(1.0F);
+                    bone.setScaleZ(1.0F);
+                });
+            }
+        }
+
+        for (Map.Entry<String, net.minecraft.world.phys.Vec3> entry : sizes.entrySet()) {
+            net.minecraft.world.phys.Vec3 scale = entry.getValue();
+            if (scale == null) continue;
+            touchedScaleBones.add(entry.getKey());
+            model.getBone(entry.getKey()).ifPresent(bone -> {
+                bone.setScaleX((float) scale.x);
+                bone.setScaleY((float) scale.y);
+                bone.setScaleZ((float) scale.z);
+            });
+        }
+    }
+
+    /** Per-bone position offsets, reset the same way as the scales. */
+    private void applyBonePositions(T animatable, BakedGeoModel model) {
+        Map<String, net.minecraft.world.phys.Vec3> offsets = animatable.bonePositionOffset;
+        if (offsets == null) return;
+
+        for (String boneName : touchedPosBones) {
+            if (!offsets.containsKey(boneName)) {
+                model.getBone(boneName).ifPresent(bone -> {
+                    bone.setPosX(0.0F);
+                    bone.setPosY(0.0F);
+                    bone.setPosZ(0.0F);
+                });
+            }
+        }
+
+        for (Map.Entry<String, net.minecraft.world.phys.Vec3> entry : offsets.entrySet()) {
+            net.minecraft.world.phys.Vec3 pos = entry.getValue();
+            if (pos == null) continue;
+            touchedPosBones.add(entry.getKey());
+            model.getBone(entry.getKey()).ifPresent(bone -> {
+                bone.setPosX((float) pos.x);
+                bone.setPosY((float) pos.y);
+                bone.setPosZ((float) pos.z);
+            });
+        }
+    }
+
+    private final java.util.Set<String> touchedScaleBones = new java.util.HashSet<>();
+    private final java.util.Set<String> touchedPosBones = new java.util.HashSet<>();
+
+    /**
+     * Per-bone colour tint (kobold scales, dyed leather armour).
+     *
+     * <p>GeckoLib 4 has no per-bone colour, so the tint is applied at draw time by overriding
+     * the render colour for the bone currently being rendered.</p>
+     */
+    @Override
+    public void renderRecursively(PoseStack poseStack, T animatable, GeoBone bone, net.minecraft.client.renderer.RenderType renderType,
+                                  MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int packedLight, int packedOverlay, int colour) {
+        Map<String, Integer> colours = animatable.boneColorOverrides;
+        int effective = colour;
+        if (colours != null && !colours.isEmpty()) {
+            Integer override = colours.get(bone.getName());
+            if (override != null) {
+                effective = override;
+            }
+        }
+        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, effective);
     }
 
     /** Root bone of the embedded partner skeleton, present in every girl rig. */

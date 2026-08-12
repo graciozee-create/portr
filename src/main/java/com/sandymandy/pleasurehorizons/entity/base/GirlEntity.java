@@ -331,6 +331,66 @@ public abstract class GirlEntity extends PathfinderMob {
     public void applyClothingAndArmor() {
     }
 
+    // ------------------------------------------------------- bone overrides
+    // These mirror the Fabric original's helpers. They only make sense on the client,
+    // where GirlRenderer reads the maps every frame while walking the baked model.
+
+    public void setBoneVisibility(List<String> bones, boolean visible) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneVisibility.put(bone, visible);
+        }
+    }
+
+    public void setBoneVisibility(String bone, boolean visible) {
+        this.setBoneVisibility(List.of(bone), visible);
+    }
+
+    public void overrideBoneColor(List<String> bones, int argb) {
+        if (!this.level().isClientSide()) return;
+        int withAlpha = (argb & 0xFF000000) == 0 ? (argb | 0xFF000000) : argb;
+        for (String bone : bones) {
+            this.boneColorOverrides.put(bone, withAlpha);
+        }
+    }
+
+    public void overrideBoneColor(String bone, int argb) {
+        this.overrideBoneColor(List.of(bone), argb);
+    }
+
+    public void setBonePos(String bone, float x, float y, float z) {
+        this.setBonePos(bone, new Vec3(x, y, z));
+    }
+
+    public void setBonePos(String bone, Vec3 pos) {
+        if (!this.level().isClientSide()) return;
+        this.bonePositionOffset.put(bone, pos);
+    }
+
+    /** Sizes are authored as percentages upstream (100 = unchanged). */
+    public void setBoneSize(String bone, float x, float y, float z, float min, float max) {
+        if (!this.level().isClientSide()) return;
+        if (min != 0 && max != 0) {
+            x = Mth.clamp(x, min, max);
+            y = Mth.clamp(y, min, max);
+            z = Mth.clamp(z, min, max);
+        }
+        this.boneSizeOverrides.put(bone, new Vec3(x, y, z));
+    }
+
+    public void setBoneSize(String bone, int size, int min, int max) {
+        float finalSize = size / 100f;
+        if (min == 0 && max == 0) {
+            setBoneSize(bone, finalSize, finalSize, finalSize, 0, 0);
+            return;
+        }
+        setBoneSize(bone, finalSize, finalSize, finalSize, min / 100f, max / 100f);
+    }
+
+    public void setBoneSize(String bone, int size) {
+        setBoneSize(bone, size, 0, 0);
+    }
+
     public boolean isArmorVisible(EquipmentSlot slot) {
         return this.armorVisibility.getOrDefault(slot, true);
     }
