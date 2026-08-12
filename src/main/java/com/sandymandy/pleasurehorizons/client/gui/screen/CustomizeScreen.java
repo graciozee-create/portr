@@ -173,6 +173,10 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         selectedButtons.put(groupId, button);
     }
 
+    public net.minecraft.client.gui.components.AbstractWidget addWidget(net.minecraft.client.gui.components.AbstractWidget widget) {
+        return this.addRenderableWidget(widget);
+    }
+
     public static class LayoutConfig {
         public int previewWidth;
         public int menuWidth;
