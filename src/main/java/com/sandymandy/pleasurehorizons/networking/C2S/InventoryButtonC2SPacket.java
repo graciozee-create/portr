@@ -83,6 +83,41 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                         }
                     }
                 }
+                case "guardBase" -> {
+                    girl.setGuardBaseEnabled(!girl.isGuardBaseEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isGuardBaseEnabled() ? "msg.pleasurehorizons.guardBaseEnabled" : "msg.pleasurehorizons.guardBaseDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "guardOwner" -> {
+                    girl.setGuardOwnerEnabled(!girl.isGuardOwnerEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isGuardOwnerEnabled() ? "msg.pleasurehorizons.guardOwnerEnabled" : "msg.pleasurehorizons.guardOwnerDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "gather" -> {
+                    girl.setGatherEnabled(!girl.isGatherEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isGatherEnabled() ? "msg.pleasurehorizons.gatherEnabled" : "msg.pleasurehorizons.gatherDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "harvest" -> {
+                    girl.setHarvestEnabled(!girl.isHarvestEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isHarvestEnabled() ? "msg.pleasurehorizons.harvestEnabled" : "msg.pleasurehorizons.harvestDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "stayNearBase" -> {
+                    girl.setStayNearBaseEnabled(!girl.isStayNearBaseEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isStayNearBaseEnabled() ? "msg.pleasurehorizons.stayNearBaseEnabled" : "msg.pleasurehorizons.stayNearBaseDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
                 default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId());
             }
         });

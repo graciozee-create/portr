@@ -20,7 +20,8 @@ public class GirlGuardBaseGoal extends TargetGoal {
 
     @Override
     public boolean canUse() {
-        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive()) {
+        if (!girl.isGuardBaseEnabled()) return false;
+        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
         BlockPos center = girl.getBasePos();
@@ -40,7 +41,8 @@ public class GirlGuardBaseGoal extends TargetGoal {
 
     @Override
     public boolean canContinueToUse() {
-        return !girl.isSitting() && !girl.isFollowing() && !girl.isSceneActive()
+        return girl.isGuardBaseEnabled() && !girl.isSitting() && !girl.isFollowing()
+                && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger()
                 && girl.getTarget() != null && girl.getTarget().isAlive();
     }
 }

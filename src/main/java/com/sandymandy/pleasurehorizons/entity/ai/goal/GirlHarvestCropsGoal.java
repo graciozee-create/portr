@@ -20,7 +20,8 @@ public class GirlHarvestCropsGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive()) {
+        if (!girl.isHarvestEnabled()) return false;
+        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
         if (cooldown > 0) {
@@ -46,7 +47,8 @@ public class GirlHarvestCropsGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return targetCrop != null && !girl.isSitting() && !girl.isFollowing() && !girl.isSceneActive()
+        return girl.isHarvestEnabled() && targetCrop != null && !girl.isSitting() && !girl.isFollowing()
+                && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger()
                 && girl.level().getBlockState(targetCrop).getBlock() instanceof CropBlock crop
                 && crop.isMaxAge(girl.level().getBlockState(targetCrop));
     }

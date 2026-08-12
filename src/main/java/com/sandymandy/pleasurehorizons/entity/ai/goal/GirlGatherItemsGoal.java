@@ -20,7 +20,8 @@ public class GirlGatherItemsGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (girl.isSitting() || girl.isSceneActive()) {
+        if (!girl.isGatherEnabled()) return false;
+        if (girl.isSitting() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
         List<ItemEntity> items = girl.level().getEntitiesOfClass(ItemEntity.class, girl.getBoundingBox().inflate(8.0D, 3.0D, 8.0D),
@@ -34,7 +35,8 @@ public class GirlGatherItemsGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return targetItem != null && targetItem.isAlive() && !targetItem.getItem().isEmpty() && !girl.isSitting() && !girl.isSceneActive();
+        return girl.isGatherEnabled() && targetItem != null && targetItem.isAlive() && !targetItem.getItem().isEmpty()
+                && !girl.isSitting() && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger();
     }
 
     @Override

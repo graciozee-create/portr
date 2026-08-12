@@ -153,6 +153,15 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 int y = startY + i * (buttonHeight + paddingY);
                 Component dynamicLabel = action.label();
 
+                // Dynamic labels for AI toggles - show Stop when enabled
+                if ("gui.pleasurehorizons.button.guardBase".equals(action.labelKey()) && girl.isGuardBaseEnabled()) {
+                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGuardBase");
+                } else if ("gui.pleasurehorizons.button.guardOwner".equals(action.labelKey()) && girl.isGuardOwnerEnabled()) {
+                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGuardOwner");
+                } else if ("gui.pleasurehorizons.button.stayNearBase".equals(action.labelKey()) && girl.isStayNearBaseEnabled()) {
+                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopStayNearBase");
+                }
+
                 this.drawButton(dynamicLabel, action, startX, y, buttonWidth, buttonHeight);
             }
 
@@ -165,10 +174,12 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                     dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stand");
                 } else if ("gui.pleasurehorizons.button.follow".equals(action.labelKey()) && girl.isFollowing()) {
                     dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopFollowing");
-                }
-
-                if ("gui.pleasurehorizons.button.strip".equals(action.labelKey()) && girl.isStripped()) {
+                } else if ("gui.pleasurehorizons.button.strip".equals(action.labelKey()) && girl.isStripped()) {
                     dynamicLabel = Component.translatable("gui.pleasurehorizons.button.dressUp");
+                } else if ("gui.pleasurehorizons.button.gather".equals(action.labelKey()) && girl.isGatherEnabled()) {
+                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGather");
+                } else if ("gui.pleasurehorizons.button.harvest".equals(action.labelKey()) && girl.isHarvestEnabled()) {
+                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopHarvest");
                 }
 
                 this.drawButton(dynamicLabel, action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);

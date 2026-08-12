@@ -104,6 +104,18 @@ public abstract class GirlEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> IS_DOWNED =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
 
+    // --- AI Task toggles (new advanced AI system) ---
+    private static final EntityDataAccessor<Boolean> AI_GUARD_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GUARD_OWNER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GATHER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_HARVEST =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_STAY_NEAR_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+
     public static final Random RANDOM = new Random();
 
     public Map<String, Boolean> boneVisibility = new HashMap<>();
@@ -169,6 +181,11 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(SCENE_ANIM, "");
         builder.define(CONSUMING_STACK, Items.COOKED_BEEF.getDefaultInstance());
         builder.define(IS_DOWNED, false);
+        builder.define(AI_GUARD_BASE, false);
+        builder.define(AI_GUARD_OWNER, false);
+        builder.define(AI_GATHER, true); // gather by default is useful and non-intrusive
+        builder.define(AI_HARVEST, false);
+        builder.define(AI_STAY_NEAR_BASE, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -180,6 +197,22 @@ public abstract class GirlEntity extends PathfinderMob {
     public boolean isFollowing() {
         return this.entityData.get(FOLLOWING);
     }
+
+    // --- AI toggles ---
+    public void setGuardBaseEnabled(boolean enabled) { this.entityData.set(AI_GUARD_BASE, enabled); }
+    public boolean isGuardBaseEnabled() { return this.entityData.get(AI_GUARD_BASE); }
+
+    public void setGuardOwnerEnabled(boolean enabled) { this.entityData.set(AI_GUARD_OWNER, enabled); }
+    public boolean isGuardOwnerEnabled() { return this.entityData.get(AI_GUARD_OWNER); }
+
+    public void setGatherEnabled(boolean enabled) { this.entityData.set(AI_GATHER, enabled); }
+    public boolean isGatherEnabled() { return this.entityData.get(AI_GATHER); }
+
+    public void setHarvestEnabled(boolean enabled) { this.entityData.set(AI_HARVEST, enabled); }
+    public boolean isHarvestEnabled() { return this.entityData.get(AI_HARVEST); }
+
+    public void setStayNearBaseEnabled(boolean enabled) { this.entityData.set(AI_STAY_NEAR_BASE, enabled); }
+    public boolean isStayNearBaseEnabled() { return this.entityData.get(AI_STAY_NEAR_BASE); }
 
     public void setStripped(boolean stripped) {
         this.entityData.set(STRIPPED, stripped);
@@ -577,6 +610,12 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
         compound.putInt("BreastSize", getBreastSize());
         compound.putInt("MilkedAmount", getMilkedAmount());
+        // AI toggles
+        compound.putBoolean("AIGuardBase", isGuardBaseEnabled());
+        compound.putBoolean("AIGuardOwner", isGuardOwnerEnabled());
+        compound.putBoolean("AIGather", isGatherEnabled());
+        compound.putBoolean("AIHarvest", isHarvestEnabled());
+        compound.putBoolean("AIStayNearBase", isStayNearBaseEnabled());
 
         CompoundTag inventoryTag = new CompoundTag();
         ContainerHelper.saveAllItems(inventoryTag, this.inventory.getItems(), this.registryAccess());
@@ -599,6 +638,11 @@ public abstract class GirlEntity extends PathfinderMob {
             setBreastSize(compound.getInt("BreastSize"));
         }
         setMilkedAmount(compound.getInt("MilkedAmount"));
+        if (compound.contains("AIGuardBase")) setGuardBaseEnabled(compound.getBoolean("AIGuardBase"));
+        if (compound.contains("AIGuardOwner")) setGuardOwnerEnabled(compound.getBoolean("AIGuardOwner"));
+        if (compound.contains("AIGather")) setGatherEnabled(compound.getBoolean("AIGather"));
+        if (compound.contains("AIHarvest")) setHarvestEnabled(compound.getBoolean("AIHarvest"));
+        if (compound.contains("AIStayNearBase")) setStayNearBaseEnabled(compound.getBoolean("AIStayNearBase"));
 
         if (compound.contains("Inventory")) {
             ContainerHelper.loadAllItems(

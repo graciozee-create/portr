@@ -31,7 +31,19 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.customize", 1,
-                    (girl, player) -> send(girl.getId(), "customize"))
+                    (girl, player) -> send(girl.getId(), "customize")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.guardBase", 1,
+                    (girl, player) -> send(girl.getId(), "guardBase")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.guardOwner", 2,
+                    (girl, player) -> send(girl.getId(), "guardOwner")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.stayNearBase", 1,
+                    (girl, player) -> send(girl.getId(), "stayNearBase"))
     );
 
     public static final List<InventoryButtonAction> BUTTONS_RIGHT = List.of(
@@ -49,7 +61,15 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.talk", 4,
-                    (girl, player) -> send(girl.getId(), "talk"))
+                    (girl, player) -> send(girl.getId(), "talk")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.gather", 2,
+                    (girl, player) -> send(girl.getId(), "gather")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.harvest", 2,
+                    (girl, player) -> send(girl.getId(), "harvest"))
     );
 
     private static void send(int entityId, String actionId) {
