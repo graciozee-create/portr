@@ -10,6 +10,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTemptGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.MoveToPlayerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StationaryContactGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
@@ -93,6 +94,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
         this.goalSelector.addGoal(5, new GirlStayNearBaseGoal(this, 1.0D, 3.0F, 10.0F)); // toggleable
+        this.goalSelector.addGoal(6, new GirlTemptGoal(this, 1.0D, false));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
         // These two are the reason a carried girl kept spinning on the spot: the vanilla
         // look goals do not know about being a passenger, so they carried on picking new
