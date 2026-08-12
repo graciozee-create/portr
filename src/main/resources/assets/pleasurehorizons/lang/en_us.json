@@ -148,6 +148,7 @@
   "msg.pleasurehorizons.noBedFound": "We need a vacant bed nearby for this...",
   "msg.pleasurehorizons.nowFollowing": "%s follows you",
   "msg.pleasurehorizons.nowStaying": "%s stays here",
+  "msg.pleasurehorizons.profile_switched": "Switched girl profile to %s",
   "msg.pleasurehorizons.settlement.not_owner": "This settlement is not owned by you",
   "msg.pleasurehorizons.stayNearBaseDisabled": "%s will no longer stay near base",
   "msg.pleasurehorizons.stayNearBaseEnabled": "%s will stay near base",

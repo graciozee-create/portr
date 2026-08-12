@@ -148,6 +148,7 @@
   "msg.pleasurehorizons.noBedFound": "Для этого нам нужна свободная кровать поблизости...",
   "msg.pleasurehorizons.nowFollowing": "%s следует за вами",
   "msg.pleasurehorizons.nowStaying": "%s ждёт здесь",
+  "msg.pleasurehorizons.profile_switched": "Профиль девушки изменён на %s",
   "msg.pleasurehorizons.settlement.not_owner": "Это поселение принадлежит не вам",
   "msg.pleasurehorizons.stayNearBaseDisabled": "%s больше не остаётся у базы",
   "msg.pleasurehorizons.stayNearBaseEnabled": "%s теперь остаётся у базы",
