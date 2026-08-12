@@ -47,14 +47,17 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
             }
 
             switch (this.actionId()) {
-                case "stripOrDressup" -> girl.requestStrip();
+                case "stripOrDressup" -> {
+                    girl.requestStrip();
+                    girl.setStripped(!girl.isStripped());
+                }
                 case "breakUp" -> girl.breakUpParticles(ctx.player());
                 case "setBase" -> girl.setBasePosHere();
                 case "goToBase" -> girl.teleportToBase();
                 case "sit" -> girl.setSitting(!girl.isSitting());
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
-                // "talk" and "customize" need the scene/customise screens, which are not ported yet.
-                case "talk", "customize" -> {}
+                case "talk" -> girl.talkToPlayer(ctx.player());
+                case "customize" -> {}
                 default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId());
             }
         });

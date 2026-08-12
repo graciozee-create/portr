@@ -138,4 +138,5 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     public void startScene(net.minecraft.world.entity.player.Player player, String scene) {}
     public void tryTriggerCum() {}
     public void setThrusting(boolean held) {}
+    public java.util.Queue<String> animationKeyFrameEvent = new java.util.LinkedList<>();
 }

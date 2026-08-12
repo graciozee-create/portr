@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
 import net.minecraft.nbt.CompoundTag;
@@ -64,6 +65,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(0, new StripGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
@@ -174,6 +176,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
             return InteractionResult.SUCCESS;
         }
+
+    public void talkToPlayer(Player player) {
+        if (this.level().isClientSide()) return;
+        List<String> replies = this.getCurrentRelationshipLevel() < 4
+                ? this.giftRepliesLike()
+                : this.giftRepliesLove();
+        if (!replies.isEmpty()) {
+            this.messageAsEntity(player, replies.get(RANDOM.nextInt(replies.size())));
+        }
+        this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
+    }
 
         if (!this.isSceneActive() && player.isShiftKeyDown()) {
             this.setSitting(!this.isSitting());
