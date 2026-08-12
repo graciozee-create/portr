@@ -14,10 +14,12 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -482,6 +484,10 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     public void tick() {
         super.tick();
 
+        if (this.level().isClientSide()) {
+            modelLogic();
+        }
+
         if (!this.level().isClientSide()) {
             boolean inSexPhases = switch (getCurrentScenePhase()) {
                 case NONE, BED_IDLE, LAYING_DOWN, DIALOG -> false;
@@ -538,6 +544,27 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
                 pregnancyFinished();
             }
         }
+    }
+
+    /**
+     * Client-side per-frame model state: breast size/offset from the customize screen and the
+     * pregnancy belly. Without this the customize screen changed tracked data that nothing read,
+     * so the sliders had no visible effect.
+     */
+    protected void modelLogic() {
+        if (!this.level().isClientSide()) return;
+
+        setBoneSize("boobs", getBreastSize(), getBreastMinSize(), getBreastMaxSize());
+
+        Vec3 offset = getBreastOffset();
+        if (offset.lengthSqr() > 0) {
+            setBonePos("boobs", offset);
+        }
+
+        int bellySize = isPregnant()
+                ? (int) Mth.lerp(getPregnancyProgress(), 100, getMaxBellySizeWhenPregnant())
+                : 100;
+        setBoneSize("belly", bellySize);
     }
 
     /** Overridden by girls that spawn offspring; the base just resets the pregnancy. */

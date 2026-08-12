@@ -33,7 +33,7 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
     }
 
     public GirlCustomizeScreen(int entityId, int previewEntityId) {
-        this(Component.literal("Customize Girl"), entityId, previewEntityId);
+        this(Component.translatable("gui.pleasurehorizons.customize.titleGirl"), entityId, previewEntityId);
     }
 
     @Override
@@ -42,7 +42,8 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
 
         sections.add(new SliderSection<>(
                 entity, previewEntity,
-                "Breast Size", entity.getBreastMinSize(), entity.getBreastMaxSize(),
+                Component.translatable("gui.pleasurehorizons.customize.breastSize"),
+                entity.getBreastMinSize(), entity.getBreastMaxSize(),
                 () -> breastSize,
                 value -> breastSize = value,
                 ""
@@ -50,14 +51,14 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
 
         sections.add(new Vec3dInputSection<>(
                 entity, previewEntity,
-                "Breast Offset",
+                Component.translatable("gui.pleasurehorizons.customize.breastOffset"),
                 () -> breastOffset,
                 vec3 -> breastOffset = vec3
         ));
 
         sections.add(new ButtonSection<>(
                 entity, previewEntity,
-                "Can Get Impregnated",
+                Component.translatable("gui.pleasurehorizons.customize.canGetImpregnated"),
                 () -> canGetImpregnated,
                 value -> canGetImpregnated = value
         ));
@@ -70,7 +71,8 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
             @Override
             public int render(CustomizeScreen<GirlSceneEntity> screen, LayoutConfig layout, int currentY) {
                 Button clearBtn = Button.builder(
-                        Component.literal("Clear").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+                        Component.translatable("gui.pleasurehorizons.customize.clear")
+                                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
                         button -> {
                             onClear();
                             screen.onClose();

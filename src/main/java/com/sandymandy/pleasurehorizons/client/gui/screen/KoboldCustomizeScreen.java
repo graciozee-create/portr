@@ -46,7 +46,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
     }
 
     public KoboldCustomizeScreen(int entityId, int previewEntityId) {
-        this(Component.literal("Kobold Customization"), entityId, previewEntityId);
+        this(Component.translatable("gui.pleasurehorizons.customize.titleKobold"), entityId, previewEntityId);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
         sections.add(new SliderSection<>(
                 entity, previewEntity,
-                "Body Size", 65, 115,
+                Component.translatable("gui.pleasurehorizons.customize.bodySize"), 65, 115,
                 () -> bodySize,
                 value -> bodySize = value,
                 "Size affects hitbox height"
@@ -63,7 +63,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
         sections.add(new SliderSection<>(
                 entity, previewEntity,
-                "Breast Size", 60, 160,
+                Component.translatable("gui.pleasurehorizons.customize.breastSize"), 60, 160,
                 () -> breastSize,
                 value -> breastSize = value,
                 "Adjust breast size"
@@ -71,7 +71,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
         sections.add(new ButtonGridSection<>(
                 entity, previewEntity,
-                "Color Pattern:",
+                Component.translatable("gui.pleasurehorizons.customize.colorPattern"),
                 "color_preset",
                 KoboldEntity.PatternPresets.values(),
                 2,
@@ -99,7 +99,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
         sections.add(new ButtonGridSection<>(
                 entity, previewEntity,
-                "Iris Color:",
+                Component.translatable("gui.pleasurehorizons.customize.irisColor"),
                 "iris_color",
                 irisColors,
                 3,
@@ -111,11 +111,11 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
         Integer[] topHornTypes = {0, 1, 2, 3, 4, 5, 6, 7};
         sections.add(new ButtonGridSection<>(
                 entity, previewEntity,
-                "Top Horns:",
+                Component.translatable("gui.pleasurehorizons.customize.topHorns"),
                 "top_horn",
                 topHornTypes,
                 4,
-                type -> Component.literal("Type " + type),
+                type -> Component.translatable("gui.pleasurehorizons.customize.hornType", type),
                 type -> topHornType = type,
                 () -> topHornType
         ));
@@ -123,11 +123,11 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
         Integer[] bottomHornTypes = {0, 1, 2};
         sections.add(new ButtonGridSection<>(
                 entity, previewEntity,
-                "Bottom Horns:",
+                Component.translatable("gui.pleasurehorizons.customize.bottomHorns"),
                 "bottom_horn",
                 bottomHornTypes,
                 3,
-                type -> Component.literal("Type " + type),
+                type -> Component.translatable("gui.pleasurehorizons.customize.hornType", type),
                 type -> bottomHornType = type,
                 () -> bottomHornType
         ));
@@ -140,7 +140,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
             @Override
             public int render(CustomizeScreen<KoboldEntity> screen, LayoutConfig layout, int currentY) {
                 Button randomizeBtn = Button.builder(
-                        Component.literal("Randomize"),
+                        Component.translatable("gui.pleasurehorizons.customize.randomize"),
                         button -> randomizeAll()
                 ).bounds(layout.centerX, currentY, layout.contentWidth, 20).build();
                 screen.addWidget(randomizeBtn);
