@@ -16,6 +16,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -48,6 +49,12 @@ public class PleasureHorizonsClientEvents {
                 PleasureHorizonsScreenHandlerRegistry.SETTLEMENT_HUB_HOLDER.get(),
                 SettlementHubScreen::new
         );
+    }
+
+    /** Keyframe sound/message tables are reloaded together with the resource packs. */
+    @SubscribeEvent
+    public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
+        com.sandymandy.pleasurehorizons.util.SceneKeyframeEventReloader.registerClient(event);
     }
 
     @SubscribeEvent

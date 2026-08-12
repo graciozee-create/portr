@@ -436,6 +436,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
     }
 
+    @Override
+    public String getSceneDisplayName() {
+        return getGirlDisplayName();
+    }
+
     public String getGirlDisplayName() {
         if (this.hasCustomName()) {
             return this.getCustomName().getString();

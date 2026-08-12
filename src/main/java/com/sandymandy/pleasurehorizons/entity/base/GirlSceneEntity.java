@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.entity.base;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.networking.S2C.PlayCumHudAnimationS2CPacket;
+import com.sandymandy.pleasurehorizons.registries.SceneKeyframeEventRegistry;
 import com.sandymandy.pleasurehorizons.util.Utils;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import com.sandymandy.pleasurehorizons.util.variables.ScenePhase;
@@ -14,6 +15,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
@@ -461,11 +463,81 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
         this.animationEventQueueServer.add(key.toLowerCase());
         handleSceneSpeed(key);
+        handleSceneFootstepSounds(key);
+        relayKeyframeSounds(key);
+    }
+
+    /**
+     * Plays the keyframe's sounds for everyone except the scene player.
+     *
+     * <p>The scene player already played them locally the instant the frame fired, which keeps
+     * them tight to the animation; replaying server-side would double them up for that one
+     * player.</p>
+     */
+    private void relayKeyframeSounds(String key) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+
+        List<SoundEvent> sounds = SceneKeyframeEventRegistry.getSound(getGirlID(), key);
+        if (sounds.isEmpty()) return;
+
+        ServerPlayer scenePlayer = getScenePlayerServer();
+        for (SoundEvent sound : sounds) {
+            serverLevel.playSound(scenePlayer, this.getX(), this.getY(), this.getZ(),
+                    sound, this.getSoundSource(), 1.0f, 1.0f);
+        }
+    }
+
+    /** Footstep sounds keyed off the block she is standing on. */
+    private void handleSceneFootstepSounds(String key) {
+        if (!key.toLowerCase().contains("startstep")) return;
+
+        net.minecraft.world.level.block.state.BlockState below =
+                this.level().getBlockState(this.blockPosition().below());
+        this.playSound(below.getSoundType().getStepSound(), 1.0f, 1.0f);
     }
 
     public void handleAnimationEventClient(String key) {
         if (!this.level().isClientSide()) return;
         this.animationEventQueueClient.add(key.toLowerCase());
+
+        // Scene dialogue and voice lines bound to this keyframe.
+        for (String message : SceneKeyframeEventRegistry.getMessage(getGirlID(), key)) {
+            sceneMessageAsGirl(message);
+        }
+        for (String message : SceneKeyframeEventRegistry.getPlayerMessage(key)) {
+            sceneMessageAsPlayer(message);
+        }
+        for (SoundEvent sound : SceneKeyframeEventRegistry.getSound(getGirlID(), key)) {
+            this.level().playLocalSound(this.getX(), this.getY(), this.getZ(),
+                    sound, this.getSoundSource(), 1.0f, 1.0f, false);
+        }
+    }
+
+    /**
+     * Prints a scene line in chat as if the girl said it.
+     *
+     * <p>Only shown to the player currently in the scene. Deliberately does not touch
+     * {@code Minecraft.getInstance()}: this class is common code and must never load a
+     * client-only type, even from a client-guarded branch.</p>
+     */
+    protected void sceneMessageAsGirl(String message) {
+        Player target = getScenePlayer();
+        if (target == null) return;
+        target.displayClientMessage(Component.translatable(
+                "chat.pleasurehorizons.girlSays", getSceneDisplayName(), message), false);
+    }
+
+    protected void sceneMessageAsPlayer(String message) {
+        Player target = getScenePlayer();
+        if (target == null) return;
+        target.displayClientMessage(Component.translatable(
+                "chat.pleasurehorizons.girlSays", target.getGameProfile().getName(), message), false);
+    }
+
+    /** Overridden by {@code TameableGirlEntity} to respect custom names. */
+    public String getSceneDisplayName() {
+        String id = getGirlID();
+        return id.isEmpty() ? "Girl" : Character.toUpperCase(id.charAt(0)) + id.substring(1);
     }
 
     private void handleSceneSpeed(String key) {
