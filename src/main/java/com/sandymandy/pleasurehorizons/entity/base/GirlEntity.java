@@ -101,6 +101,8 @@ public abstract class GirlEntity extends PathfinderMob {
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Vector3f> BREAST_OFFSET =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
+    private static final EntityDataAccessor<Boolean> IS_DOWNED =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
 
     public static final Random RANDOM = new Random();
 
@@ -166,6 +168,7 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(OVERRIDE_ANIM, "");
         builder.define(SCENE_ANIM, "");
         builder.define(CONSUMING_STACK, Items.COOKED_BEEF.getDefaultInstance());
+        builder.define(IS_DOWNED, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -188,6 +191,14 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setFreeze(boolean locked) {
         this.entityData.set(FROZEN_STATE, locked);
+    }
+
+    public boolean isDowned() {
+        return this.entityData.get(IS_DOWNED);
+    }
+
+    public void setDowned(boolean downed) {
+        this.entityData.set(IS_DOWNED, downed);
     }
 
     public boolean isFrozenInPlace() {
@@ -282,6 +293,40 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void setTemporaryState(boolean state) {
         this.entityData.set(IS_TEMPORARY, state);
+    }
+
+    public void applyClothingAndArmor() {
+    }
+
+    public boolean isArmorVisible(EquipmentSlot slot) {
+        return this.armorVisibility.getOrDefault(slot, true);
+    }
+
+    public void setArmorVisible(EquipmentSlot slot, boolean visible) {
+        this.armorVisibility.put(slot, visible);
+    }
+
+    public GirlEntity createTempClone() {
+        if (this.level().isClientSide()) return null;
+
+        GirlEntity clone = (GirlEntity) this.getType().create(this.level());
+        if (clone == null) return null;
+
+        clone.setTemporaryState(true);
+        clone.setPos(this.getX(), 800, this.getZ());
+        clone.setInvisible(true);
+        clone.setInvulnerable(true);
+        clone.setNoGravity(true);
+
+        this.onTempCloneCreation(clone);
+
+        this.level().addFreshEntity(clone);
+        this.setCreatedCloneState(true);
+        return clone;
+    }
+
+    public void onTempCloneCreation(GirlEntity clone) {
+        clone.setStripped(this.isStripped());
     }
 
     public boolean createdClone() {
@@ -508,6 +553,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("Stripped", isStripped());
+        compound.putBoolean("Downed", isDowned());
         compound.putBoolean("Following", isFollowing());
         compound.putBoolean("Pregnant", isPregnant());
         compound.putBoolean("CanGetImpregnated", canGetImpregnated());
@@ -527,6 +573,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         setStripped(compound.getBoolean("Stripped"));
+        setDowned(compound.getBoolean("Downed"));
         setFollowing(compound.getBoolean("Following"));
         setPregnantState(compound.getBoolean("Pregnant"));
         canGetImpregnatedState(compound.getBoolean("CanGetImpregnated"));

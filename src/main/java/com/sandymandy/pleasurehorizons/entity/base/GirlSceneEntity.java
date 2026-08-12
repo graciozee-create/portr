@@ -80,6 +80,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     private PlayState handleAnimations(AnimationState<GirlSceneEntity> state) {
+        if (isDowned()) {
+            return state.setAndContinue(
+                    RawAnimation.begin().then(getAnimationPath("downed"), Animation.LoopType.LOOP));
+        }
+
         // An explicitly requested animation always wins.
         String override = getOverrideAnim();
         if (!override.isEmpty()) {
@@ -97,7 +102,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
                     RawAnimation.begin().then(getAnimationPath(sceneAnim), Animation.LoopType.LOOP));
         }
 
-        if (isSitting()) {
+        if (isSitting() || (isPassenger() && getVehicle() instanceof net.minecraft.world.entity.player.Player)) {
             return state.setAndContinue(
                     RawAnimation.begin().then(getAnimationPath("sit"), Animation.LoopType.LOOP));
         }
@@ -130,4 +135,13 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
         return false;
     }
+
+    public void animationFinished() {}
+    public void stopScene() {}
+    public void playPhase(int phase) {}
+    public void handleAnimationEventServer(String event) {}
+    public void startScene(net.minecraft.world.entity.player.Player player, String scene) {}
+    public void tryTriggerCum() {}
+    public void setThrusting(boolean held) {}
+    public java.util.Queue<String> animationKeyFrameEvent = new java.util.LinkedList<>();
 }

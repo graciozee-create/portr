@@ -2,12 +2,17 @@ package com.sandymandy.pleasurehorizons.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer;
 
 import java.util.Map;
 
@@ -15,6 +20,31 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     public GirlRenderer(EntityRendererProvider.Context context) {
         super(context, new GirlModel<>());
         this.shadowRadius = 0.4F;
+
+        this.addRenderLayer(new BlockAndItemGeoLayer<>(this) {
+            @Nullable
+            @Override
+            protected ItemStack getStackForBone(GeoBone bone, T animatable) {
+                if ("weapon".equals(bone.getName()) && !animatable.isSceneActive()) {
+                    return animatable.getMainHandItem();
+                }
+                return null;
+            }
+
+            @Override
+            protected ItemDisplayContext getTransformTypeForStack(GeoBone bone, ItemStack stack, T animatable) {
+                return ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+            }
+
+            @Override
+            protected void renderStackForBone(PoseStack poseStack, GeoBone bone, ItemStack stack, T animatable, MultiBufferSource bufferSource, float partialTick, int packedLight, int packedOverlay) {
+                if ("weapon".equals(bone.getName())) {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getWeaponBoneXRotation()));
+                    poseStack.scale(0.7F, 0.7F, 0.7F);
+                }
+                super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+            }
+        });
     }
 
     /**
@@ -37,6 +67,13 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                           int packedOverlay, int colour) {
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, colour);
+
+        boolean carriedByLocalPlayer = animatable.getVehicle() != null
+                && animatable.getVehicle().is(net.minecraft.client.Minecraft.getInstance().player)
+                && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        if (carriedByLocalPlayer) {
+            poseStack.scale(0.0F, 0.0F, 0.0F);
+        }
 
         // The partner rig is scene-only; keep the whole sub-tree hidden otherwise.
         boolean sceneActive = animatable.isSceneActive();
