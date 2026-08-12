@@ -129,6 +129,8 @@ public abstract class GirlEntity extends PathfinderMob {
     public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverrides = new HashMap<>();
     public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer2 = new HashMap<>();
     public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer3 = new HashMap<>();
+    /** Per-bone UV shift, used to pick the armour material column. Client-side only. */
+    public Map<String, org.joml.Vector2f> boneUVOffsets = new HashMap<>();
     public Map<String, Vec3> boneSizeOverrides = new HashMap<>();
     public Map<String, Vec3> bonePositionOffset = new HashMap<>();
     public final Map<EquipmentSlot, Boolean> armorVisibility = new EnumMap<>(EquipmentSlot.class);
@@ -337,7 +339,168 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(IS_TEMPORARY, state);
     }
 
+    /**
+     * Shows/hides the armour bones baked into the rig and picks the right armour material.
+     *
+     * <p>Girls do not render vanilla armour models; every rig carries its own armour geometry
+     * whose texture sheet holds one column per material. Choosing a material is therefore a
+     * horizontal UV shift, and dyed leather is additionally tinted.</p>
+     *
+     * <p>This was an empty method in the port, so equipping armour on a girl did nothing at
+     * all. Client-side only: the maps it writes are read by {@code GirlRenderer} every frame,
+     * and {@code armorVisibility} arrives from the server via
+     * {@code ClothingArmorVisibilityS2CPacket}.</p>
+     */
     public void applyClothingAndArmor() {
+        if (!this.level().isClientSide()) return;
+
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!isGirlArmorSlot(slot)) continue;
+
+            List<String> armorBones = getArmorBones().get(slot);
+            if (armorBones != null) {
+                boolean visible = this.armorVisibility.getOrDefault(slot, false);
+                setBoneVisibility(armorBones, visible);
+
+                // Leg armour covers the crotch, so the bare bone underneath must go.
+                if (slot == EquipmentSlot.LEGS) {
+                    setBoneVisibility("vagina", !visible);
+                }
+            }
+            displayArmor(slot);
+        }
+    }
+
+    /** Maps an equipment slot onto the girl's own inventory layout. */
+    public ItemStack getArmorStack(EquipmentSlot slot) {
+        int index = switch (slot) {
+            case FEET -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_FEET_SLOT;
+            case LEGS -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_LEGS_SLOT;
+            case CHEST -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_CHEST_SLOT;
+            case HEAD -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_HEAD_SLOT;
+            default -> -1;
+        };
+        return index < 0 ? ItemStack.EMPTY : this.inventory.getItem(index);
+    }
+
+    /**
+     * Recomputes which armour pieces are worn and tells every tracking client.
+     *
+     * <p>Server side of {@code applyClothingAndArmor}. The visibility flags cannot be derived
+     * on the client because the girl's container is not synched, so they are broadcast with
+     * {@code ClothingArmorVisibilityS2CPacket}. Nothing sent this packet before, which is why
+     * the armour bones never appeared.</p>
+     */
+    public void updateClothingAndArmor() {
+        if (this.level().isClientSide()) return;
+
+        boolean stripped = this.isStripped();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!isGirlArmorSlot(slot)) continue;
+            boolean hasArmor = !this.getArmorStack(slot).isEmpty();
+            this.armorVisibility.put(slot, hasArmor && !stripped);
+        }
+
+        java.util.List<Boolean> armorList = new ArrayList<>();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            armorList.add(this.armorVisibility.getOrDefault(slot, false));
+        }
+
+        var packet = new com.sandymandy.pleasurehorizons.networking.S2C
+                .ClothingArmorVisibilityS2CPacket(this.getId(), armorList);
+        for (net.minecraft.server.level.ServerPlayer player :
+                ((net.minecraft.server.level.ServerLevel) this.level()).players()) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, packet);
+        }
+    }
+
+    /**
+     * Broadcasts armour visibility only when it has actually changed.
+     *
+     * <p>Polled from {@code tick}, because neither the girl's container nor the stripped flag
+     * fires an event when it changes. Comparing first keeps this from sending a packet per
+     * girl per second forever.</p>
+     */
+    public void updateClothingAndArmorIfChanged() {
+        if (this.level().isClientSide()) return;
+
+        boolean stripped = this.isStripped();
+        boolean changed = false;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!isGirlArmorSlot(slot)) continue;
+            boolean expected = !this.getArmorStack(slot).isEmpty() && !stripped;
+            if (this.armorVisibility.getOrDefault(slot, false) != expected) {
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            updateClothingAndArmor();
+        }
+    }
+
+    /** Which slots the rigs actually have armour geometry for. */
+    protected boolean isGirlArmorSlot(EquipmentSlot slot) {
+        return slot == EquipmentSlot.HEAD
+                || slot == EquipmentSlot.CHEST
+                || slot == EquipmentSlot.LEGS
+                || slot == EquipmentSlot.FEET;
+    }
+
+    /**
+     * Picks the armour material column for one slot.
+     *
+     * <p>The armour atlas stores the materials side by side, 9 pixels apart on a 512-wide
+     * sheet - hence the 0.017578125 step. Column 0 is the default, so an unrecognised material
+     * simply renders as that.</p>
+     */
+    private void displayArmor(EquipmentSlot slot) {
+        List<String> bones = getArmorBones().get(slot);
+        if (bones == null) return;
+
+        // Girls keep their gear in their own container, not in the vanilla equipment slots,
+        // so getItemBySlot would always come back empty here.
+        ItemStack item = this.getArmorStack(slot);
+        if (item.isEmpty()) {
+            // Nothing equipped: drop any offset/tint left over from the previous item.
+            clearBoneUV(bones);
+            clearBoneColor(bones);
+            return;
+        }
+
+        final float step = 0.017578125F;
+        float u = 0.0F;
+
+        // Matched on the item id, as upstream does, so modded armour falls back to column 0.
+        String armorType = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(item.getItem()).getPath().toLowerCase(java.util.Locale.ROOT);
+
+        if (armorType.contains("diamond")) u = step;
+        if (armorType.contains("gold")) u = step * 2;
+        if (armorType.contains("iron")) u = step * 3;
+        if (armorType.contains("copper")) u = step * 4;
+        if (armorType.contains("chain")) u = step * 5;
+        if (armorType.contains("leather")) {
+            u = step * 6;
+            overrideBoneColor(bones, getDyedArmorColor(item));
+        } else {
+            clearBoneColor(bones);
+        }
+        if (armorType.contains("turtle")) u = step * 7;
+
+        overrideBoneUV(bones, u, 0.0F);
+    }
+
+    /** Dyed leather colour, falling back to vanilla's undyed leather brown. */
+    private int getDyedArmorColor(ItemStack stack) {
+        if (stack.isEmpty()) return 0xFFFFFF;
+
+        net.minecraft.world.item.component.DyedItemColor dyed =
+                stack.get(net.minecraft.core.component.DataComponents.DYED_COLOR);
+        if (dyed != null) {
+            return dyed.rgb();
+        }
+        return 0xA06540;
     }
 
     // ------------------------------------------------------- bone overrides
@@ -365,6 +528,28 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public void overrideBoneColor(String bone, int argb) {
         this.overrideBoneColor(List.of(bone), argb);
+    }
+
+    /** Shifts a bone's texture coordinates, used to select the armour material column. */
+    public void overrideBoneUV(List<String> bones, float uOffset, float vOffset) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneUVOffsets.put(bone, new org.joml.Vector2f(uOffset, vOffset));
+        }
+    }
+
+    public void clearBoneUV(List<String> bones) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneUVOffsets.remove(bone);
+        }
+    }
+
+    public void clearBoneColor(List<String> bones) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneColorOverrides.remove(bone);
+        }
     }
 
     public void setBonePos(String bone, float x, float y, float z) {

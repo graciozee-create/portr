@@ -562,6 +562,13 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
 
         if (!this.level().isClientSide()) {
+            // Armour visibility depends on the girl's own container plus the stripped flag,
+            // neither of which raises an event, so it is re-checked periodically and only
+            // broadcast when it actually changes.
+            if (this.tickCount % 20 == 0) {
+                updateClothingAndArmorIfChanged();
+            }
+
             boolean inSexPhases = switch (getCurrentScenePhase()) {
                 case NONE, BED_IDLE, LAYING_DOWN, DIALOG -> false;
                 default -> true;

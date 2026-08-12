@@ -15,6 +15,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer;
 
 import com.sandymandy.pleasurehorizons.util.rendering.JigglePhysics;
+import com.sandymandy.pleasurehorizons.util.rendering.OffsetVertexConsumer;
 import com.sandymandy.pleasurehorizons.util.variables.JiggleBoneConfig;
 
 import java.util.List;
@@ -412,6 +413,29 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     public void renderRecursively(PoseStack poseStack, T animatable, GeoBone bone, net.minecraft.client.renderer.RenderType renderType,
                                   MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                                   float partialTick, int packedLight, int packedOverlay, int colour) {
+        // A bone with a texture override is drawn by BoneOverrideRenderLayer with its own
+        // texture. Skipping it in the base pass avoids drawing it twice - once with the
+        // girl's sheet underneath, which would z-fight with the override.
+        // isReRender is the override layer's own call, which must go through.
+        if (!isReRender
+                && animatable.boneTextureOverrides != null
+                && animatable.boneTextureOverrides.containsKey(bone.getName())) {
+            return;
+        }
+
+        VertexConsumer targetBuffer = buffer;
+
+        // Armour material selection: shift this bone's UVs into the right atlas column.
+        Map<String, org.joml.Vector2f> uvOffsets = animatable.boneUVOffsets;
+        if (uvOffsets != null && !uvOffsets.isEmpty()) {
+            org.joml.Vector2f offset = uvOffsets.get(bone.getName());
+            if (offset != null && (offset.x != 0.0F || offset.y != 0.0F)) {
+                OffsetVertexConsumer offsetBuffer = new OffsetVertexConsumer();
+                offsetBuffer.setup(targetBuffer, offset.x, offset.y);
+                targetBuffer = offsetBuffer;
+            }
+        }
+
         Map<String, Integer> colours = animatable.boneColorOverrides;
         int effective = colour;
         if (colours != null && !colours.isEmpty()) {
@@ -420,7 +444,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                 effective = override;
             }
         }
-        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
+        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, targetBuffer, isReRender,
                 partialTick, packedLight, packedOverlay, effective);
     }
 
