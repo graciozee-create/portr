@@ -254,5 +254,17 @@
   "msg.pleasurehorizons.harvestEnabled": "%s will now auto-harvest and replant crops (6 blocks)",
   "msg.pleasurehorizons.harvestDisabled": "%s stopped harvesting crops",
   "msg.pleasurehorizons.stayNearBaseEnabled": "%s will stay near base",
-  "msg.pleasurehorizons.stayNearBaseDisabled": "%s will no longer stay near base"
+  "msg.pleasurehorizons.stayNearBaseDisabled": "%s will no longer stay near base",
+  "gui.pleasurehorizons.customize.breastSize": "Breast Size",
+  "gui.pleasurehorizons.customize.breastOffset": "Breast Offset",
+  "gui.pleasurehorizons.customize.canGetImpregnated": "Can Get Impregnated",
+  "gui.pleasurehorizons.customize.clear": "Clear",
+  "gui.pleasurehorizons.customize.bodySize": "Body Size",
+  "gui.pleasurehorizons.customize.colorPattern": "Color Pattern:",
+  "gui.pleasurehorizons.customize.irisColor": "Iris Color:",
+  "gui.pleasurehorizons.customize.topHorns": "Top Horns:",
+  "gui.pleasurehorizons.customize.bottomHorns": "Bottom Horns:",
+  "gui.pleasurehorizons.customize.randomize": "Randomize",
+  "gui.pleasurehorizons.customize.titleGirl": "Customize Girl",
+  "gui.pleasurehorizons.customize.titleKobold": "Kobold Customization"
 }

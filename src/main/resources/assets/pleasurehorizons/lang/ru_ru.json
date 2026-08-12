@@ -256,5 +256,17 @@
   "msg.pleasurehorizons.harvestEnabled": "%s теперь автоматически собирает и пересаживает урожай (6 блоков)",
   "msg.pleasurehorizons.harvestDisabled": "%s перестала собирать урожай",
   "msg.pleasurehorizons.stayNearBaseEnabled": "%s теперь остаётся у базы",
-  "msg.pleasurehorizons.stayNearBaseDisabled": "%s больше не остаётся у базы"
+  "msg.pleasurehorizons.stayNearBaseDisabled": "%s больше не остаётся у базы",
+  "gui.pleasurehorizons.customize.breastSize": "Размер груди",
+  "gui.pleasurehorizons.customize.breastOffset": "Смещение груди",
+  "gui.pleasurehorizons.customize.canGetImpregnated": "Может забеременеть",
+  "gui.pleasurehorizons.customize.clear": "Сбросить",
+  "gui.pleasurehorizons.customize.bodySize": "Размер тела",
+  "gui.pleasurehorizons.customize.colorPattern": "Цветовой узор:",
+  "gui.pleasurehorizons.customize.irisColor": "Цвет радужки:",
+  "gui.pleasurehorizons.customize.topHorns": "Верхние рога:",
+  "gui.pleasurehorizons.customize.bottomHorns": "Нижние рога:",
+  "gui.pleasurehorizons.customize.randomize": "Рандомизировать",
+  "gui.pleasurehorizons.customize.titleGirl": "Настройка девушки",
+  "gui.pleasurehorizons.customize.titleKobold": "Настройка кобольда"
 }
