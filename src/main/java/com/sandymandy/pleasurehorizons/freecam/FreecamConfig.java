@@ -49,6 +49,9 @@ public final class FreecamConfig {
     private FreecamConfig() {}
 
     // ---- spec ----
+    /** Config file name; also used to identify the config in the load/reload events. */
+    public static final String FILE_NAME = "pleasurehorizons-freecam.toml";
+
     public static final ModConfigSpec SPEC;
 
     // Declared with the generic ConfigValue/EnumValue types rather than the IntValue /
@@ -118,7 +121,7 @@ public final class FreecamConfig {
     }
 
     public static void register(ModContainer container) {
-        container.registerConfig(ModConfig.Type.CLIENT, SPEC, "pleasurehorizons-freecam.toml");
+        container.registerConfig(ModConfig.Type.CLIENT, SPEC, FILE_NAME);
     }
 
     /** Copies the spec values into the plain fields; called on load and on reload. */

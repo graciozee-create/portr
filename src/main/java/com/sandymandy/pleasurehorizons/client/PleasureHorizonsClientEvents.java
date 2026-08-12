@@ -65,14 +65,17 @@ public class PleasureHorizonsClientEvents {
      */
     @SubscribeEvent
     public static void onConfigLoad(net.neoforged.fml.event.config.ModConfigEvent.Loading event) {
-        if (event.getConfig().getSpec() == com.sandymandy.pleasurehorizons.freecam.FreecamConfig.SPEC) {
-            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.sync();
-        }
+        syncFreecamConfig(event.getConfig());
     }
 
     @SubscribeEvent
     public static void onConfigReload(net.neoforged.fml.event.config.ModConfigEvent.Reloading event) {
-        if (event.getConfig().getSpec() == com.sandymandy.pleasurehorizons.freecam.FreecamConfig.SPEC) {
+        syncFreecamConfig(event.getConfig());
+    }
+
+    /** Matched on the file name, which is stable public API on {@code ModConfig}. */
+    private static void syncFreecamConfig(net.neoforged.fml.config.ModConfig config) {
+        if (com.sandymandy.pleasurehorizons.freecam.FreecamConfig.FILE_NAME.equals(config.getFileName())) {
             com.sandymandy.pleasurehorizons.freecam.FreecamConfig.sync();
         }
     }
