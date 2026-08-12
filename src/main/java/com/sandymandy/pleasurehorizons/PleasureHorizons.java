@@ -60,7 +60,7 @@ public class PleasureHorizons {
         GirlMemoryTypes.register(modEventBus);
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
-        PleasureHorizonsDispenserBehavior.register();
+        PleasureHorizonsDispenserBehavior.register(modEventBus);
         PleasureHorizonsItemGroups.register(modEventBus);
         Commands.register();
         // Girl profiles reference items by id, so they must load after the item registry
