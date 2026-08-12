@@ -284,6 +284,29 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(IS_TEMPORARY, state);
     }
 
+    public GirlEntity createTempClone() {
+        if (this.level().isClientSide()) return null;
+
+        GirlEntity clone = (GirlEntity) this.getType().create(this.level());
+        if (clone == null) return null;
+
+        clone.setTemporaryState(true);
+        clone.setPos(this.getX(), 800, this.getZ());
+        clone.setInvisible(true);
+        clone.setInvulnerable(true);
+        clone.setNoGravity(true);
+
+        this.onTempCloneCreation(clone);
+
+        this.level().addFreshEntity(clone);
+        this.setCreatedCloneState(true);
+        return clone;
+    }
+
+    public void onTempCloneCreation(GirlEntity clone) {
+        clone.setStripped(this.isStripped());
+    }
+
     public boolean createdClone() {
         return this.entityData.get(CREATED_CLONE);
     }

@@ -36,7 +36,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
 
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            Entity entity = ctx.player().level().getEntity(this.entityId);
+            Entity entity = ctx.player().level().getEntity(this.entityId());
             if (!(entity instanceof TameableGirlEntity girl)) {
                 return;
             }
@@ -46,7 +46,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 return;
             }
 
-            switch (this.actionId) {
+            switch (this.actionId()) {
                 case "stripOrDressup" -> girl.requestStrip();
                 case "breakUp" -> girl.breakUpParticles(ctx.player());
                 case "setBase" -> girl.setBasePosHere();
@@ -55,7 +55,7 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
                 // "talk" and "customize" need the scene/customise screens, which are not ported yet.
                 case "talk", "customize" -> {}
-                default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId);
+                default -> PleasureHorizons.LOGGER.warn("Unknown girl interaction: {}", this.actionId());
             }
         });
     }

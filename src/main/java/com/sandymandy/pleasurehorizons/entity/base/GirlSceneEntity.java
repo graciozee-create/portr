@@ -130,4 +130,12 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
         return false;
     }
+
+    public void animationFinished() {}
+    public void stopScene() {}
+    public void playPhase(int phase) {}
+    public void handleAnimationEventServer(String event) {}
+    public void startScene(net.minecraft.world.entity.player.Player player, String scene) {}
+    public void tryTriggerCum() {}
+    public void setThrusting(boolean held) {}
 }

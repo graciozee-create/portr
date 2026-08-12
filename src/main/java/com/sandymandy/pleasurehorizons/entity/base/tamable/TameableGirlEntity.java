@@ -11,6 +11,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -181,13 +183,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         if (!this.isSceneActive()) {
-            // The full inventory/scene GUI is not ported yet; toggling following keeps her useful.
-            this.setFollowing(!this.isFollowing());
-            player.displayClientMessage(Component.translatable(
-                    this.isFollowing()
-                            ? "msg.pleasurehorizons.nowFollowing"
-                            : "msg.pleasurehorizons.nowStaying",
-                    this.getGirlDisplayName()), true);
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(new GirlInventoryScreenHandlerFactory(this), buf -> buf.writeVarInt(this.getId()));
+                this.setGUIOpenState(true, player);
+            }
             return InteractionResult.SUCCESS;
         }
 

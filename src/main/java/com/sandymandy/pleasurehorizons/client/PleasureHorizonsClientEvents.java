@@ -1,12 +1,16 @@
 package com.sandymandy.pleasurehorizons.client;
 
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
+import com.sandymandy.pleasurehorizons.client.gui.screen.GirlInventoryScreen;
+import com.sandymandy.pleasurehorizons.client.gui.screen.settlement.SettlementHubScreen;
 import com.sandymandy.pleasurehorizons.client.render.GirlRenderer;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
+import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 /**
  * Without these registrations every girl entity exists on the server but is completely
@@ -24,5 +28,17 @@ public class PleasureHorizonsClientEvents {
         event.registerEntityRenderer(GirlRegistry.KOBOLD.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.COPPIE.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.CUSTOM_GIRL.get(), GirlRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(
+                PleasureHorizonsScreenHandlerRegistry.GIRL_INVENTORY_HOLDER.get(),
+                GirlInventoryScreen::new
+        );
+        event.register(
+                PleasureHorizonsScreenHandlerRegistry.SETTLEMENT_HUB_HOLDER.get(),
+                SettlementHubScreen::new
+        );
     }
 }
