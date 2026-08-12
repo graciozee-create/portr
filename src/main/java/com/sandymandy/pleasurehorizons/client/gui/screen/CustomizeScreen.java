@@ -39,6 +39,11 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         net.minecraft.client.multiplayer.ClientLevel world = Minecraft.getInstance().level;
         this.previewEntity = world != null ? entityClass.cast(world.getEntity(previewEntityId)) : null;
         this.entity = world != null ? entityClass.cast(world.getEntity(entityId)) : null;
+
+        if (this.previewEntity != null) {
+            this.previewEntity.setInvisible(false);
+            this.previewEntity.setNoGravity(false);
+        }
     }
 
     protected abstract void addSections();
