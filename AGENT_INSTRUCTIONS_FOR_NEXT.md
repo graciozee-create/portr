@@ -82,22 +82,46 @@ gh api repos/graciozee-create/portr/check-runs/$ID/annotations \
   `return false`), `PlayAttackAnimationS2CPacket` теперь несёт id и проигрывает замах.
 - Локализация: 292 ключа, полный паритет en/ru, ни одного `translatable` без ключа.
 
-## 4. Что осталось сделать
+## 4. Добавлено во второй половине сессии
 
-- `GirlCustomizeScreen`: `Vec3dInputSection` использует кнопки ±0.1; в оригинале были
-  `TextFieldWidget` (в 1.21.1 — `EditBox`) с парсингом double. Можно вернуть.
-- Кастомные девушки (`CustomGirlEntity`, `CustomGirlLoader`, `CustomGirlParser`,
-  `RegisterCustomGirl*C2SPacket`) — загрузка профилей из JSON всё ещё заглушки.
-- `SceneKeyframeEventRegistry` / `SceneKeyframeEventLoader` — реестр сообщений и звуков по
-  ключевым кадрам пустой, поэтому реплики во время сцен не проигрываются.
-- Freecam (`freecam/*`, `config/keys/*`) — заглушки; в оригинале это отдельная подсистема.
-- `RefreshModelsS2CPacket`, `RunAnimEventsS2CPacket` — обработчики пустые.
-- `JigglePhysics`, `BoneOverrideRenderLayer`, текстурные оверрайды костей
-  (`overrideBoneTexture`, скин игрока на кости `steve`) — не портированы.
-- `SettlementBuildingManager` / `BuildingScanner` — сканирование зданий не подключено к тику хаба,
-  поэтому число зданий в GUI всегда 0.
+- **Keyframe-события сцен:** `SceneKeyframeEventRegistry` (восстановлено разбиение на токены —
+  GeckoLib шлёт payload списком через запятую, поэтому старый точный lookup никогда не совпадал),
+  `SceneKeyframeEventLoader` читает `assets/*/keyframe_events/*.json`, регистрация через
+  `RegisterClientReloadListenersEvent`. Реплики, стоны и шаги во время сцен теперь работают,
+  звук ретранслируется остальным игрокам через `RunAnimEventsS2CPacket`.
+- **Сканер зданий:** flood-fill комнаты, захват пола/стен/крыши, проверка требований
+  (кровати/наковальня/сундуки), многоблочные объекты считаются один раз.
+  Установка таблички рядом с дверью запускает скан. Счётчик зданий в GUI хаба больше не 0.
+- **Кастомные девушки:** `CustomGirlProfile`/`CustomGirlParser`/`CustomGirlLoader` +
+  `CustomGirlEntity` реально применяет профиль (HP, скорость, урон, хитбокс, GUI, предмет
+  приручения, сцены), сохраняет id профиля, поддерживает смену профиля через Shift+ПКМ.
+  **Важно:** профили грузятся на `ServerStartingEvent`, а не в конструкторе мода — до заполнения
+  реестров `tame_item` резолвился бы в воздух.
+- **Команда `/girls`:** `reload` и `spawn <id> [pos]` с автодополнением id профилей.
+- **Лучный бой:** `SettlementGirlEntityAI implements RangedAttackMob`, `GirlBowAttackGoal`
+  (натягивает, стреляет, кайтит при HP < 50%), `GirlAttackSwitchGoal` переключает ближний/дальний.
+  Раньше девушка с луком просто подходила и била рукой.
+- `PleasureHorizonsMessages` — методы были пустыми и глотали сообщения.
 
-## 5. Правила работы
+## 5. Что осталось сделать
+
+- **Freecam** (`freecam/*`, `config/keys/*`, `FreeCamera`, `Motion`, `TripodRegistry`) — заглушки.
+  В оригинале это отдельная подсистема с миксинами в камеру; на NeoForge потребуется
+  `ViewportEvent`/`ComputeCameraAngles` вместо миксинов Fabric.
+- **Конфиг** (`ModConfig`, `ModBindings`, `config/gui/*`) — в оригинале AutoConfig + Cloth Config
+  (Fabric-only). Сейчас `ModConfig` этоハードкод-дефолты в памяти: настройки не сохраняются и
+  не редактируются. Нужен `neoforge.common.ModConfigSpec`.
+- **JigglePhysics** и `BoneOverrideRenderLayer` — физика груди/волос не портирована.
+- **Текстурные оверрайды костей** (`overrideBoneTexture`, скин игрока на кость `steve`,
+  UV-сдвиг брони по материалу) — цвет и видимость костей работают, текстуры нет.
+- `Vec3dInputSection` — кнопки ±0.1 вместо `EditBox` с парсингом double.
+- `RegisterCustomGirl*C2SPacket` — пустые; в оригинале они тоже никем не отправлялись,
+  можно удалить целиком.
+- `TamedGirlManager` — очистка мёртвых девушек отключена (`onServerTick` закомментирован).
+- `AbstractGirlModel`/`client/rendering/renderers/*` — дублирующая иерархия рендереров из
+  оригинала; в порту всё рисует единый `GirlRenderer`, эти классы можно удалить.
+
+## 6. Правила работы
 
 - После каждого логического этапа: `git add -A && git commit && git push origin <ветка>`,
   затем дождись `gh run list --branch <ветка> --limit 1` → `success`.
