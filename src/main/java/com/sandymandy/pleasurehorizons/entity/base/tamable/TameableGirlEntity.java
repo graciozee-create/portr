@@ -177,17 +177,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
-    public void talkToPlayer(Player player) {
-        if (this.level().isClientSide()) return;
-        List<String> replies = this.getCurrentRelationshipLevel() < 4
-                ? this.giftRepliesLike()
-                : this.giftRepliesLove();
-        if (!replies.isEmpty()) {
-            this.messageAsEntity(player, replies.get(RANDOM.nextInt(replies.size())));
-        }
-        this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
-    }
-
         if (!this.isSceneActive() && player.isShiftKeyDown()) {
             this.setSitting(!this.isSitting());
             this.jumping = false;
@@ -204,6 +193,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         return InteractionResult.FAIL;
+    }
+
+    public void talkToPlayer(Player player) {
+        if (this.level().isClientSide()) return;
+        List<String> replies = this.getCurrentRelationshipLevel() < 4
+                ? this.giftRepliesLike()
+                : this.giftRepliesLove();
+        if (!replies.isEmpty()) {
+            this.messageAsEntity(player, replies.get(RANDOM.nextInt(replies.size())));
+        }
+        this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
     }
 
     protected InteractionResult interactNotTamed(Player player, ItemStack stack) {
