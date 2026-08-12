@@ -14,6 +14,10 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer;
 
+import com.sandymandy.pleasurehorizons.util.rendering.JigglePhysics;
+import com.sandymandy.pleasurehorizons.util.variables.JiggleBoneConfig;
+
+import java.util.List;
 import java.util.Map;
 
 public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T> {
@@ -129,9 +133,163 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
             }
         }
 
+        applyHeadTracking(animatable, model);
+        applyJigglePhysics(animatable, model);
         applyBoneScales(animatable, model);
         applyBonePositions(animatable, model);
     }
+
+    /**
+     * Makes the girl actually look where she is facing.
+     *
+     * <p>Upstream does this in {@code AbstractGirlModel#setCustomAnimations}, which this port
+     * never had, so the head stayed locked forward no matter where she looked - one of the
+     * "model nuances" that made the girls look lifeless. Suppressed during scenes, where the
+     * animation owns the head.</p>
+     */
+    private void applyHeadTracking(T animatable, BakedGeoModel model) {
+        model.getBone(HEAD_BONE).ifPresent(bone -> {
+            if (animatable.isSceneActive()) {
+                bone.setRotX(0.0F);
+                bone.setRotY(0.0F);
+                return;
+            }
+            // Head yaw relative to the body, so she does not twist her neck when turning.
+            float relativeYaw = net.minecraft.util.Mth.wrapDegrees(
+                    animatable.getYHeadRot() - animatable.yBodyRot);
+            relativeYaw = net.minecraft.util.Mth.clamp(relativeYaw, -60.0F, 60.0F);
+            float pitch = net.minecraft.util.Mth.clamp(animatable.getXRot(), -45.0F, 45.0F);
+
+            bone.setRotX(-pitch * ((float) Math.PI / 180F));
+            bone.setRotY(-relativeYaw * ((float) Math.PI / 180F));
+        });
+    }
+
+    /**
+     * Secondary motion for the soft bones.
+     *
+     * <p>Upstream runs a spring-damper per bone from {@code AbstractGirlModel}; the port shipped
+     * {@code JigglePhysics} as a no-op stub, so nothing ever moved. The simulation is stepped at
+     * a fixed 25 Hz and interpolated, exactly as upstream does, so it is frame-rate independent.
+     * State is keyed per entity, and the rest rotation is captured from the animation's current
+     * pose each frame so the offset is added on top of whatever the animation is doing.</p>
+     *
+     * <p>Skipped while a scene is playing, while she is carried and while sprinting - the same
+     * conditions upstream uses.</p>
+     */
+    private void applyJigglePhysics(T animatable, BakedGeoModel model) {
+        boolean suppressed = animatable.isSceneActive()
+                || animatable.isPassenger()
+                || animatable.isSprinting();
+
+        java.util.UUID id = animatable.getUUID();
+        if (suppressed) {
+            JIGGLE_STATE.remove(id);
+            return;
+        }
+
+        JiggleState state = JIGGLE_STATE.computeIfAbsent(id, key -> new JiggleState());
+        state.lastSeenFrame = FRAME_COUNTER;
+
+        // Drop state for girls that have not been rendered recently, otherwise the map would
+        // grow for the whole session as girls despawn or the player changes dimension.
+        if (JIGGLE_STATE.size() > MAX_TRACKED_GIRLS) {
+            JIGGLE_STATE.values().removeIf(tracked -> FRAME_COUNTER - tracked.lastSeenFrame > 200);
+        }
+        FRAME_COUNTER++;
+
+        // Driving force: change in velocity plus a contribution from turning on the spot.
+        net.minecraft.world.phys.Vec3 velocity = animatable.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 deltaVelocity = velocity.subtract(state.previousVelocity);
+        state.previousVelocity = velocity;
+
+        float currentYaw = animatable.getYRot();
+        float yawDelta = net.minecraft.util.Mth.wrapDegrees(currentYaw - state.previousYaw);
+        state.previousYaw = currentYaw;
+
+        net.minecraft.world.phys.Vec3 force = deltaVelocity.scale(1.2)
+                .add(Math.sin(Math.toRadians(currentYaw)) * yawDelta * 0.05,
+                        0.0,
+                        Math.cos(Math.toRadians(currentYaw)) * yawDelta * 0.05);
+
+        long now = System.nanoTime();
+        double deltaSec = state.lastUpdateNanos == 0L ? 0.0 : (now - state.lastUpdateNanos) / 1_000_000_000.0;
+        state.lastUpdateNanos = now;
+
+        state.accumulator = Math.min(state.accumulator + deltaSec, FIXED_TIMESTEP * 5);
+
+        List<JiggleBoneConfig> configs = jiggleBones(animatable);
+
+        while (state.accumulator >= FIXED_TIMESTEP) {
+            for (JiggleBoneConfig config : configs) {
+                state.physics
+                        .computeIfAbsent(config.boneName(),
+                                key -> new JigglePhysics(config.stiffness(), config.damping()))
+                        .update(force);
+            }
+            state.accumulator -= FIXED_TIMESTEP;
+            if (Double.isNaN(state.accumulator) || state.accumulator > 1.0) {
+                state.accumulator = 0.0;
+            }
+        }
+
+        double alpha = state.accumulator / FIXED_TIMESTEP;
+
+        for (JiggleBoneConfig config : configs) {
+            JigglePhysics physics = state.physics.get(config.boneName());
+            if (physics == null) continue;
+
+            net.minecraft.world.phys.Vec3 offset = physics.getInterpolatedDisplacement(alpha);
+            model.getBone(config.boneName()).ifPresent(bone -> {
+                // The rest rotation is whatever the animation posed this bone to *before* any
+                // jiggle was applied. It has to be captured once per bone and reused, because
+                // this runs every frame on shared baked bones: reading the live rotation and
+                // adding to it would fold the previous frame's offset back in and the bone
+                // would spiral away. Upstream keeps the same "default rotation" map.
+                float[] rest = state.restRotations.computeIfAbsent(config.boneName(),
+                        key -> new float[] {bone.getRotX(), bone.getRotY(), bone.getRotZ()});
+
+                bone.setRotX(rest[0] + (float) offset.x);
+                bone.setRotY(rest[1] + (float) offset.y);
+                bone.setRotZ(rest[2] + (float) offset.z);
+            });
+        }
+    }
+
+    /** Which bones jiggle; the chest bones differ between the dressed and nude rigs. */
+    private List<JiggleBoneConfig> jiggleBones(T animatable) {
+        List<JiggleBoneConfig> bones = new java.util.ArrayList<>();
+        bones.add(new JiggleBoneConfig("cheekL", 0.2, 0.2));
+        bones.add(new JiggleBoneConfig("cheekR", 0.2, 0.2));
+        bones.add(new JiggleBoneConfig("belly", 0.3, 0.4));
+
+        if (!animatable.isStripped()) {
+            bones.add(new JiggleBoneConfig("boobs", 0.2, 0.4));
+        } else {
+            bones.add(new JiggleBoneConfig("boobL", 0.2, 0.3));
+            bones.add(new JiggleBoneConfig("boobR", 0.2, 0.3));
+        }
+        return bones;
+    }
+
+    /** Per-entity jiggle state. Cleared when the girl despawns or a scene starts. */
+    private static final class JiggleState {
+        final Map<String, JigglePhysics> physics = new java.util.HashMap<>();
+        /** Rest rotation per bone, captured on first sight and reused every frame. */
+        final Map<String, float[]> restRotations = new java.util.HashMap<>();
+        net.minecraft.world.phys.Vec3 previousVelocity = net.minecraft.world.phys.Vec3.ZERO;
+        float previousYaw = 0.0F;
+        long lastUpdateNanos = 0L;
+        double accumulator = 0.0;
+        long lastSeenFrame = 0L;
+    }
+
+    private static final double FIXED_TIMESTEP = 1.0 / 25.0;
+    private static final Map<java.util.UUID, JiggleState> JIGGLE_STATE = new java.util.HashMap<>();
+    /** Above this many tracked girls, prune entries whose entity is no longer loaded. */
+    private static final int MAX_TRACKED_GIRLS = 64;
+    private static long FRAME_COUNTER = 0L;
+    private static final String HEAD_BONE = "head";
 
     /**
      * Per-bone scale overrides (kobold body/breast size, pregnancy belly).
