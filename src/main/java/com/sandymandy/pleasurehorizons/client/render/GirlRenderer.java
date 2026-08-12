@@ -25,6 +25,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         super(context, new GirlModel<>());
         this.shadowRadius = 0.4F;
 
+        // Draws the partner skeleton with the scene player's skin instead of the girl's sheet.
+        this.addRenderLayer(new com.sandymandy.pleasurehorizons.client.rendering.layers
+                .BoneOverrideRenderLayer<>(this));
+
         this.addRenderLayer(new BlockAndItemGeoLayer<>(this) {
             @Nullable
             @Override
@@ -133,10 +137,54 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
             }
         }
 
+        updatePartnerSkin(animatable);
         applyHeadTracking(animatable, model);
         applyJigglePhysics(animatable, model);
         applyBoneScales(animatable, model);
         applyBonePositions(animatable, model);
+    }
+
+    /**
+     * Dresses the embedded partner skeleton in the scene player's actual skin.
+     *
+     * <p>The {@code steve} sub-tree is a full second body baked into every girl rig. It has no
+     * texture of its own, so without an override it is drawn with the girl's texture sheet and
+     * comes out as a mess of misplaced UVs. Upstream sets this from
+     * {@code GirlSceneEntity#applySkinToBone}; that method was never ported, so the maps stayed
+     * empty and the partner was always mis-textured during scenes.</p>
+     *
+     * <p>Skins resolve asynchronously, so this is refreshed every frame while a scene runs
+     * rather than once at scene start - the first frames would otherwise use the fallback.</p>
+     */
+    private void updatePartnerSkin(T animatable) {
+        if (!animatable.isSceneActive()) {
+            if (!animatable.boneTextureOverrides.isEmpty()) {
+                animatable.boneTextureOverrides.clear();
+                animatable.boneTextureOverridesLayer2.clear();
+            }
+            return;
+        }
+
+        // Vanilla Steve is the fallback so the partner is never left untextured.
+        net.minecraft.resources.ResourceLocation skin =
+                net.minecraft.resources.ResourceLocation.withDefaultNamespace(
+                        "textures/entity/player/wide/steve.png");
+
+        if (animatable.getScenePlayer() instanceof net.minecraft.client.player.AbstractClientPlayer scenePlayer) {
+            net.minecraft.client.resources.PlayerSkin playerSkin = scenePlayer.getSkin();
+            if (playerSkin != null && playerSkin.texture() != null) {
+                skin = playerSkin.texture();
+                // The slim/wide flag is synched entity data owned by the server; writing it
+                // from the renderer would be overwritten on the next sync anyway, so the
+                // model choice is left to whatever the server already published.
+            }
+        }
+
+        animatable.boneTextureOverrides.put(PARTNER_BONE, skin);
+        animatable.boneTextureOverridesLayer2.put(PARTNER_BONE,
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                        com.sandymandy.pleasurehorizons.PleasureHorizons.MOD_ID,
+                        "textures/player/penis.png"));
     }
 
     /**

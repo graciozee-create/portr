@@ -120,6 +120,15 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public Map<String, Boolean> boneVisibility = new HashMap<>();
     public Map<String, Integer> boneColorOverrides = new HashMap<>();
+    /**
+     * Per-bone texture overrides, drawn by {@code BoneOverrideRenderLayer}.
+     *
+     * <p>Client-side only and never saved: they are rebuilt from the scene state each time.
+     * Three layers exist so a bone can be stacked (base skin, then overlays).</p>
+     */
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverrides = new HashMap<>();
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer2 = new HashMap<>();
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer3 = new HashMap<>();
     public Map<String, Vec3> boneSizeOverrides = new HashMap<>();
     public Map<String, Vec3> bonePositionOffset = new HashMap<>();
     public final Map<EquipmentSlot, Boolean> armorVisibility = new EnumMap<>(EquipmentSlot.class);
