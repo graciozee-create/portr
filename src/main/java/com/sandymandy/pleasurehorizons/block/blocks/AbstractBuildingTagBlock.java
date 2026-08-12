@@ -56,6 +56,50 @@ public abstract class AbstractBuildingTagBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Placing a tag next to a door triggers a building scan.
+     *
+     * <p>Nothing called {@code BuildingScanner} before, so the hub GUI always reported zero
+     * buildings no matter what the player built.</p>
+     */
+    @Override
+    public void setPlacedBy(net.minecraft.world.level.Level level, BlockPos pos, BlockState state,
+                            @Nullable net.minecraft.world.entity.LivingEntity placer,
+                            net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
+        if (!(placer instanceof net.minecraft.world.entity.player.Player player)) return;
+
+        Direction facing = state.getValue(FACING);
+        BlockPos doorPos = com.sandymandy.pleasurehorizons.util.Utils.findNearbyDoor(level, pos, facing);
+        if (doorPos == null) {
+            player.displayClientMessage(net.minecraft.network.chat.Component
+                    .translatable("msg.pleasurehorizons.building.no_door")
+                    .withStyle(net.minecraft.ChatFormatting.RED), false);
+            return;
+        }
+
+        com.sandymandy.pleasurehorizons.settlement.Settlement settlement =
+                com.sandymandy.pleasurehorizons.util.Utils.findNearestSettlement(level, pos);
+        if (settlement == null) {
+            player.displayClientMessage(net.minecraft.network.chat.Component
+                    .translatable("msg.pleasurehorizons.building.no_settlement")
+                    .withStyle(net.minecraft.ChatFormatting.RED), false);
+            return;
+        }
+
+        com.sandymandy.pleasurehorizons.settlement.building.BuildingType type =
+                level.getBlockEntity(pos) instanceof AbstractBuildingTagBlockEntity tag
+                        ? tag.getBuildingType()
+                        : com.sandymandy.pleasurehorizons.settlement.building.BuildingType.NONE;
+
+        // Scan starts from the block on the inside of the door.
+        BlockPos origin = com.sandymandy.pleasurehorizons.util.Utils.getBlockBehind(doorPos, facing);
+
+        new com.sandymandy.pleasurehorizons.settlement.building.BuildingScanner(settlement)
+                .scanForBuilding(serverLevel, origin, doorPos, pos, type, player);
+    }
+
     @Nullable
     @Override
     public abstract BlockEntity newBlockEntity(BlockPos pos, BlockState state);

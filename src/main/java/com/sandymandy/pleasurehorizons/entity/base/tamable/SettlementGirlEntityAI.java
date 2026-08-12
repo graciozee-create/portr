@@ -4,14 +4,30 @@ import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import com.sandymandy.pleasurehorizons.settlement.SettlementMember;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public abstract class SettlementGirlEntityAI extends TameableGirlEntity implements SettlementMember {
+/**
+ * Adds settlement membership and ranged (bow) capability.
+ *
+ * <p>{@link RangedAttackMob} is implemented here rather than on {@code GirlEntity} because only
+ * the settlement-capable girls use weapons. Without it {@code GirlBowAttackGoal} had no way to
+ * fire an arrow, which is why girls holding a bow just walked up and punched.</p>
+ */
+public abstract class SettlementGirlEntityAI extends TameableGirlEntity
+        implements SettlementMember, RangedAttackMob {
     @Nullable
     private UUID settlementId;
 
@@ -32,6 +48,41 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity implemen
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
+    }
+
+    @Override
+    protected void registerCombatGoals() {
+        // Switches between melee and bow based on weapon, range and health.
+        this.goalSelector.addGoal(2,
+                new com.sandymandy.pleasurehorizons.entity.ai.goal.GirlAttackSwitchGoal(
+                        this, 1.2D, 5.0F, 6.0F, 16.0F));
+    }
+
+    /**
+     * Fires an arrow at the target. Mirrors vanilla {@code AbstractSkeleton#performRangedAttack}:
+     * the arrow is built from the held ammo so enchantments and tipped arrows carry over.
+     */
+    @Override
+    public void performRangedAttack(LivingEntity target, float pullProgress) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) return;
+
+        ItemStack bow = this.getItemInHand(ProjectileUtil.getWeaponHoldingHand(this,
+                item -> item instanceof BowItem));
+        ItemStack ammo = this.getProjectile(bow);
+
+        AbstractArrow arrow = ProjectileUtil.getMobArrow(this, ammo, pullProgress, bow);
+
+        double dx = target.getX() - this.getX();
+        double dy = target.getY(0.3333333333333333D) - arrow.getY();
+        double dz = target.getZ() - this.getZ();
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+
+        arrow.shoot(dx, dy + horizontal * 0.20000000298023224D, dz, 1.6F,
+                14 - serverLevel.getDifficulty().getId() * 4);
+
+        this.playSound(SoundEvents.SKELETON_SHOOT, 1.0F,
+                1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
+        serverLevel.addFreshEntity(arrow);
     }
 
     @Nullable

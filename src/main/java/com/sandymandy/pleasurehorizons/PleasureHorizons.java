@@ -63,7 +63,9 @@ public class PleasureHorizons {
         PleasureHorizonsDispenserBehavior.register();
         PleasureHorizonsItemGroups.register(modEventBus);
         Commands.register();
-        CustomGirlLoader.register();
+        // Girl profiles reference items by id, so they must load after the item registry
+        // is populated - see onServerStarting below. Loading them here would resolve every
+        // tame_item to air.
 
         // Networking
         PleasureHorizonsPackets.register();
@@ -73,7 +75,15 @@ public class PleasureHorizons {
 
         if (dist == Dist.CLIENT) {
             modEventBus.addListener(PleasureHorizonsClient::onClientSetup);
+            // Freecam settings live in a CLIENT config; registering it here (rather than in
+            // client setup) is required because NeoForge reads the spec during mod loading.
+            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.register(container);
         }
+    }
+
+    @SubscribeEvent
+    public void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
+        CustomGirlLoader.register();
     }
 
     @SubscribeEvent
