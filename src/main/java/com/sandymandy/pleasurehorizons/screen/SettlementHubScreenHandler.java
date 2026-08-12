@@ -1,5 +1,6 @@
 package com.sandymandy.pleasurehorizons.screen;
 
+import com.sandymandy.pleasurehorizons.block.entity.entities.SettlementHubBlockEntity;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import com.sandymandy.pleasurehorizons.settlement.SettlementSnapshot;
@@ -40,7 +41,22 @@ public class SettlementHubScreenHandler extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return true;
+        double x = snapshot.corePos().getX() + 0.5D;
+        double y = snapshot.corePos().getY() + 0.5D;
+        double z = snapshot.corePos().getZ() + 0.5D;
+        if (player.distanceToSqr(x, y, z) > 64.0D
+                || !(player.level().getBlockEntity(snapshot.corePos()) instanceof SettlementHubBlockEntity hub)) {
+            return false;
+        }
+        if (player.level().isClientSide()) {
+            return true;
+        }
+
+        Settlement live = hub.getSettlement();
+        return settlement != null
+                && live != null
+                && live.getId().equals(settlement.getId())
+                && live.getOwner().equals(player.getUUID());
     }
 
     @Nullable

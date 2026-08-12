@@ -2,8 +2,10 @@ package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
 import com.sandymandy.pleasurehorizons.settlement.SettlementMember;
+import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
@@ -30,24 +32,25 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity
         implements SettlementMember, RangedAttackMob {
     @Nullable
     private UUID settlementId;
+    @Nullable
+    private transient Settlement settlementCache;
 
     protected SettlementGirlEntityAI(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-    }
-
-    @Override
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
+        if (settlementId != null) {
+            compound.putUUID("SettlementId", settlementId);
+        }
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
+        setSettlementById(compound.hasUUID("SettlementId") ? compound.getUUID("SettlementId") : null);
     }
 
     @Override
@@ -93,14 +96,45 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity
     @Nullable
     @Override
     public Settlement getSettlement() {
-        return null;
+        if (settlementId == null || !(this.level() instanceof ServerLevel serverLevel)) {
+            return settlementCache;
+        }
+
+        Settlement stored = SettlementManager.get(serverLevel).getSettlement(settlementId);
+        if (stored == null) {
+            setSettlementById(null);
+            return null;
+        }
+        settlementCache = stored;
+        return settlementCache;
+    }
+
+    public void setSettlementById(@Nullable UUID id) {
+        this.settlementId = id;
+        this.settlementCache = null;
     }
 
     @Override
-    public void setSettlement(Settlement settlement) {}
+    public void setSettlement(@Nullable Settlement settlement) {
+        this.settlementId = settlement == null ? null : settlement.getId();
+        this.settlementCache = settlement;
+    }
 
     @Override
-    public boolean hasSettlement() {
-        return false;
+    public void breakUp(Player player) {
+        Settlement settlement = getSettlement();
+        if (settlement != null) {
+            settlement.removeMember(this);
+        }
+        super.breakUp(player);
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        Settlement settlement = getSettlement();
+        if (settlement != null) {
+            settlement.removeMember(this);
+        }
+        super.die(source);
     }
 }

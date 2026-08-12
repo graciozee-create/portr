@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.block.blocks;
 
 import com.mojang.serialization.MapCodec;
 import com.sandymandy.pleasurehorizons.block.entity.entities.SettlementHubBlockEntity;
+import com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager;
 import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -80,7 +81,11 @@ public class SettlementHubBlock extends BaseEntityBlock {
             manager.getAllSettlements().stream()
                     .filter(s -> s.getCorePos().equals(pos))
                     .findFirst()
-                    .ifPresent(s -> manager.removeSettlement(s.getId()));
+                    .ifPresent(settlement -> {
+                        SettlementBuildingManager buildings = SettlementBuildingManager.get(serverLevel);
+                        settlement.getBuildingIds().forEach(buildings::removeBuilding);
+                        manager.removeSettlement(settlement.getId());
+                    });
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

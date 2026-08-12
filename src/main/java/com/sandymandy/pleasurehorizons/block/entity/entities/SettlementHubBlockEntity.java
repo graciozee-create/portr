@@ -58,22 +58,20 @@ public class SettlementHubBlockEntity extends BlockEntity {
     public void openGui(ServerLevel level, ServerPlayer player) {
         Settlement settlement = getSettlement();
         if (settlement == null) {
-            // Hub placed before this feature existed, or its settlement was wiped - recreate it.
-            initializeWithOwner(level, player.getUUID());
-            settlement = getSettlement();
-        }
-        if (settlement == null) {
+            // Do not let an arbitrary visitor claim an orphaned hub whose original owner is unknown.
+            player.displayClientMessage(Component.translatable(
+                    "item.pleasurehorizons.settlement_recruit_contract.use_on_entity.settlement_no_longer_exists"), true);
             return;
         }
 
-        Player owner = level.getPlayerByUUID(settlement.getOwner());
-        if (owner == null || player.getUUID().equals(settlement.getOwner())) {
-            SettlementHubScreenHandlerFactory factory = new SettlementHubScreenHandlerFactory(settlement);
-            player.openMenu(factory, factory::writeScreenOpeningData);
-        } else {
+        if (!player.getUUID().equals(settlement.getOwner())) {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.settlement.not_owner"), true);
+            return;
         }
+
+        SettlementHubScreenHandlerFactory factory = new SettlementHubScreenHandlerFactory(settlement);
+        player.openMenu(factory, factory::writeScreenOpeningData);
     }
 
     /* === Tick === */

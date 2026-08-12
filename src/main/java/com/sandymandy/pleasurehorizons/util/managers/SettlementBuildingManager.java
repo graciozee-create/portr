@@ -1,66 +1,81 @@
 package com.sandymandy.pleasurehorizons.util.managers;
 
+import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.settlement.building.SettlementBuilding;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.WeakHashMap;
 
-/**
- * Per-level store of scanned buildings.
- *
- * <p>Indexed twice on purpose: by settlement (for counting and iteration) and by door position
- * (so a re-scan can find and replace an existing building without walking every settlement).</p>
- */
-public class SettlementBuildingManager {
-    private final Map<UUID, List<SettlementBuilding>> bySettlement = new HashMap<>();
-    private final Map<BlockPos, SettlementBuilding> byDoor = new LinkedHashMap<>();
-    private final Map<BlockPos, UUID> doorToSettlement = new HashMap<>();
+/** Persistent index of scanned buildings in one dimension. */
+public class SettlementBuildingManager extends SavedData {
+    private static final String DATA_NAME = PleasureHorizons.MOD_ID + "_settlement_buildings";
+    private static final String BUILDINGS_TAG = "buildings";
+    private static final SavedData.Factory<SettlementBuildingManager> FACTORY =
+            new SavedData.Factory<>(SettlementBuildingManager::new, SettlementBuildingManager::load);
 
-    private static final Map<ServerLevel, SettlementBuildingManager> INSTANCES = new WeakHashMap<>();
+    private final Map<BlockPos, SettlementBuilding> buildings = new LinkedHashMap<>();
 
     public static SettlementBuildingManager get(ServerLevel level) {
-        return INSTANCES.computeIfAbsent(level, l -> new SettlementBuildingManager());
+        return level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
     }
 
-    public void addBuilding(UUID settlementId, SettlementBuilding building) {
-        bySettlement.computeIfAbsent(settlementId, k -> new ArrayList<>()).add(building);
-        byDoor.put(building.doorPos(), building);
-        doorToSettlement.put(building.doorPos(), settlementId);
+    private static SettlementBuildingManager load(CompoundTag tag, HolderLookup.Provider registries) {
+        SettlementBuildingManager manager = new SettlementBuildingManager();
+        if (!tag.contains(BUILDINGS_TAG, Tag.TAG_LIST)) {
+            return manager;
+        }
+
+        SettlementBuilding.CODEC.listOf().parse(NbtOps.INSTANCE, tag.get(BUILDINGS_TAG))
+                .resultOrPartial(error -> PleasureHorizons.LOGGER.error("Could not load settlement buildings: {}", error))
+                .ifPresent(loaded -> loaded.forEach(
+                        building -> manager.buildings.put(building.doorPos(), building)));
+        return manager;
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        SettlementBuilding.CODEC.listOf().encodeStart(NbtOps.INSTANCE, new ArrayList<>(buildings.values()))
+                .resultOrPartial(error -> PleasureHorizons.LOGGER.error("Could not save settlement buildings: {}", error))
+                .ifPresent(encoded -> tag.put(BUILDINGS_TAG, encoded));
+        return tag;
+    }
+
+    public void addBuilding(SettlementBuilding building) {
+        buildings.put(building.doorPos(), building);
+        setDirty();
     }
 
     public void removeBuilding(BlockPos doorPos) {
-        SettlementBuilding building = byDoor.remove(doorPos);
-        UUID settlementId = doorToSettlement.remove(doorPos);
-        if (building != null && settlementId != null) {
-            List<SettlementBuilding> list = bySettlement.get(settlementId);
-            if (list != null) {
-                list.remove(building);
-            }
+        if (buildings.remove(doorPos) != null) {
+            setDirty();
         }
     }
 
     @Nullable
     public SettlementBuilding getBuilding(BlockPos doorPos) {
-        return byDoor.get(doorPos);
+        return buildings.get(doorPos);
     }
 
-    public List<SettlementBuilding> getBuildings(UUID settlementId) {
-        return bySettlement.getOrDefault(settlementId, List.of());
+    @Nullable
+    public SettlementBuilding getBuildingAt(BlockPos pos) {
+        for (SettlementBuilding building : buildings.values()) {
+            if (building.getBoundingBox().contains(pos.getX(), pos.getY(), pos.getZ())) {
+                return building;
+            }
+        }
+        return null;
     }
 
     public Map<BlockPos, SettlementBuilding> getAllBuildings() {
-        return byDoor;
-    }
-
-    public void markDirty() {
-        // Buildings are rebuilt by re-scanning; nothing persisted yet.
+        return Map.copyOf(buildings);
     }
 }

@@ -1,9 +1,6 @@
 package com.sandymandy.pleasurehorizons.settlement.building;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 
@@ -20,11 +17,6 @@ public enum BuildingType {
             default -> Map.of();
         };
     }
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, BuildingType> PACKET_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, BuildingType::ordinal,
-            ordinal -> BuildingType.values()[ordinal]
-    );
 
     public static final Codec<BuildingType> CODEC = Codec.STRING.xmap(
             name -> {

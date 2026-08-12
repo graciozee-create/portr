@@ -2,16 +2,20 @@ package com.sandymandy.pleasurehorizons.settlement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
+import com.sandymandy.pleasurehorizons.settlement.building.SettlementBuilding;
+import com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager;
+import com.sandymandy.pleasurehorizons.util.managers.SettlementManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.server.level.ServerLevel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/** Persistent state for one settlement. Mutations are routed through methods that mark its manager dirty. */
 public class Settlement {
     private final UUID id;
     private final UUID owner;
@@ -19,22 +23,26 @@ public class Settlement {
     private final BlockPos corePos;
     private final List<UUID> members = new ArrayList<>();
     private final List<BlockPos> buildingIds = new ArrayList<>();
-    private SettlementResourceData data = new SettlementResourceData();
+    private SettlementResourceData data = SettlementResourceData.DEFAULT;
+    @Nullable
+    private transient SettlementManager manager;
 
     public static final Codec<Settlement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.fieldOf("id").forGetter(Settlement::getId),
             UUIDUtil.CODEC.fieldOf("owner").forGetter(Settlement::getOwner),
             Codec.STRING.fieldOf("name").forGetter(Settlement::getName),
-            BlockPos.CODEC.fieldOf("corePos").forGetter(Settlement::getCorePos)
-    ).apply(instance, (id, owner, name, pos) -> new Settlement(id, owner, name, pos)));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, Settlement> PACKET_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, Settlement::getId,
-            UUIDUtil.STREAM_CODEC, Settlement::getOwner,
-            ByteBufCodecs.STRING_UTF8, Settlement::getName,
-            BlockPos.STREAM_CODEC, Settlement::getCorePos,
-            Settlement::new
-    );
+            BlockPos.CODEC.fieldOf("core_pos").forGetter(Settlement::getCorePos),
+            UUIDUtil.CODEC.listOf().optionalFieldOf("members", List.of()).forGetter(Settlement::getMembers),
+            BlockPos.CODEC.listOf().optionalFieldOf("building_ids", List.of()).forGetter(Settlement::getBuildingIds),
+            SettlementResourceData.CODEC.optionalFieldOf("resources", SettlementResourceData.DEFAULT)
+                    .forGetter(Settlement::getData)
+    ).apply(instance, (id, owner, name, corePos, members, buildingIds, resources) -> {
+        Settlement settlement = new Settlement(id, owner, name, corePos);
+        settlement.members.addAll(members);
+        settlement.buildingIds.addAll(buildingIds);
+        settlement.data = resources;
+        return settlement;
+    }));
 
     public Settlement(UUID id, UUID owner, String name, BlockPos corePos) {
         this.id = id;
@@ -47,38 +55,70 @@ public class Settlement {
     public UUID getOwner() { return owner; }
     public String getName() { return name; }
     public BlockPos getCorePos() { return corePos; }
-    public List<UUID> getMembers() { return members; }
-    public List<BlockPos> getBuildingIds() { return buildingIds; }
+    public List<UUID> getMembers() { return List.copyOf(members); }
+    public List<BlockPos> getBuildingIds() { return List.copyOf(buildingIds); }
     public SettlementResourceData getData() { return data; }
 
-    public void addMember(com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI girl) {
-        if (girl != null) members.add(girl.getUUID());
+    public boolean hasMember(UUID girlId) {
+        return members.contains(girlId);
     }
 
-    /**
-     * Registers a scanned building.
-     *
-     * <p>{@code buildingIds} holds door positions; the building itself lives in the per-level
-     * {@link com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager}. Keeping the
-     * position list here is what makes the hub GUI's building count real rather than always 0.</p>
-     */
-    public void addBuilding(BlockPos doorPos,
-                            com.sandymandy.pleasurehorizons.settlement.building.SettlementBuilding building,
-                            net.minecraft.server.level.ServerLevel level) {
-        if (!buildingIds.contains(doorPos)) {
-            buildingIds.add(doorPos);
+    public void addMember(SettlementGirlEntityAI girl) {
+        if (girl == null) return;
+        boolean added = false;
+        if (!members.contains(girl.getUUID())) {
+            members.add(girl.getUUID());
+            added = true;
         }
-        com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager
-                .get(level).addBuilding(this.id, building);
+        girl.setSettlement(this);
+        if (added) {
+            markDirty();
+        }
     }
 
-    public void removeBuilding(BlockPos doorPos, net.minecraft.server.level.ServerLevel level) {
+    public void removeMember(SettlementGirlEntityAI girl) {
+        if (girl == null) return;
+        boolean removed = members.remove(girl.getUUID());
+        if (this.id.equals(girl.getSettlementId())) {
+            girl.setSettlement(null);
+        }
+        if (removed) {
+            markDirty();
+        }
+    }
+
+    public void addBuilding(BlockPos doorPos, SettlementBuilding building, ServerLevel level) {
+        if (!buildingIds.contains(doorPos)) {
+            buildingIds.add(doorPos.immutable());
+        }
+        SettlementBuildingManager.get(level).addBuilding(building);
+        markDirty();
+    }
+
+    public void removeBuilding(BlockPos doorPos, ServerLevel level) {
         buildingIds.remove(doorPos);
-        com.sandymandy.pleasurehorizons.util.managers.SettlementBuildingManager
-                .get(level).removeBuilding(doorPos);
+        SettlementBuildingManager.get(level).removeBuilding(doorPos);
+        markDirty();
     }
 
-    public void removeMember(com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI girl) {
-        if (girl != null) members.remove(girl.getUUID());
+    public void setMorale(float morale) {
+        if (!Float.isFinite(morale)) return;
+        data = data.withMorale(Math.max(0.0F, Math.min(1.0F, morale)));
+        markDirty();
+    }
+
+    public void addResources(int amount) {
+        data = data.withMaterials(Math.max(0, data.materials() + amount));
+        markDirty();
+    }
+
+    public void attachManager(SettlementManager manager) {
+        this.manager = manager;
+    }
+
+    private void markDirty() {
+        if (manager != null) {
+            manager.setDirty();
+        }
     }
 }
