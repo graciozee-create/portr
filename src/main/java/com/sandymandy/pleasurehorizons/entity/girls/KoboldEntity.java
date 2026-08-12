@@ -3,19 +3,27 @@ package com.sandymandy.pleasurehorizons.entity.girls;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
 import com.sandymandy.pleasurehorizons.util.Colors;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevelAccessor;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -44,6 +52,8 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     public static final int MAX_BODY_SIZE = 115;
     public static final int MIN_BREAST_SIZE = 60;
     public static final int MAX_BREAST_SIZE = 160;
+    private static final int MIN_HEALTH = 4;
+    private static final int MAX_HEALTH = 12;
 
     /** Avoids recomputing dimensions every tick when nothing changed. */
     private float lastHitboxHeight = 1.0f;
@@ -56,6 +66,19 @@ public class KoboldEntity extends SettlementGirlEntityAI {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes();
+    }
+
+    /**
+     * Randomise only genuinely new server-side spawns. Doing this in the constructor, as the
+     * Fabric version does, would also randomise NBT-loaded and client-created entity instances.
+     */
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
+                                        MobSpawnType reason, @Nullable SpawnGroupData spawnData) {
+        SpawnGroupData result = super.finalizeSpawn(level, difficulty, reason, spawnData);
+        randomizeAppearance(level.getRandom());
+        return result;
     }
 
     @Override
@@ -173,7 +196,7 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("KoboldBodySize", getBodySize());
+        tag.putInt("BodySize", getBodySize());
         tag.putInt("KoboldBreastSize", getKoboldBreastSize());
         tag.putInt("PrimaryColor", getPrimaryColor());
         tag.putInt("SecondaryColor", getSecondaryColor());
@@ -185,7 +208,12 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("KoboldBodySize")) setBodySize(tag.getInt("KoboldBodySize"));
+        if (tag.contains("BodySize")) {
+            setBodySize(tag.getInt("BodySize"));
+        } else if (tag.contains("KoboldBodySize")) {
+            // Compatibility with worlds saved by earlier NeoForge port builds.
+            setBodySize(tag.getInt("KoboldBodySize"));
+        }
         if (tag.contains("KoboldBreastSize")) setKoboldBreastSize(tag.getInt("KoboldBreastSize"));
         if (tag.contains("PrimaryColor")) setPrimaryColor(tag.getInt("PrimaryColor"));
         if (tag.contains("SecondaryColor")) setSecondaryColor(tag.getInt("SecondaryColor"));
@@ -269,13 +297,21 @@ public class KoboldEntity extends SettlementGirlEntityAI {
         customizationApplied = false;
     }
 
-    public void randomizeAppearance() {
-        setBodySize(RANDOM.nextInt(MIN_BODY_SIZE, MAX_BODY_SIZE + 1));
-        setColorPreset(PatternPresets.values()[RANDOM.nextInt(PatternPresets.values().length)]);
-        setIrisColor(Colors.ALL_COLORS.get(RANDOM.nextInt(Colors.ALL_COLORS.size())));
-        setTopHornType(RANDOM.nextInt(0, 8));
-        setBottomHornType(RANDOM.nextInt(0, 3));
-        setKoboldBreastSize(RANDOM.nextInt(MIN_BREAST_SIZE, MAX_BREAST_SIZE + 1));
+    private void randomizeAppearance(RandomSource random) {
+        int health = MIN_HEALTH + random.nextInt(MAX_HEALTH - MIN_HEALTH + 1);
+        AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(health);
+            this.setHealth(health);
+        }
+
+        setBodySize(MIN_BODY_SIZE + random.nextInt(MAX_BODY_SIZE - MIN_BODY_SIZE + 1));
+        PatternPresets[] presets = PatternPresets.values();
+        setColorPreset(presets[random.nextInt(presets.length)]);
+        setIrisColor(Colors.ALL_COLORS.get(random.nextInt(Colors.ALL_COLORS.size())));
+        setTopHornType(random.nextInt(8));
+        setBottomHornType(random.nextInt(3));
+        setKoboldBreastSize(MIN_BREAST_SIZE + random.nextInt(MAX_BREAST_SIZE - MIN_BREAST_SIZE + 1));
     }
 
     // Bone groups tinted with the primary / secondary / iris colour.
@@ -339,6 +375,18 @@ public class KoboldEntity extends SettlementGirlEntityAI {
         }
 
         customizationApplied = true;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (PRIMARY_COLOR.equals(key) || SECONDARY_COLOR.equals(key) || IRIS_COLOR.equals(key)
+                || TOP_HORN_TYPE.equals(key) || BOTTOM_HORN_TYPE.equals(key)) {
+            customizationApplied = false;
+        }
+        if (HITBOX_HEIGHT.equals(key)) {
+            this.refreshDimensions();
+        }
     }
 
     @Override
