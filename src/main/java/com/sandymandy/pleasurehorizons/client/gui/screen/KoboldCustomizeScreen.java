@@ -134,10 +134,6 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
         sections.add(new CustomizeSection<KoboldEntity>(entity, previewEntity) {
             @Override
-            public void init(CustomizeScreen<KoboldEntity> screen, LayoutConfig layout, int startY) {
-            }
-
-            @Override
             public int render(CustomizeScreen<KoboldEntity> screen, LayoutConfig layout, int currentY) {
                 Button randomizeBtn = Button.builder(
                         Component.translatable("gui.pleasurehorizons.customize.randomize"),

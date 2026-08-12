@@ -14,11 +14,6 @@ public abstract class CustomizeSection<T extends GirlSceneEntity> {
     }
 
     /**
-     * Initialize the section (called during screen init)
-     */
-    public abstract void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY);
-
-    /**
      * Render the section and return the new Y position
      */
     public abstract int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY);

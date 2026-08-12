@@ -65,10 +65,6 @@ public class GirlCustomizeScreen extends CustomizeScreen<GirlSceneEntity> {
 
         sections.add(new CustomizeSection<GirlSceneEntity>(entity, previewEntity) {
             @Override
-            public void init(CustomizeScreen<GirlSceneEntity> screen, LayoutConfig layout, int startY) {
-            }
-
-            @Override
             public int render(CustomizeScreen<GirlSceneEntity> screen, LayoutConfig layout, int currentY) {
                 Button clearBtn = Button.builder(
                         Component.translatable("gui.pleasurehorizons.customize.clear")

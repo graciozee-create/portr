@@ -42,10 +42,6 @@ public class ButtonGridSection<T extends GirlSceneEntity, V> extends CustomizeSe
     }
 
     @Override
-    public void init(CustomizeScreen<T> screen, LayoutConfig layout, int startY) {
-    }
-
-    @Override
     public int render(CustomizeScreen<T> screen, LayoutConfig layout, int currentY) {
         StringWidget titleWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
                 title, Minecraft.getInstance().font);

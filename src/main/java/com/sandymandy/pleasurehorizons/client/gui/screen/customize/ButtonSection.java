@@ -29,10 +29,6 @@ public class ButtonSection<T extends GirlSceneEntity> extends CustomizeSection<T
     }
 
     @Override
-    public void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY) {
-    }
-
-    @Override
     public int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY) {
         StringWidget labelWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
                 label, Minecraft.getInstance().font);

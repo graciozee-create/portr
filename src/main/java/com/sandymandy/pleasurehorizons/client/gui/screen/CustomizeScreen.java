@@ -76,7 +76,6 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
         currentY += 30;
 
         for (CustomizeSection<T> section : sections) {
-            section.init(this, layout, currentY);
             currentY = section.render(this, layout, currentY);
             currentY += section.getSpacing();
         }

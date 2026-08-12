@@ -44,10 +44,6 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
     }
 
     @Override
-    public void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY) {
-    }
-
-    @Override
     public int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY) {
         int value = valueGetter.get();
 

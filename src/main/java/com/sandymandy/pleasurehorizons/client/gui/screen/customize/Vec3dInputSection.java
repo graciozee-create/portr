@@ -34,10 +34,6 @@ public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSecti
     }
 
     @Override
-    public void init(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int startY) {
-    }
-
-    @Override
     public int render(CustomizeScreen<T> screen, CustomizeScreen.LayoutConfig layout, int currentY) {
         Vec3 current = valueGetter.get();
 
