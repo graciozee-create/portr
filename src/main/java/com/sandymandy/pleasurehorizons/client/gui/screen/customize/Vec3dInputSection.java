@@ -41,13 +41,44 @@ public class Vec3dInputSection<T extends GirlSceneEntity> extends CustomizeSecti
 
         int btnW = (layout.contentWidth / 3) - 4;
 
-        Button xMinus = Button.builder(Component.literal("X-"), b -> {}).bounds(layout.centerX, currentY, btnW, 20).build();
-        Button yMinus = Button.builder(Component.literal("Y-"), b -> {}).bounds(layout.centerX + btnW + 6, currentY, btnW, 20).build();
-        Button zMinus = Button.builder(Component.literal("Z-"), b -> {}).bounds(layout.centerX + (btnW + 6) * 2, currentY, btnW, 20).build();
+        Button xMinus = Button.builder(Component.literal("X-"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x() - 0.1, v.y(), v.z()));
+        }).bounds(layout.centerX, currentY, btnW, 20).build();
+
+        Button yMinus = Button.builder(Component.literal("Y-"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x(), v.y() - 0.1, v.z()));
+        }).bounds(layout.centerX + btnW + 6, currentY, btnW, 20).build();
+
+        Button zMinus = Button.builder(Component.literal("Z-"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x(), v.y(), v.z() - 0.1));
+        }).bounds(layout.centerX + (btnW + 6) * 2, currentY, btnW, 20).build();
 
         screen.addWidget(xMinus);
         screen.addWidget(yMinus);
         screen.addWidget(zMinus);
+        currentY += 22;
+
+        Button xPlus = Button.builder(Component.literal("X+"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x() + 0.1, v.y(), v.z()));
+        }).bounds(layout.centerX, currentY, btnW, 20).build();
+
+        Button yPlus = Button.builder(Component.literal("Y+"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x(), v.y() + 0.1, v.z()));
+        }).bounds(layout.centerX + btnW + 6, currentY, btnW, 20).build();
+
+        Button zPlus = Button.builder(Component.literal("Z+"), b -> {
+            Vec3 v = valueGetter.get();
+            valueSetter.accept(new Vec3(v.x(), v.y(), v.z() + 0.1));
+        }).bounds(layout.centerX + (btnW + 6) * 2, currentY, btnW, 20).build();
+
+        screen.addWidget(xPlus);
+        screen.addWidget(yPlus);
+        screen.addWidget(zPlus);
 
         return currentY + 25;
     }
