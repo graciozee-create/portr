@@ -208,7 +208,9 @@ public class FreecamHandler {
     /** Replaces {@code ClientPacketListenerMixin}: never survive a world change. */
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel().isClientSide()) {
+        // Tested with instanceof rather than isClientSide() because the event exposes a
+        // LevelAccessor, and ClientLevel is exactly the case we care about here.
+        if (event.getLevel() instanceof net.minecraft.client.multiplayer.ClientLevel) {
             Freecam.onDisconnect();
         }
     }
