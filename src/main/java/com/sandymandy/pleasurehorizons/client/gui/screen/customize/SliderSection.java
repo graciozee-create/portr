@@ -5,7 +5,6 @@ import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.Consumer;
@@ -46,9 +45,6 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
 
         StringWidget labelWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
                 Component.literal(label + \": \" + value), Minecraft.getInstance().font);
-        if (tooltipText != null) {
-            labelWidget.setTooltip(Tooltip.create(Component.literal(tooltipText)));
-        }
         screen.addWidget(labelWidget);
         currentY += 20;
 
@@ -57,14 +53,12 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
             int cur = valueGetter.get();
             int newVal = Math.max(minValue, cur - 1);
             valueSetter.accept(newVal);
-            labelWidget.setMessage(Component.literal(label + \": \" + newVal));
         }).bounds(layout.centerX, currentY, btnWidth, 20).build();
 
         Button plusBtn = Button.builder(Component.literal(\"+\"), btn -> {
             int cur = valueGetter.get();
             int newVal = Math.min(maxValue, cur + 1);
             valueSetter.accept(newVal);
-            labelWidget.setMessage(Component.literal(label + \": \" + newVal));
         }).bounds(layout.centerX + btnWidth + 4, currentY, btnWidth, 20).build();
 
         screen.addWidget(minusBtn);
