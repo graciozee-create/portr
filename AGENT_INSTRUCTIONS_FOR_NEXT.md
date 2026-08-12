@@ -103,23 +103,83 @@ gh api repos/graciozee-create/portr/check-runs/$ID/annotations \
   Раньше девушка с луком просто подходила и била рукой.
 - `PleasureHorizonsMessages` — методы были пустыми и глотали сообщения.
 
-## 5. Что осталось сделать
+## 5. Добавлено в третьей части сессии (НЕ ПРОВЕРЕНО СБОРКОЙ)
 
-- **Freecam** (`freecam/*`, `config/keys/*`, `FreeCamera`, `Motion`, `TripodRegistry`) — заглушки.
-  В оригинале это отдельная подсистема с миксинами в камеру; на NeoForge потребуется
-  `ViewportEvent`/`ComputeCameraAngles` вместо миксинов Fabric.
-- **Конфиг** (`ModConfig`, `ModBindings`, `config/gui/*`) — в оригинале AutoConfig + Cloth Config
-  (Fabric-only). Сейчас `ModConfig` это хардкод-дефолты в памяти: настройки не сохраняются и
-  не редактируются. Нужен `neoforge.common.ModConfigSpec`.
-- **JigglePhysics** и `BoneOverrideRenderLayer` — физика груди/волос не портирована.
+> **Внимание:** во время этой части токен GitHub истёк (`gh: Bad credentials`,
+> `git push` отклонён). Коммиты лежат локально в ветке и **не проходили CI**.
+> Первое, что нужно сделать следующему агенту: `git push origin arena/019ff5e7-portr`
+> и прогнать сборку. Ошибки компиляции, если они есть, будут именно в этих файлах.
+
+### 5.1. Починен баг «девушка застывает» при взятии на руки
+
+Симптом: нажимаешь взаимодействие — девушка замирает на месте вместо того, чтобы
+оказаться на руках. Причина **не** в `startRiding`, а в ванильном трекинге сущностей:
+
+- `ChunkMap.TrackedEntity#updatePlayer` начинается с `if (player != this.entity)` —
+  игроку **никогда** не шлют трекинг-пакеты о нём самом. Значит, когда транспортом
+  становится игрок, `ClientboundSetPassengersPacket` до клиента носильщика не доходит.
+- `ServerEntity#sendChanges` при этом перестаёт слать позицию для пассажира.
+
+Итог: у носильщика девушка остаётся на последней синхронизированной позиции — «застыла».
+Другие игроки видели её на руках корректно.
+
+Что сделано в `TameableGirlEntity`:
+- добавлен `syncCarryState()` — явно шлёт `ClientboundSetPassengersPacket` носильщику;
+- обе ветки (обычная и «спасение раненой») сведены в один `toggleCarry()`;
+- неудачный `startRiding` больше не оставляет `setNoGravity(true)` — раньше это и давало
+  зависание в воздухе;
+- `getVehicleAttachmentPoint` = `(0, 0.7, 0)` — `positionRider` **вычитает** этот вектор,
+  поэтому положительный Y опускает её: 1.8 − 0.7 ≈ уровень груди;
+- `canBeCollidedWith` = false во время переноски;
+- в `tick()` убран мусорный код, добавлен сброс `noGravity`.
+
+### 5.2. Freecam портирован
+
+Оригинал построен на 18 миксинах и фейковом `ClientPlayerEntity` с самодельным
+`ClientPlayNetworkHandler`. В порту вместо этого:
+
+- `Minecraft#setCameraEntity` + лёгкая сущность `FreeCamera` на `EntityType.MARKER`
+  (у него нет рендерера и хитбокса). `GameRenderer#renderLevel` передаёт
+  `getCameraEntity()` прямо в `Camera#setup` — миксин в камеру не нужен;
+- `ViewportEvent.ComputeCameraAngles` — вместо `CameraMixin` и
+  `EntityMixin#changeLookDirection`. Мышь уже повернула игрока, поэтому дельта
+  переносится на камеру, а игрок «отматывается» назад;
+- `MovementInputUpdateEvent` — вместо подмены `player.input`;
+- `RenderPlayerEvent.Pre` / `RenderHandEvent` / `InteractionKeyMappingTriggered` /
+  `LivingDamageEvent.Post` / `LevelEvent.Unload` — вместо остальных миксинов;
+- `FreecamConfig` на `ModConfigSpec` вместо AutoConfig/Cloth (Fabric-only),
+  файл `config/pleasurehorizons-freecam.toml`;
+- клавиши: F4 — вкл/выкл, плюс две несвязанные (`player_control`, `tripod_reset`).
+  F4 + цифра 1–9 — штативы, как в оригинале;
+- исправлена ошибка оригинала: в `TripodSlot.valueOf` условие было инвертировано.
+
+Удалены больше не нужные заглушки `config/keys/*`, `config/gui/*`, `ModBindings`.
+
+### 5.3. Модели: физика и поворот головы
+
+- `JigglePhysics` был заглушкой (`update()` пустой, геттеры возвращали `Vec3.ZERO`) —
+  портирован дословно, это чистая векторная математика;
+- добавлена запись `JiggleBoneConfig`;
+- в порту вообще не было аналога `AbstractGirlModel#setCustomAnimations`, поэтому голова
+  была намертво зафиксирована. Теперь в `GirlRenderer#preRender`:
+  - поворот головы по yaw/pitch относительно корпуса (в сценах отключён);
+  - тряска `cheekL`/`cheekR`/`belly` + `boobs` (одетая) или `boobL`/`boobR` (раздетая),
+    фиксированный шаг 25 Гц с интерполяцией, как в оригинале;
+  - опорный поворот кости запоминается один раз, а не читается каждый кадр — иначе
+    смещение накапливалось бы (кости в GeckoLib общие и переиспользуются).
+
+## 5a. Что ещё осталось
+
 - **Текстурные оверрайды костей** (`overrideBoneTexture`, скин игрока на кость `steve`,
   UV-сдвиг брони по материалу) — цвет и видимость костей работают, текстуры нет.
+  Это `BoneOverrideRenderLayer` (98 строк в оригинале), всё ещё заглушка.
 - `Vec3dInputSection` — кнопки ±0.1 вместо `EditBox` с парсингом double.
 - `RegisterCustomGirl*C2SPacket` — пустые; в оригинале они тоже никем не отправлялись,
   можно удалить целиком.
 - `TamedGirlManager` — очистка мёртвых девушек отключена (`onServerTick` закомментирован).
 - `AbstractGirlModel`/`client/rendering/renderers/*` — дублирующая иерархия рендереров из
   оригинала; в порту всё рисует единый `GirlRenderer`, эти классы можно удалить.
+- Остальной `ModConfig` (не-freecam часть) — всё ещё хардкод-дефолты в памяти.
 
 ## 6. Правила работы
 
