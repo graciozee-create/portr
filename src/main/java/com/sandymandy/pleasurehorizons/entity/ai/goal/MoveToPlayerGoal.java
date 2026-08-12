@@ -18,6 +18,7 @@ public class MoveToPlayerGoal extends Goal {
     private final GirlSceneEntity girl;
     private final double speed;
     private boolean started = false;
+    private boolean sceneStarted = false;
     private int ticksRunning = 0;
 
     public MoveToPlayerGoal(GirlSceneEntity girl, double speed) {
@@ -34,6 +35,7 @@ public class MoveToPlayerGoal extends Goal {
     @Override
     public void start() {
         this.started = false;
+        this.sceneStarted = false;
         this.ticksRunning = 0;
     }
 
@@ -54,6 +56,7 @@ public class MoveToPlayerGoal extends Goal {
             girl.setDeltaMovement(Vec3.ZERO);
             girl.getNavigation().stop();
             girl.startRidingScene(player);
+            sceneStarted = girl.isSceneActive() && girl.isVehicle();
             started = true;
         }
     }
@@ -66,8 +69,13 @@ public class MoveToPlayerGoal extends Goal {
 
     @Override
     public void stop() {
-        this.started = false;
-        this.ticksRunning = 0;
         girl.getNavigation().stop();
+        if (!this.sceneStarted) {
+            // A failed path or vanished player must not leave the girl/player reserved forever.
+            girl.stopScene();
+        }
+        this.started = false;
+        this.sceneStarted = false;
+        this.ticksRunning = 0;
     }
 }

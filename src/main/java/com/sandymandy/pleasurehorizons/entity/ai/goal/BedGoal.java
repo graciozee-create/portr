@@ -41,6 +41,8 @@ public class BedGoal extends Goal {
     private Vec3 scenePos;
     @Nullable
     private Path pathToBed;
+    private boolean sceneStarted;
+    private int ticksRunning;
 
     public BedGoal(GirlSceneEntity entity, double speed) {
         this.entity = entity;
@@ -57,6 +59,7 @@ public class BedGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         return this.entity.targetBedPos != null
+                && (this.sceneStarted || this.ticksRunning < 600)
                 && Utils.checkForBlockAt(this.entity.level(), this.entity.targetBedPos, null, BlockTags.BEDS);
     }
 
@@ -64,6 +67,8 @@ public class BedGoal extends Goal {
     public void start() {
         if (this.entity.targetBedPos == null) return;
 
+        this.sceneStarted = false;
+        this.ticksRunning = 0;
         PleasureHorizons.usedBeds.put(this.entity.getUUID(), this.entity.targetBedPos);
 
         BlockState state = this.entity.level().getBlockState(this.entity.targetBedPos);
@@ -100,6 +105,7 @@ public class BedGoal extends Goal {
 
     @Override
     public void tick() {
+        this.ticksRunning++;
         handleMovement();
         startOnContact();
     }
@@ -139,15 +145,17 @@ public class BedGoal extends Goal {
         if (player == null) return;
 
         UUID playerId = player.getUUID();
-        if (PleasureHorizons.activeScenes.containsKey(playerId)) return;
+        UUID reservedBy = PleasureHorizons.activeScenes.get(playerId);
+        if (reservedBy != null && !reservedBy.equals(this.entity.getUUID())) return;
 
         if (this.entity.distanceToSqr(player) <= 1.5D
                 && this.entity.getCurrentScenePhase() == ScenePhase.BED_IDLE) {
-            PleasureHorizons.activeScenes.put(playerId, this.entity.getUUID());
+            PleasureHorizons.activeScenes.putIfAbsent(playerId, this.entity.getUUID());
             if (this.scenePos != null) {
                 this.entity.setPos(this.scenePos.x, this.scenePos.y, this.scenePos.z);
             }
             this.entity.startRidingScene(player);
+            this.sceneStarted = this.entity.isSceneActive() && this.entity.isVehicle();
         }
     }
 
@@ -155,5 +163,11 @@ public class BedGoal extends Goal {
     public void stop() {
         this.navigation.stop();
         this.entity.setWaitingAtBedState(false);
+        if (!this.sceneStarted) {
+            // Cancel an unreachable/destroyed-bed request instead of freezing the girl indefinitely.
+            this.entity.stopScene();
+        }
+        this.sceneStarted = false;
+        this.ticksRunning = 0;
     }
 }

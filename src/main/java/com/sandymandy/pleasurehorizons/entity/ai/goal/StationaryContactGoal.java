@@ -77,13 +77,14 @@ public class StationaryContactGoal extends Goal {
         if (player == null) return;
 
         UUID playerId = player.getUUID();
-        if (PleasureHorizons.activeScenes.containsKey(playerId)) return;
+        UUID reservedBy = PleasureHorizons.activeScenes.get(playerId);
+        if (reservedBy != null && !reservedBy.equals(this.entity.getUUID())) return;
 
         if (this.entity.distanceToSqr(player) <= 1.5D
                 && this.entity.getCurrentScenePhase() == ScenePhase.BED_IDLE) {
-            PleasureHorizons.activeScenes.put(playerId, this.entity.getUUID());
+            PleasureHorizons.activeScenes.putIfAbsent(playerId, this.entity.getUUID());
             this.entity.startRidingScene(player);
-            this.finished = true;
+            this.finished = this.entity.isSceneActive() && this.entity.isVehicle();
         }
     }
 
@@ -92,6 +93,10 @@ public class StationaryContactGoal extends Goal {
         this.navigation.stop();
         this.entity.setWaitingAtBedState(false);
         this.entity.setWaitingForPlayerState(false);
+        if (!this.finished) {
+            // Includes the 30-second contact timeout and a disconnected scene player.
+            this.entity.stopScene();
+        }
     }
 
     @Override

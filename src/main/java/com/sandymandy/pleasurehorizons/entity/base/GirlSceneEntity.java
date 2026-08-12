@@ -107,6 +107,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     private boolean requestMoveToBed = false;
     private boolean requestMoveToPlayer = false;
     private boolean requestWaitForPlayer = false;
+    private boolean sceneCostPaid = false;
 
     protected GirlSceneEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -286,7 +287,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     public void startScene(Player player, Scene option) {
         if (this.level().isClientSide()) return;
         if (this.isSceneActive() || this.getScenePlayer() != null) return;
-        if (player == null) return;
+        if (player == null || option == null || option.isEmpty()) return;
 
         if (this.getCurrentRelationshipLevel() < option.requiredRelationshipLevel()) {
             player.displayClientMessage(Component.translatable(
@@ -294,11 +295,19 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
             return;
         }
 
+        UUID playerId = player.getUUID();
+        UUID reservedBy = PleasureHorizons.activeScenes.get(playerId);
+        if (reservedBy != null && !reservedBy.equals(this.getUUID())) return;
+
+        // Reserve the player while strip/path/contact goals prepare the scene as well as during
+        // playback. Reserving only on physical contact allowed multiple pending scenes per player.
+        PleasureHorizons.activeScenes.put(playerId, this.getUUID());
+        this.sceneCostPaid = false;
         this.setScenePlayer(player);
 
         if (isPregnant()) {
             player.displayClientMessage(Component.translatable("msg.pleasurehorizons.isPregnant"), true);
-            this.setScenePlayer(null);
+            this.stopScene();
             return;
         }
 
@@ -324,19 +333,13 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         Player player = getScenePlayer();
         if (player == null) return;
 
-        if (this.useUpRelationShipLevels()) {
-            this.setCurrentRelationshipLevel(
-                    Math.max(0, this.getCurrentRelationshipLevel() - option.requiredRelationshipLevel()));
-        }
-
         switch (option.sceneType()) {
             case ON_BED -> {
                 Utils.BlockInfo bedInfo = Utils.findNearbyBed(this.level(), this.blockPosition(), 15);
                 if (bedInfo == null) {
                     player.displayClientMessage(
                             Component.translatable("msg.pleasurehorizons.noBedFound"), true);
-                    this.setCurrentScene(Scene.EMPTY);
-                    this.setScenePlayer(null);
+                    this.stopScene();
                     return;
                 }
                 PleasureHorizons.usedBeds.put(this.getUUID(), bedInfo.pos());
@@ -351,6 +354,15 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
     }
 
+    private void paySceneCost(Scene option) {
+        if (this.sceneCostPaid) return;
+        if (this.useUpRelationShipLevels()) {
+            this.setCurrentRelationshipLevel(
+                    Math.max(0, this.getCurrentRelationshipLevel() - option.requiredRelationshipLevel()));
+        }
+        this.sceneCostPaid = true;
+    }
+
     /** Called by the girl once she is next to the player (or on the bed) and can mount them. */
     public void startRidingScene(Player player) {
         if (player == null) return;
@@ -358,12 +370,14 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         SceneType type = getCurrentScene().sceneType();
         if (type == SceneType.STATIONARY_INTRO || type == SceneType.STATIONARY) return;
 
+        if (!player.startRiding(this, true)) return;
+
+        this.paySceneCost(getCurrentScene());
         player.setInvisible(true);
         this.setSceneProgress(0f);
         this.setCumThreshold(getCurrentScene().cumThreshold());
         this.setThrusting(false);
         this.targetBedPos = null;
-        player.startRiding(this, true);
         this.setIntroIndex(0);
         this.lastSceneAnim = "";
         this.setSceneState(true);
@@ -376,6 +390,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
             return;
         }
 
+        this.paySceneCost(option);
         this.setSceneState(true);
         this.setSceneProgress(0f);
         this.setCurrentScenePhase(ScenePhase.STATIONARY_INTRO);
@@ -386,6 +401,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     private void startStationaryLoop(Scene option) {
+        this.paySceneCost(option);
         this.setSceneState(true);
         this.setSceneProgress(0f);
         this.setCurrentScenePhase(ScenePhase.STATIONARY);
@@ -395,7 +411,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     }
 
     public void stopScene() {
-        if (!this.isSceneActive()) return;
+        Optional<UUID> scenePlayerId = this.entityData.get(CURRENT_SCENE_PLAYER);
+        boolean hasPendingOrActiveScene = this.isSceneActive()
+                || !this.getCurrentScene().isEmpty()
+                || scenePlayerId.isPresent();
+        if (!hasPendingOrActiveScene) return;
 
         if (this.level().isClientSide()) {
             if (hasLocalScenePlayer()) {
@@ -406,9 +426,13 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
 
         PleasureHorizons.usedBeds.remove(this.getUUID());
+        scenePlayerId.ifPresent(playerId ->
+                PleasureHorizons.activeScenes.remove(playerId, this.getUUID()));
         Player scenePlayer = getScenePlayer();
+        if (scenePlayer == null && this.level() instanceof ServerLevel serverLevel && scenePlayerId.isPresent()) {
+            scenePlayer = serverLevel.getServer().getPlayerList().getPlayer(scenePlayerId.get());
+        }
         if (scenePlayer != null) {
-            PleasureHorizons.activeScenes.remove(scenePlayer.getUUID());
             scenePlayer.setInvisible(false);
         }
 
@@ -428,8 +452,24 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         this.lastSceneAnim = "";
         this.bedPos = null;
         this.targetBedPos = null;
+        this.requestStrip = false;
+        this.requestMoveToBed = false;
+        this.requestMoveToPlayer = false;
+        this.requestWaitForPlayer = false;
+        this.sceneCostPaid = false;
+        this.stripOptions = Scene.EMPTY;
+        this.setWaitingAtBedState(false);
+        this.setWaitingForPlayerState(false);
         this.getNavigation().stop();
         this.setScenePlayer(null);
+    }
+
+    @Override
+    public void remove(net.minecraft.world.entity.Entity.RemovalReason reason) {
+        if (!this.level().isClientSide()) {
+            this.stopScene();
+        }
+        super.remove(reason);
     }
 
     public void playPhase(ScenePhase phase) {
@@ -604,6 +644,15 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
             // broadcast when it actually changes.
             if (this.tickCount % 20 == 0) {
                 updateClothingAndArmorIfChanged();
+            }
+
+            // A disconnected/dimension-changed player no longer resolves in this level. Release
+            // both active and still-preparing scenes instead of leaking the global reservation.
+            if ((this.isSceneActive()
+                    || !this.getCurrentScene().isEmpty()
+                    || this.entityData.get(CURRENT_SCENE_PLAYER).isPresent())
+                    && this.getScenePlayer() == null) {
+                stopScene();
             }
 
             boolean inSexPhases = switch (getCurrentScenePhase()) {

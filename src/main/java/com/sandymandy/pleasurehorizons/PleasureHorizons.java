@@ -76,6 +76,10 @@ public class PleasureHorizons {
 
     @SubscribeEvent
     public void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
+        // Integrated servers can stop and restart in the same JVM. Runtime-only reservations
+        // from the previous world must never block players or beds in the next one.
+        usedBeds.clear();
+        activeScenes.clear();
         CustomGirlLoader.register();
     }
 }
