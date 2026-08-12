@@ -5,7 +5,6 @@ import com.sandymandy.pleasurehorizons.block.PleasureHorizonsBlocks;
 import com.sandymandy.pleasurehorizons.block.entity.PleasureHorizonsBlockEntities;
 import com.sandymandy.pleasurehorizons.command.Commands;
 import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTypes;
-import com.sandymandy.pleasurehorizons.entity.ai.brain.GirlMemoryTypes;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
@@ -24,7 +23,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +55,6 @@ public class PleasureHorizons {
         PleasureHorizonsDataComponentTypes.register(modEventBus);
 
         // Other systems
-        GirlMemoryTypes.register(modEventBus);
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
         PleasureHorizonsDispenserBehavior.register(modEventBus);
@@ -84,14 +81,5 @@ public class PleasureHorizons {
     @SubscribeEvent
     public void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
         CustomGirlLoader.register();
-    }
-
-    @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
-        // Cleanup disabled for stub to avoid dependency on TamedGirlManager with ServerLevel
-        // var server = event.getServer();
-        // if (server != null) {
-        //     TamedGirlManager.get(server.overworld()).cleanupDeadGirls(server.overworld());
-        // }
     }
 }
