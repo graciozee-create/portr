@@ -94,6 +94,9 @@ public class CustomGirlEntity extends SettlementGirlEntityAI {
             this.entityData.set(GIRL_NAME, profile.name());
             this.entityData.set(HITBOX_HEIGHT, profile.hitboxHeight());
             this.entityData.set(IS_PROFILE_PERMANENT, isPermanent);
+            // Custom profiles are server-only. Sync their calculated maximum so the client
+            // inventory can still display the real denominator without loading server JSON.
+            this.setMaxRelationshipLevel(this.maxRelationshipLevel());
         }
 
         this.lastHitboxHeight = profile.hitboxHeight();

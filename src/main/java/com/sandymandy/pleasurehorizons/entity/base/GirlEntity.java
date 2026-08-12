@@ -834,12 +834,38 @@ public abstract class GirlEntity extends PathfinderMob {
         return "sit";
     }
 
+    /**
+     * Returns the highest relationship level required by this girl's scenes.
+     *
+     * <p>The old port only returned {@link #MAX_RELATIONSHIP_LEVEL}, which is initialised to
+     * four and was never updated. Girls with later scenes therefore displayed {@code 4/4}
+     * even though content could require level ten. Keep this method as a pure calculation:
+     * writing synched entity data while an inventory screen calls it on the client is unsafe.
+     * The tracked value is only a fallback for profile-driven girls whose JSON scenes exist
+     * on the server but are not loaded on the client.</p>
+     */
     public int maxRelationshipLevel() {
-        return this.entityData.get(MAX_RELATIONSHIP_LEVEL);
+        try {
+            List<com.sandymandy.pleasurehorizons.util.variables.Scene> scenes = getScenes();
+            if (scenes == null || scenes.isEmpty()) {
+                return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
+            }
+
+            return scenes.stream()
+                    .map(com.sandymandy.pleasurehorizons.util.variables.Scene::requiredRelationshipLevel)
+                    .max(Integer::compareTo)
+                    .orElse(4);
+        } catch (RuntimeException exception) {
+            // A missing/malformed custom profile must not make relationship progress unusable.
+            return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
+        }
     }
 
-    public void setMaxRelationshipLevel(int value) {
-        this.entityData.set(MAX_RELATIONSHIP_LEVEL, value);
+    /** Server-only update for profile-driven girls; clients merely read the tracked fallback. */
+    protected void setMaxRelationshipLevel(int value) {
+        if (!this.level().isClientSide()) {
+            this.entityData.set(MAX_RELATIONSHIP_LEVEL, value);
+        }
     }
 
     protected Map<EquipmentSlot, List<String>> getArmorBones() {
