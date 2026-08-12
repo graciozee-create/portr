@@ -23,6 +23,14 @@ public record OpenCustomizeScreenS2CPacket(int entityId, int previewEntityId) im
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {});
+        ctx.enqueueWork(() -> {
+            try {
+                Class<?> handler = Class.forName("com.sandymandy.pleasurehorizons.client.networking.ClientPacketHandlers");
+                handler.getMethod("handleOpenCustomizeScreen", int.class, int.class)
+                        .invoke(null, this.entityId(), this.previewEntityId());
+            } catch (Exception e) {
+                PleasureHorizons.LOGGER.debug("OpenCustomizeScreen packet on server");
+            }
+        });
     }
 }
