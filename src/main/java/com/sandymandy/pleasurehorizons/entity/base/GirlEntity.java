@@ -1012,6 +1012,7 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
         compound.putInt("BreastSize", getBreastSize());
         compound.putInt("MilkedAmount", getMilkedAmount());
+        compound.putLong("BasePos", getBasePos().asLong());
         // AI toggles
         compound.putBoolean("AIGuardBase", isGuardBaseEnabled());
         compound.putBoolean("AIGuardOwner", isGuardOwnerEnabled());
@@ -1040,6 +1041,11 @@ public abstract class GirlEntity extends PathfinderMob {
             setBreastSize(compound.getInt("BreastSize"));
         }
         setMilkedAmount(compound.getInt("MilkedAmount"));
+        // Older port saves omitted this field. Keep ZERO as the explicit "base not set"
+        // sentinel instead of inventing a home at the entity's load position.
+        if (compound.contains("BasePos")) {
+            setBasePos(BlockPos.of(compound.getLong("BasePos")));
+        }
         if (compound.contains("AIGuardBase")) setGuardBaseEnabled(compound.getBoolean("AIGuardBase"));
         if (compound.contains("AIGuardOwner")) setGuardOwnerEnabled(compound.getBoolean("AIGuardOwner"));
         if (compound.contains("AIGather")) setGatherEnabled(compound.getBoolean("AIGather"));
