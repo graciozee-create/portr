@@ -1071,6 +1071,10 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putInt("PregnancyStage", getPregnancyStage());
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
         compound.putInt("BreastSize", getBreastSize());
+        Vec3 breastOffset = getBreastOffset();
+        compound.putDouble("BreastOffsetX", breastOffset.x);
+        compound.putDouble("BreastOffsetY", breastOffset.y);
+        compound.putDouble("BreastOffsetZ", breastOffset.z);
         compound.putInt("MilkedAmount", getMilkedAmount());
         compound.putLong("BasePos", getBasePos().asLong());
         // AI toggles
@@ -1099,6 +1103,14 @@ public abstract class GirlEntity extends PathfinderMob {
         setCurrentRelationshipLevel(compound.getInt("RelationshipLevel"));
         if (compound.contains("BreastSize")) {
             setBreastSize(compound.getInt("BreastSize"));
+        }
+        if (compound.contains("BreastOffsetX")
+                && compound.contains("BreastOffsetY")
+                && compound.contains("BreastOffsetZ")) {
+            setBreastOffset(new Vec3(
+                    compound.getDouble("BreastOffsetX"),
+                    compound.getDouble("BreastOffsetY"),
+                    compound.getDouble("BreastOffsetZ")));
         }
         setMilkedAmount(compound.getInt("MilkedAmount"));
         // Older port saves omitted this field. Keep ZERO as the explicit "base not set"
