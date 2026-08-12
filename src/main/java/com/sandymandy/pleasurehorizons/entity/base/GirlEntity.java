@@ -284,6 +284,17 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(IS_TEMPORARY, state);
     }
 
+    public void applyClothingAndArmor() {
+    }
+
+    public boolean isArmorVisible(EquipmentSlot slot) {
+        return this.armorVisibility.getOrDefault(slot, true);
+    }
+
+    public void setArmorVisible(EquipmentSlot slot, boolean visible) {
+        this.armorVisibility.put(slot, visible);
+    }
+
     public GirlEntity createTempClone() {
         if (this.level().isClientSide()) return null;
 

@@ -1,6 +1,9 @@
 package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
@@ -70,10 +73,13 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
         this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
+        this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this));
+        this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this));
     }
 
     // ------------------------------------------------------------ ownership
