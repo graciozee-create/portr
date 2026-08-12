@@ -57,17 +57,8 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     }
 
     /**
-     * Applies per-bone visibility before the model is drawn.
-     *
-     * <p>Every girl rig embeds a second, full "steve" partner skeleton (132 bones / 670 cubes)
-     * pivoted at z = -16, i.e. exactly one block behind her. It is only meant to be visible
-     * during a scene. Nothing ever hid it in this port, so it rendered permanently as a
-     * detached, un-animated body floating one block away from the girl.</p>
-     *
-     * <p>{@link software.bernie.geckolib.cache.object.GeoBone#setHidden(boolean)} also hides
-     * children, which is what we want here: hiding {@code steve} removes the whole sub-tree.
-     * Bones are shared, baked model state, so every flag must be written on every frame -
-     * otherwise a hidden bone stays hidden for all other girls using the same model.</p>
+     * Applies whole-entity transforms before rendering. Bone transforms are deliberately
+     * deferred until after GeckoLib evaluates the animation; see {@link #renderRecursively}.
      */
     @Override
     public void preRender(PoseStack poseStack, T animatable, BakedGeoModel model,
@@ -77,6 +68,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, colour);
 
+        if (!isReRender) {
+            currentRenderModel = model;
+        }
+
         boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
 
         if (isCarried) {
@@ -84,62 +79,24 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
             // and rotation are recomputed here rather than in tick(). See snapToCarrier.
             snapToCarrier(animatable);
 
-            // Sat on the carrier's shoulder.
-            //
-            // The previous version placed her out in front of the player and, in first
-            // person, off to the side at half scale - which read as "floating a couple of
-            // blocks away" rather than being carried. She is now parked directly on the
-            // right shoulder, close in, and the knees are tucked up by the bone pose below.
-            //
-            // Everything here is in the entity's own space, and the entity is already
-            // positioned at the carrier by the vehicle attachment point, so these are small
-            // local offsets rather than world coordinates. Because tick() pins her yaw to
-            // the carrier's, no yaw compensation is needed - she turns with him.
+            // The entity is already seated at the carrier by its attachment point; these are
+            // small local offsets that place her directly on the right shoulder.
             poseStack.translate(SHOULDER_RIGHT, SHOULDER_UP, SHOULDER_FORWARD);
             poseStack.scale(CARRY_SCALE, CARRY_SCALE, CARRY_SCALE);
-
-            // Slight inward lean so she rests against the head instead of sitting bolt
-            // upright, plus a gentle sway driven by the carrier's walk cycle.
             poseStack.mulPose(Axis.ZP.rotationDegrees(-8.0F));
+
             if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
                 float walk = player.walkAnimation.position(partialTick);
                 float sway = net.minecraft.util.Mth.sin(walk * 0.6F) * 3.0F
                         * player.walkAnimation.speed(partialTick);
                 poseStack.mulPose(Axis.XP.rotationDegrees(sway));
             }
-
-            // Mika has a real carry animation, so let it own the pose rather than
-            // overwriting the very bones it is animating.
-            if (!animatable.hasCarryAnimation()) {
-                applyCarryPose(model);
-            } else {
-                clearCarryPose(model);
-            }
-        } else {
-            // Baked bones are shared, so the pose must be cleared for everyone else.
-            clearCarryPose(model);
         }
 
-        // The partner rig is scene-only; keep the whole sub-tree hidden otherwise.
-        boolean sceneActive = animatable.isSceneActive();
-        model.getBone(PARTNER_BONE).ifPresent(bone -> bone.setHidden(!sceneActive));
-
-        Map<String, Boolean> boneVisibility = animatable.boneVisibility;
-        if (boneVisibility != null && !boneVisibility.isEmpty()) {
-            for (Map.Entry<String, Boolean> entry : boneVisibility.entrySet()) {
-                Boolean visible = entry.getValue();
-                if (visible == null) {
-                    continue;
-                }
-                model.getBone(entry.getKey()).ifPresent(bone -> bone.setHidden(!visible));
-            }
-        }
-
+        // GeckoLib applies controller animations in actuallyRender, after preRender. Bone
+        // changes made here would therefore be overwritten. They are applied lazily from the
+        // first renderRecursively call instead, then restored in postRender.
         updatePartnerSkin(animatable);
-        applyHeadTracking(animatable, model);
-        applyJigglePhysics(animatable, model);
-        applyBoneScales(animatable, model);
-        applyBonePositions(animatable, model);
     }
 
     /**
@@ -199,17 +156,45 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     }
 
     /**
+     * Applies every entity-specific bone override after GeckoLib has evaluated the animation.
+     * The baked bones are shared between all entities using this renderer, so every original
+     * value is captured first and restored from {@link #postRender} after all render layers.
+     */
+    private void applyBoneOverrides(T animatable, BakedGeoModel model) {
+        model.getBone(PARTNER_BONE).ifPresent(bone -> {
+            rememberBone(bone);
+            bone.setHidden(!animatable.isSceneActive());
+        });
+
+        Map<String, Boolean> visibility = animatable.boneVisibility;
+        if (visibility != null) {
+            for (Map.Entry<String, Boolean> entry : visibility.entrySet()) {
+                if (entry.getValue() == null) continue;
+                model.getBone(entry.getKey()).ifPresent(bone -> {
+                    rememberBone(bone);
+                    bone.setHidden(!entry.getValue());
+                });
+            }
+        }
+
+        if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player
+                && !animatable.hasCarryAnimation()) {
+            applyCarryPose(model);
+        }
+
+        applyHeadTracking(animatable, model);
+        applyJigglePhysics(animatable, model);
+        applyBoneScales(animatable, model);
+        applyBonePositions(animatable, model);
+    }
+
+    private void rememberBone(GeoBone bone) {
+        renderedBoneStates.computeIfAbsent(bone, BoneRenderState::capture);
+    }
+
+    /**
      * Tucks the knees up so she sits on the shoulder instead of standing rigid in mid-air.
-     *
-     * <p>None of the rigs ship a real carry animation - only Mika has {@code carry_slow1},
-     * and that one belongs to a scene - so the pose is posed by hand here. Hips bend forward,
-     * shins fold back under the thighs and the arms come down, which reads as sitting with
-     * the knees drawn up.</p>
-     *
-     * <p>These bones are also driven by the walk/idle animation that just ran, so the values
-     * are assigned rather than added; and since baked GeckoLib bones are shared between every
-     * girl using the rig, {@link #CARRY_POSE_BONES} is reset on any girl that is not being
-     * carried, otherwise one carried girl would leave every other girl in a sitting pose.</p>
+     * The pose is applied after the normal animation and restored after this render pass.
      */
     private void applyCarryPose(BakedGeoModel model) {
         setBoneRotation(model, "legL", CARRY_THIGH_PITCH, 0.0F, CARRY_THIGH_SPREAD);
@@ -220,20 +205,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         setBoneRotation(model, "armR", CARRY_ARM_PITCH, 0.0F, -CARRY_ARM_SPREAD);
     }
 
-    /** Puts the carry-pose bones back to their animated rotation for girls on the ground. */
-    private void clearCarryPose(BakedGeoModel model) {
-        for (String boneName : CARRY_POSE_BONES) {
-            model.getBone(boneName).ifPresent(bone -> {
-                bone.setRotX(0.0F);
-                bone.setRotY(0.0F);
-                bone.setRotZ(0.0F);
-            });
-        }
-    }
-
-    private static void setBoneRotation(BakedGeoModel model, String boneName,
-                                        float xDeg, float yDeg, float zDeg) {
+    private void setBoneRotation(BakedGeoModel model, String boneName,
+                                 float xDeg, float yDeg, float zDeg) {
         model.getBone(boneName).ifPresent(bone -> {
+            rememberBone(bone);
             bone.setRotX(xDeg * ((float) Math.PI / 180F));
             bone.setRotY(yDeg * ((float) Math.PI / 180F));
             bone.setRotZ(zDeg * ((float) Math.PI / 180F));
@@ -292,12 +267,11 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
      * animation owns the head.</p>
      */
     private void applyHeadTracking(T animatable, BakedGeoModel model) {
+        if (animatable.isSceneActive()) return;
+
         model.getBone(HEAD_BONE).ifPresent(bone -> {
-            if (animatable.isSceneActive()) {
-                bone.setRotX(0.0F);
-                bone.setRotY(0.0F);
-                return;
-            }
+            rememberBone(bone);
+
             // Head yaw relative to the body, so she does not twist her neck when turning.
             float relativeYaw = net.minecraft.util.Mth.wrapDegrees(
                     animatable.getYHeadRot() - animatable.yBodyRot);
@@ -385,17 +359,13 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
 
             net.minecraft.world.phys.Vec3 offset = physics.getInterpolatedDisplacement(alpha);
             model.getBone(config.boneName()).ifPresent(bone -> {
-                // The rest rotation is whatever the animation posed this bone to *before* any
-                // jiggle was applied. It has to be captured once per bone and reused, because
-                // this runs every frame on shared baked bones: reading the live rotation and
-                // adding to it would fold the previous frame's offset back in and the bone
-                // would spiral away. Upstream keeps the same "default rotation" map.
-                float[] rest = state.restRotations.computeIfAbsent(config.boneName(),
-                        key -> new float[] {bone.getRotX(), bone.getRotY(), bone.getRotZ()});
-
-                bone.setRotX(rest[0] + (float) offset.x);
-                bone.setRotY(rest[1] + (float) offset.y);
-                bone.setRotZ(rest[2] + (float) offset.z);
+                // Controller animations have already established this frame's pose. Add the
+                // spring displacement to that pose and restore it after rendering, preventing
+                // the offset from accumulating on the shared baked bone.
+                rememberBone(bone);
+                bone.setRotX(bone.getRotX() + (float) offset.x);
+                bone.setRotY(bone.getRotY() + (float) offset.y);
+                bone.setRotZ(bone.getRotZ() + (float) offset.z);
             });
         }
     }
@@ -419,8 +389,6 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     /** Per-entity jiggle state. Cleared when the girl despawns or a scene starts. */
     private static final class JiggleState {
         final Map<String, JigglePhysics> physics = new java.util.HashMap<>();
-        /** Rest rotation per bone, captured on first sight and reused every frame. */
-        final Map<String, float[]> restRotations = new java.util.HashMap<>();
         net.minecraft.world.phys.Vec3 previousVelocity = net.minecraft.world.phys.Vec3.ZERO;
         float previousYaw = 0.0F;
         long lastUpdateNanos = 0L;
@@ -435,32 +403,16 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     private static long FRAME_COUNTER = 0L;
     private static final String HEAD_BONE = "head";
 
-    /**
-     * Per-bone scale overrides (kobold body/breast size, pregnancy belly).
-     *
-     * <p>Bones are shared baked-model state, so the previous frame's values must be undone.
-     * Every bone we ever touched is reset to 1.0 first, then the current overrides applied -
-     * otherwise a resized kobold would permanently resize every other girl on the same rig.</p>
-     */
+    /** Per-bone scale overrides (kobold body/breast size, pregnancy belly). */
     private void applyBoneScales(T animatable, BakedGeoModel model) {
         Map<String, net.minecraft.world.phys.Vec3> sizes = animatable.boneSizeOverrides;
         if (sizes == null) return;
 
-        for (String boneName : touchedScaleBones) {
-            if (!sizes.containsKey(boneName)) {
-                model.getBone(boneName).ifPresent(bone -> {
-                    bone.setScaleX(1.0F);
-                    bone.setScaleY(1.0F);
-                    bone.setScaleZ(1.0F);
-                });
-            }
-        }
-
         for (Map.Entry<String, net.minecraft.world.phys.Vec3> entry : sizes.entrySet()) {
             net.minecraft.world.phys.Vec3 scale = entry.getValue();
             if (scale == null) continue;
-            touchedScaleBones.add(entry.getKey());
             model.getBone(entry.getKey()).ifPresent(bone -> {
+                rememberBone(bone);
                 bone.setScaleX((float) scale.x);
                 bone.setScaleY((float) scale.y);
                 bone.setScaleZ((float) scale.z);
@@ -468,35 +420,22 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         }
     }
 
-    /** Per-bone position offsets, reset the same way as the scales. */
+    /** Per-bone position offsets, restored with the other bone state after rendering. */
     private void applyBonePositions(T animatable, BakedGeoModel model) {
         Map<String, net.minecraft.world.phys.Vec3> offsets = animatable.bonePositionOffset;
         if (offsets == null) return;
 
-        for (String boneName : touchedPosBones) {
-            if (!offsets.containsKey(boneName)) {
-                model.getBone(boneName).ifPresent(bone -> {
-                    bone.setPosX(0.0F);
-                    bone.setPosY(0.0F);
-                    bone.setPosZ(0.0F);
-                });
-            }
-        }
-
         for (Map.Entry<String, net.minecraft.world.phys.Vec3> entry : offsets.entrySet()) {
             net.minecraft.world.phys.Vec3 pos = entry.getValue();
             if (pos == null) continue;
-            touchedPosBones.add(entry.getKey());
             model.getBone(entry.getKey()).ifPresent(bone -> {
+                rememberBone(bone);
                 bone.setPosX((float) pos.x);
                 bone.setPosY((float) pos.y);
                 bone.setPosZ((float) pos.z);
             });
         }
     }
-
-    private final java.util.Set<String> touchedScaleBones = new java.util.HashSet<>();
-    private final java.util.Set<String> touchedPosBones = new java.util.HashSet<>();
 
     /**
      * Per-bone colour tint (kobold scales, dyed leather armour).
@@ -508,6 +447,13 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     public void renderRecursively(PoseStack poseStack, T animatable, GeoBone bone, net.minecraft.client.renderer.RenderType renderType,
                                   MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                                   float partialTick, int packedLight, int packedOverlay, int colour) {
+        // GeoEntityRenderer evaluates controller animations immediately before descending into
+        // the bone tree. This is therefore the first safe point to layer our custom pose on top.
+        if (!isReRender && !boneOverridesApplied && currentRenderModel != null) {
+            boneOverridesApplied = true;
+            applyBoneOverrides(animatable, currentRenderModel);
+        }
+
         // A bone with a texture override is drawn by BoneOverrideRenderLayer with its own
         // texture. Skipping it in the base pass avoids drawing it twice - once with the
         // girl's sheet underneath, which would z-fight with the override.
@@ -543,6 +489,53 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                 partialTick, packedLight, packedOverlay, effective);
     }
 
+    @Override
+    public void postRender(PoseStack poseStack, T animatable, BakedGeoModel model,
+                           MultiBufferSource bufferSource, @Nullable VertexConsumer buffer,
+                           boolean isReRender, float partialTick, int packedLight,
+                           int packedOverlay, int colour) {
+        if (!isReRender) {
+            renderedBoneStates.forEach((bone, state) -> state.restore(bone));
+            renderedBoneStates.clear();
+            boneOverridesApplied = false;
+            currentRenderModel = null;
+        }
+        super.postRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, colour);
+    }
+
+    private final Map<GeoBone, BoneRenderState> renderedBoneStates = new java.util.IdentityHashMap<>();
+    @Nullable
+    private BakedGeoModel currentRenderModel;
+    private boolean boneOverridesApplied;
+
+    private record BoneRenderState(boolean hidden, boolean childrenHidden,
+                                   float rotX, float rotY, float rotZ,
+                                   float posX, float posY, float posZ,
+                                   float scaleX, float scaleY, float scaleZ) {
+        static BoneRenderState capture(GeoBone bone) {
+            return new BoneRenderState(
+                    bone.isHidden(), bone.isHidingChildren(),
+                    bone.getRotX(), bone.getRotY(), bone.getRotZ(),
+                    bone.getPosX(), bone.getPosY(), bone.getPosZ(),
+                    bone.getScaleX(), bone.getScaleY(), bone.getScaleZ());
+        }
+
+        void restore(GeoBone bone) {
+            bone.setHidden(hidden);
+            bone.setChildrenHidden(childrenHidden);
+            bone.setRotX(rotX);
+            bone.setRotY(rotY);
+            bone.setRotZ(rotZ);
+            bone.setPosX(posX);
+            bone.setPosY(posY);
+            bone.setPosZ(posZ);
+            bone.setScaleX(scaleX);
+            bone.setScaleY(scaleY);
+            bone.setScaleZ(scaleZ);
+        }
+    }
+
     /** Root bone of the embedded partner skeleton, present in every girl rig. */
     private static final String PARTNER_BONE = "steve";
 
@@ -571,8 +564,4 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     private static final float CARRY_SHIN_PITCH = 105.0F;
     private static final float CARRY_ARM_PITCH = -12.0F;
     private static final float CARRY_ARM_SPREAD = 8.0F;
-
-    /** Every bone the carry pose touches, so it can be undone on non-carried girls. */
-    private static final String[] CARRY_POSE_BONES =
-            {"legL", "legR", "shinL", "shinR", "armL", "armR"};
 }
