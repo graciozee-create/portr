@@ -1,8 +1,8 @@
 package com.sandymandy.pleasurehorizons.block.blocks;
 
 import com.mojang.serialization.MapCodec;
+import com.sandymandy.pleasurehorizons.block.PleasureHorizonsBlocks;
 import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
-import com.sandymandy.pleasurehorizons.registries.BlockRegistry;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 /**
- * Summons a custom girl from two girl-spawn blocks, or Coppie from a copper golem shape.
+ * Summons a custom girl from two house-tag blocks, or Coppie from a copper golem shape.
  *
  * <p>This is a separate pumpkin from the vanilla carved pumpkin, so it intentionally does not
  * delegate placement to {@link CarvedPumpkinBlock}: doing so would spawn vanilla golems instead
@@ -104,7 +104,7 @@ public class CarvedGirlPumpkinBlock extends CarvedPumpkinBlock {
             customGirlBase = BlockPatternBuilder.start()
                     .aisle(" ", "#", "#")
                     .where('#', BlockInWorld.hasState(
-                            BlockStatePredicate.forBlock(BlockRegistry.GIRL_SPAWN_BLOCK.get())))
+                            BlockStatePredicate.forBlock(PleasureHorizonsBlocks.HOUSE_BUILDING_TAG.get())))
                     .build();
         }
         return customGirlBase;
@@ -116,7 +116,7 @@ public class CarvedGirlPumpkinBlock extends CarvedPumpkinBlock {
                     .aisle("^", "#", "#")
                     .where('^', BlockInWorld.hasState(GIRL_PUMPKIN_PREDICATE))
                     .where('#', BlockInWorld.hasState(
-                            BlockStatePredicate.forBlock(BlockRegistry.GIRL_SPAWN_BLOCK.get())))
+                            BlockStatePredicate.forBlock(PleasureHorizonsBlocks.HOUSE_BUILDING_TAG.get())))
                     .build();
         }
         return customGirlFull;

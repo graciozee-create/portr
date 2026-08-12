@@ -31,7 +31,7 @@ public class PleasureHorizonsBlocks {
                     .strength(1.0F, 100.0F)
                     .pushReaction(PushReaction.DESTROY)));
 
-    public static final DeferredHolder<Block, Block> CARVED_GIRL_PUMPKIN = BLOCKS.register("carved_girl_pumpkin",
+    public static final DeferredHolder<Block, CarvedGirlPumpkinBlock> CARVED_GIRL_PUMPKIN = BLOCKS.register("carved_girl_pumpkin",
             () -> new CarvedGirlPumpkinBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_ORANGE)
                     .strength(1.0F)

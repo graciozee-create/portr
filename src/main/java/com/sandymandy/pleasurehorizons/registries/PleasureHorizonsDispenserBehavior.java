@@ -1,5 +1,6 @@
 package com.sandymandy.pleasurehorizons.registries;
 
+import com.sandymandy.pleasurehorizons.block.PleasureHorizonsBlocks;
 import com.sandymandy.pleasurehorizons.block.blocks.CarvedGirlPumpkinBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.dispenser.BlockSource;
@@ -23,7 +24,8 @@ public final class PleasureHorizonsDispenserBehavior {
 
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> DispenserBlock.registerBehavior(
-                BlockRegistry.CARVED_GIRL_PUMPKIN.get(), new CarvedGirlPumpkinDispenseBehavior()));
+                PleasureHorizonsBlocks.CARVED_GIRL_PUMPKIN.get(),
+                new CarvedGirlPumpkinDispenseBehavior()));
     }
 
     private static final class CarvedGirlPumpkinDispenseBehavior extends OptionalDispenseItemBehavior {
@@ -31,7 +33,7 @@ public final class PleasureHorizonsDispenserBehavior {
         protected ItemStack execute(BlockSource source, ItemStack stack) {
             ServerLevel level = source.level();
             BlockPos targetPos = source.pos().relative(source.state().getValue(DispenserBlock.FACING));
-            CarvedGirlPumpkinBlock pumpkin = BlockRegistry.CARVED_GIRL_PUMPKIN.get();
+            CarvedGirlPumpkinBlock pumpkin = PleasureHorizonsBlocks.CARVED_GIRL_PUMPKIN.get();
 
             if (level.isEmptyBlock(targetPos) && pumpkin.canDispense(level, targetPos)) {
                 level.setBlock(targetPos, pumpkin.defaultBlockState(), 3);
