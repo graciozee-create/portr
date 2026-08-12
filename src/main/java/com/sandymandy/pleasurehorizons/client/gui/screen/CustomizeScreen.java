@@ -175,7 +175,7 @@ public abstract class CustomizeScreen<T extends GirlSceneEntity> extends Screen 
 
     // Public wrapper around protected Screen#addRenderableWidget so that CustomizeSection implementations
     // (which live in a different package) can add widgets.
-    public <W extends net.minecraft.client.gui.components.events.GuiEventListener & net.minecraft.client.gui.components.Renderable & net.minecraft.client.gui.navigables.Navigable> W addWidget(W widget) {
+    public net.minecraft.client.gui.components.AbstractWidget addWidget(net.minecraft.client.gui.components.AbstractWidget widget) {
         return this.addRenderableWidget(widget);
     }
 
