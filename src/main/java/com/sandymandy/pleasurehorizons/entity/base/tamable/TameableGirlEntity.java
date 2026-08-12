@@ -65,6 +65,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final double CARRY_RIGHT_OFFSET = 0.50D;
+    private static final double CARRY_FORWARD_OFFSET = 0.16D;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -98,7 +100,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
         // These two are the reason a carried girl kept spinning on the spot: the vanilla
         // look goals do not know about being a passenger, so they carried on picking new
-        // look targets and rotating her while she sat on the player's shoulder.
+        // look targets and rotating her while the player carried her.
         this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F) {
             @Override
             public boolean canUse() {
@@ -404,22 +406,35 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     /**
-     * Where the carrier's client places her hitbox while she is carried.
+     * Defines the complete carry position relative to a player vehicle.
      *
-     * <p>The default {@code PASSENGER} attachment falls back to the vehicle's full height, which
-     * for a player vehicle parks her on top of his head. Vanilla positions a passenger at
-     * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}
-     * (see {@code Entity#positionRider}), so a <em>positive</em> Y here moves her down.</p>
+     * <p>Vanilla positions a passenger at
+     * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}.
+     * A player's riding point is at the top of its current dimensions, while the normal vehicle
+     * point on a passenger is its feet. Returning feet here therefore puts the girl on the
+     * player's head. The old renderer tried to compensate after the fact with another
+     * translation, a {@code 0.62} scale and render-time entity movement; those overlapping
+     * coordinate systems caused the reported hovering and shrinking.</p>
      *
-     * <p>{@code Player} declares no {@code PASSENGER} attachment, so it falls back to
-     * {@code AT_HEIGHT}, i.e. the full standing height of <b>1.8</b> - not the 1.62 eye height
-     * an earlier version of this comment assumed. Subtracting 0.6 seats her origin at 1.2,
-     * which is shoulder level, so the renderer does not have to lift her at all.</p>
+     * <p>The vertical component centers both full-size hitboxes. The horizontal component places
+     * her just in front of the carrier's right side and rotates with the carrier's body. Because
+     * this is the sole positional calculation, normal passenger ticking keeps the server, the
+     * carrier and every observer on the same coordinates.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
-        if (vehicle instanceof Player) {
-            return new net.minecraft.world.phys.Vec3(0.0, 0.6, 0.0);
+        if (vehicle instanceof Player player) {
+            float yawRadians = player.yBodyRot * ((float) Math.PI / 180.0F);
+            double rightX = Math.cos(yawRadians);
+            double rightZ = Math.sin(yawRadians);
+            double forwardX = -Math.sin(yawRadians);
+            double forwardZ = Math.cos(yawRadians);
+            double offsetX = rightX * CARRY_RIGHT_OFFSET + forwardX * CARRY_FORWARD_OFFSET;
+            double offsetZ = rightZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
+            double centeredHeight = (vehicle.getBbHeight() + this.getBbHeight()) * 0.5D;
+
+            // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset.
+            return new net.minecraft.world.phys.Vec3(-offsetX, centeredHeight, -offsetZ);
         }
         return super.getVehicleAttachmentPoint(vehicle);
     }
@@ -444,7 +459,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
 
             // Lock her rotation to the carrier. Without this she keeps her own yaw and any
-            // leftover look target spins her around on the player's shoulder. All four
+            // leftover look target spins her around while carried. All four
             // rotation fields have to be written, including the "O" (previous tick) ones,
             // or the renderer interpolates between the old and new yaw and she jitters.
             //

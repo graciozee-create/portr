@@ -803,16 +803,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
 
         if (isPassenger() && getVehicle() instanceof Player) {
-            // Carried on the shoulder. Only Mika has a real carry animation; for everyone
-            // else "sit" would drive the very leg bones GirlRenderer poses by hand for the
-            // tucked-up knees, and the two would fight each other. So rigs without a carry
-            // animation idle instead and let the renderer own the pose.
-            String carry = getCarryAnimation();
-            if (!hasCarryAnimation()) {
-                carry = "idle";
-            }
+            // getCarryAnimation() predates physical player carrying and names scene/sitting
+            // clips (Mika's "carry_slow1" is a scene animation). Start from neutral idle for
+            // every rig, then let GirlRenderer layer the dedicated carried pose on top.
             return state.setAndContinue(
-                    RawAnimation.begin().then(getAnimationPath(carry), Animation.LoopType.LOOP));
+                    RawAnimation.begin().then(getAnimationPath("idle"), Animation.LoopType.LOOP));
         }
 
         if (isSitting()) {

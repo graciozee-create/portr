@@ -75,14 +75,8 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         boolean isCarried = animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player;
 
         if (isCarried) {
-            // Client-side ticking does not reliably reach passengers, so her world position
-            // and rotation are recomputed here rather than in tick(). See snapToCarrier.
-            snapToCarrier(animatable);
-
-            // The entity is already seated at the carrier by its attachment point; these are
-            // small local offsets that place her directly on the right shoulder.
-            poseStack.translate(SHOULDER_RIGHT, SHOULDER_UP, SHOULDER_FORWARD);
-            poseStack.scale(CARRY_SCALE, CARRY_SCALE, CARRY_SCALE);
+            // The passenger attachment owns the complete world position. The renderer only
+            // adds a slight lean and movement sway; it must never move or resize the entity.
             poseStack.mulPose(Axis.ZP.rotationDegrees(-8.0F));
 
             if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player player) {
@@ -97,62 +91,6 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         // changes made here would therefore be overwritten. They are applied lazily from the
         // first renderRecursively call instead, then restored in postRender.
         updatePartnerSkin(animatable);
-    }
-
-    /**
-     * Forces a carried girl to the carrier's position every frame.
-     *
-     * <p>This is the reason she appeared to levitate in place while the carrier walked and
-     * turned around her. Positioning a passenger is done by {@code Entity#rideTick}, which
-     * calls {@code vehicle.positionRider(this)} - but {@code ClientLevel#tickEntities} skips
-     * every entity for which {@code isPassenger()} is true, and only reaches passengers
-     * through {@code tickPassenger}, which in turn requires the passenger to be present in
-     * the client's {@code tickingEntities} set. A girl who was already loaded before she was
-     * mounted, or whose chunk stops ticking, never gets there, so {@code positionRider} is
-     * never called on the client and she simply stays at the last position the server sent -
-     * which is also why she stayed put while the player rotated, and turned up behind him.</p>
-     *
-     * <p>Rather than depend on that, the position is recomputed here from the vehicle itself.
-     * Rendering happens every frame regardless of ticking, so this cannot be missed. The
-     * previous-frame position is written too, otherwise the renderer interpolates from her
-     * stale world position and she visibly streaks across the screen.</p>
-     */
-    private void snapToCarrier(T animatable) {
-        net.minecraft.world.entity.Entity vehicle = animatable.getVehicle();
-        if (vehicle == null) {
-            return;
-        }
-
-        // Same maths as Entity#positionRider: where the vehicle wants the rider, minus the
-        // rider's own attachment offset.
-        net.minecraft.world.phys.Vec3 seat = vehicle.getPassengerRidingPosition(animatable);
-        net.minecraft.world.phys.Vec3 attachment = animatable.getVehicleAttachmentPoint(vehicle);
-        double x = seat.x - attachment.x;
-        double y = seat.y - attachment.y;
-        double z = seat.z - attachment.z;
-
-        animatable.setPos(x, y, z);
-        animatable.xo = x;
-        animatable.yo = y;
-        animatable.zo = z;
-        animatable.xOld = x;
-        animatable.yOld = y;
-        animatable.zOld = z;
-
-        // Rotation is pinned in TameableGirlEntity#tick, which is skipped for the same
-        // reason, so it is mirrored here. Body yaw follows the carrier's body - not his
-        // look yaw, or she would swing around whenever he moved the mouse.
-        if (vehicle instanceof net.minecraft.world.entity.LivingEntity carrier) {
-            float bodyYaw = carrier.yBodyRot;
-            animatable.setYRot(bodyYaw);
-            animatable.yRotO = bodyYaw;
-            animatable.setYBodyRot(bodyYaw);
-            animatable.yBodyRotO = bodyYaw;
-            animatable.setYHeadRot(bodyYaw);
-            animatable.yHeadRotO = bodyYaw;
-            animatable.setXRot(0.0F);
-            animatable.xRotO = 0.0F;
-        }
     }
 
     /**
@@ -177,8 +115,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
             }
         }
 
-        if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player
-                && !animatable.hasCarryAnimation()) {
+        if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player) {
             applyCarryPose(model);
         }
 
@@ -193,7 +130,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     }
 
     /**
-     * Tucks the knees up so she sits on the shoulder instead of standing rigid in mid-air.
+     * Tucks the knees and arms into a compact carried pose instead of leaving her standing.
      * The pose is applied after the normal animation and restored after this render pass.
      */
     private void applyCarryPose(BakedGeoModel model) {
@@ -539,26 +476,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     /** Root bone of the embedded partner skeleton, present in every girl rig. */
     private static final String PARTNER_BONE = "steve";
 
-    // ---- shoulder carry ----
-    // Local offsets in entity space. The entity itself is already placed at the carrier by
-    // TameableGirlEntity#getVehicleAttachmentPoint, so these only fine-tune the seat.
-    /** Positive X is the carrier's right, so she sits on the right shoulder. */
-    private static final float SHOULDER_RIGHT = 0.28F;
-    /**
-     * Fine-tuning only. The height now comes from the vehicle attachment point in
-     * TameableGirlEntity, which already seats her origin at shoulder level; lifting her
-     * again here is what made her float above the carrier's head.
-     */
-    private static final float SHOULDER_UP = 0.0F;
-    /**
-     * Nudges her forward onto the front of the shoulder. The sign is taken from the reported
-     * behaviour: the previous -0.08 visibly placed her behind the carrier's back, so positive
-     * Z is forward here.
-     */
-    private static final float SHOULDER_FORWARD = 0.12F;
-    /** Scaled down a little so a full-size girl does not dwarf the player. */
-    private static final float CARRY_SCALE = 0.62F;
-
+    // ---- carried pose ----
     private static final float CARRY_THIGH_PITCH = -95.0F;
     private static final float CARRY_THIGH_SPREAD = 12.0F;
     private static final float CARRY_SHIN_PITCH = 105.0F;
