@@ -445,16 +445,76 @@ public abstract class GirlEntity extends PathfinderMob {
         }
     }
 
-    /** Maps an equipment slot onto the girl's own inventory layout. */
-    public ItemStack getArmorStack(EquipmentSlot slot) {
-        int index = switch (slot) {
-            case FEET -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_FEET_SLOT;
-            case LEGS -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_LEGS_SLOT;
-            case CHEST -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_CHEST_SLOT;
-            case HEAD -> com.sandymandy.pleasurehorizons.util.inventory.GirlInventory.ARMOR_HEAD_SLOT;
+    /** Maps vanilla equipment slots onto the girl's own persistent inventory layout. */
+    private static int girlInventorySlot(EquipmentSlot slot) {
+        return switch (slot) {
+            case MAINHAND -> GirlInventory.MAIN_HAND_SLOT;
+            case OFFHAND -> GirlInventory.OFF_HAND_SLOT;
+            case FEET -> GirlInventory.ARMOR_FEET_SLOT;
+            case LEGS -> GirlInventory.ARMOR_LEGS_SLOT;
+            case CHEST -> GirlInventory.ARMOR_CHEST_SLOT;
+            case HEAD -> GirlInventory.ARMOR_HEAD_SLOT;
             default -> -1;
         };
-        return index < 0 ? ItemStack.EMPTY : this.inventory.getItem(index);
+    }
+
+    /**
+     * Makes the inventory-screen equipment real vanilla equipment as well.
+     *
+     * <p>Mob combat, GeckoLib's held-item layer and Minecraft's equipment synchronization all
+     * read through this method. Without this bridge, items in the girl's equipment slots only
+     * existed inside her menu and were invisible to all three systems.</p>
+     */
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        int index = girlInventorySlot(slot);
+        return index < 0 ? super.getItemBySlot(slot) : this.inventory.getItem(index);
+    }
+
+    @Override
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
+        int index = girlInventorySlot(slot);
+        if (index < 0) {
+            super.setItemSlot(slot, stack);
+        } else {
+            this.verifyEquippedItem(stack);
+            ItemStack previous = this.inventory.getItem(index);
+            this.inventory.setItem(index, stack);
+            this.onEquipItem(slot, previous, stack);
+        }
+    }
+
+    @Override
+    public Iterable<ItemStack> getHandSlots() {
+        return List.of(
+                this.inventory.getItem(GirlInventory.MAIN_HAND_SLOT),
+                this.inventory.getItem(GirlInventory.OFF_HAND_SLOT));
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorSlots() {
+        return List.of(
+                getArmorStack(EquipmentSlot.FEET),
+                getArmorStack(EquipmentSlot.LEGS),
+                getArmorStack(EquipmentSlot.CHEST),
+                getArmorStack(EquipmentSlot.HEAD));
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorAndBodyArmorSlots() {
+        return List.of(
+                getArmorStack(EquipmentSlot.FEET),
+                getArmorStack(EquipmentSlot.LEGS),
+                getArmorStack(EquipmentSlot.CHEST),
+                getArmorStack(EquipmentSlot.HEAD),
+                super.getItemBySlot(EquipmentSlot.BODY));
+    }
+
+    public ItemStack getArmorStack(EquipmentSlot slot) {
+        int index = girlInventorySlot(slot);
+        return index < GirlInventory.ARMOR_START || index > GirlInventory.ARMOR_END
+                ? ItemStack.EMPTY
+                : this.inventory.getItem(index);
     }
 
     /**
