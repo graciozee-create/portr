@@ -1,12 +1,15 @@
 package com.sandymandy.pleasurehorizons.entity.base;
 
+import com.sandymandy.pleasurehorizons.networking.S2C.ClothingArmorVisibilityS2CPacket;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.Entity;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Base class for every girl entity.
@@ -517,35 +521,55 @@ public abstract class GirlEntity extends PathfinderMob {
                 : this.inventory.getItem(index);
     }
 
+    /** Builds the current server-owned visibility state in vanilla slot order. */
+    private List<Boolean> currentClothingAndArmorState() {
+        boolean stripped = this.isStripped();
+        List<Boolean> armorList = new ArrayList<>();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            boolean visible = isGirlArmorSlot(slot)
+                    && !stripped
+                    && !this.getArmorStack(slot).isEmpty();
+            armorList.add(visible);
+        }
+        return armorList;
+    }
+
+    private ClothingArmorVisibilityS2CPacket currentClothingAndArmorPacket() {
+        return new ClothingArmorVisibilityS2CPacket(this.getId(), currentClothingAndArmorState());
+    }
+
+    /**
+     * Includes visibility in the entity's initial tracking bundle.
+     *
+     * <p>Normal updates are change-driven. Without this pairing payload, a player who starts
+     * tracking an already-loaded girl can retain stale shared-rig visibility indefinitely,
+     * especially when the authoritative state is the initial all-false state.</p>
+     */
+    @Override
+    public void sendPairingData(ServerPlayer serverPlayer, Consumer<CustomPacketPayload> bundleBuilder) {
+        super.sendPairingData(serverPlayer, bundleBuilder);
+        bundleBuilder.accept(currentClothingAndArmorPacket());
+    }
+
     /**
      * Recomputes which armour pieces are worn and tells every tracking client.
      *
      * <p>Server side of {@code applyClothingAndArmor}. The visibility flags cannot be derived
-     * on the client because the girl's container is not synched, so they are broadcast with
-     * {@code ClothingArmorVisibilityS2CPacket}. Nothing sent this packet before, which is why
-     * the armour bones never appeared.</p>
+     * on the client because the girl's container is not synched, so they are sent with
+     * {@code ClothingArmorVisibilityS2CPacket}. Distribution follows vanilla entity tracking;
+     * initial state for a new tracker is supplied by {@link #sendPairingData}.</p>
      */
     public void updateClothingAndArmor() {
         if (this.level().isClientSide()) return;
 
-        boolean stripped = this.isStripped();
+        List<Boolean> armorList = currentClothingAndArmorState();
+        int index = 0;
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (!isGirlArmorSlot(slot)) continue;
-            boolean hasArmor = !this.getArmorStack(slot).isEmpty();
-            this.armorVisibility.put(slot, hasArmor && !stripped);
+            this.armorVisibility.put(slot, armorList.get(index++));
         }
 
-        java.util.List<Boolean> armorList = new ArrayList<>();
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            armorList.add(this.armorVisibility.getOrDefault(slot, false));
-        }
-
-        var packet = new com.sandymandy.pleasurehorizons.networking.S2C
-                .ClothingArmorVisibilityS2CPacket(this.getId(), armorList);
-        for (net.minecraft.server.level.ServerPlayer player :
-                ((net.minecraft.server.level.ServerLevel) this.level()).players()) {
-            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, packet);
-        }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntity(
+                this, new ClothingArmorVisibilityS2CPacket(this.getId(), armorList));
     }
 
     /**
