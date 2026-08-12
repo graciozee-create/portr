@@ -25,16 +25,27 @@ public record KoboldCustomizeC2SPacket(
             ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "koboldcustomizec2spacket"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, KoboldCustomizeC2SPacket> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::entityId,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::bodySize,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::breastSize,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::primaryColor,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::secondaryColor,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::irisColor,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::topHornType,
-                    ByteBufCodecs.VAR_INT, KoboldCustomizeC2SPacket::bottomHornType,
-                    KoboldCustomizeC2SPacket::new
+            StreamCodec.of(
+                    (buf, pkt) -> {
+                        buf.writeVarInt(pkt.entityId());
+                        buf.writeVarInt(pkt.bodySize());
+                        buf.writeVarInt(pkt.breastSize());
+                        buf.writeVarInt(pkt.primaryColor());
+                        buf.writeVarInt(pkt.secondaryColor());
+                        buf.writeVarInt(pkt.irisColor());
+                        buf.writeVarInt(pkt.topHornType());
+                        buf.writeVarInt(pkt.bottomHornType());
+                    },
+                    buf -> new KoboldCustomizeC2SPacket(
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt(),
+                            buf.readVarInt()
+                    )
             );
 
     @Override
