@@ -20,7 +20,8 @@ public class PleasureHorizonsScreenHandlerRegistry {
 
     public static final DeferredHolder<MenuType<?>, MenuType<SettlementHubScreenHandler>> SETTLEMENT_HUB_HOLDER =
             MENU_TYPES.register("settlement_hub", () -> IMenuTypeExtension.create((windowId, inv, buf) ->
-                    new SettlementHubScreenHandler(windowId, inv, null)));
+                    new SettlementHubScreenHandler(windowId, inv,
+                            com.sandymandy.pleasurehorizons.settlement.SettlementSnapshot.STREAM_CODEC.decode(buf))));
 
     public static void register(IEventBus bus) {
         MENU_TYPES.register(bus);
