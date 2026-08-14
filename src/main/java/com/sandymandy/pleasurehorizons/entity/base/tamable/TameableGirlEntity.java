@@ -65,8 +65,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    private static final double CARRY_RIGHT_OFFSET = 0.36D;
-    private static final double CARRY_FORWARD_OFFSET = 0.03D;
+    // Horizontal carry offsets, in the carrier's rotated frame. She must sit pressed against
+    // the carrier's front-side hip rather than float beside it: the side offset is just outside
+    // the 0.6-wide player hitbox (half-width 0.3) so the bodies touch, and a real forward
+    // component pulls her onto the front of the hip instead of anchoring her to the side plane.
+    private static final double CARRY_RIGHT_OFFSET = 0.30D;
+    private static final double CARRY_FORWARD_OFFSET = 0.10D;
     private static final double CARRY_VERTICAL_OFFSET = -0.12D;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
