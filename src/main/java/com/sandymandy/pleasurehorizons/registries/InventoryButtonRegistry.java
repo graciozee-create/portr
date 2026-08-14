@@ -68,14 +68,22 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.gather", 2,
-                    (girl, player) -> send(girl.getId(), "gather"))
-    );
+                    (girl, player) -> send(girl.getId(), "gather")),
 
-    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_RIGHT = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.harvest", 2,
                     (girl, player) -> send(girl.getId(), "harvest")),
 
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.cook", 3,
+                    (girl, player) -> send(girl.getId(), "cook")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.cycleRole", 2,
+                    (girl, player) -> send(girl.getId(), "cycleRole"))
+    );
+
+    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_RIGHT = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.chopTrees", 2,
                     (girl, player) -> send(girl.getId(), "chopTrees")),

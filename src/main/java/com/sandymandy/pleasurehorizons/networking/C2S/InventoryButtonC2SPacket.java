@@ -161,6 +161,24 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                             net.minecraft.network.chat.Component.translatable(
                                     "msg.pleasurehorizons.lootTransferred", girl.getGirlDisplayName()), true);
                 }
+                case "cook" -> {
+                    girl.setCookEnabled(!girl.isCookEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isCookEnabled() ? "msg.pleasurehorizons.cookEnabled" : "msg.pleasurehorizons.cookDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "cycleRole" -> {
+                    com.sandymandy.pleasurehorizons.util.variables.GirlRole next =
+                            girl.getRole().next();
+                    girl.setRole(next);
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    "msg.pleasurehorizons.roleApplied",
+                                    girl.getGirlDisplayName(),
+                                    net.minecraft.network.chat.Component.translatable(
+                                            "role.pleasurehorizons." + next.id())), true);
+                }
                 default -> { /* Unknown actions are untrusted input; ignore without log spam. */ }
             }
         });

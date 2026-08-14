@@ -246,6 +246,13 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         if ("gui.pleasurehorizons.button.feedOwner".equals(key) && girl.isFeedOwnerEnabled()) {
             return Component.translatable("gui.pleasurehorizons.button.stopFeedOwner");
         }
+        if ("gui.pleasurehorizons.button.cook".equals(key) && girl.isCookEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopCook");
+        }
+        if ("gui.pleasurehorizons.button.cycleRole".equals(key)) {
+            return Component.translatable("gui.pleasurehorizons.button.cycleRole",
+                    Component.translatable("role.pleasurehorizons." + girl.getRole().id()));
+        }
         return action.label();
     }
 }

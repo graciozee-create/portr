@@ -3,18 +3,24 @@ package com.sandymandy.pleasurehorizons.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.entity.girls.CustomGirlEntity;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import com.sandymandy.pleasurehorizons.util.variables.CustomGirlProfile;
+import com.sandymandy.pleasurehorizons.util.variables.GirlRole;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 /**
  * {@code /girls} - reload custom girl profiles and spawn a custom girl by profile id.
@@ -47,7 +53,13 @@ public class GirlsCommand {
                                 .then(Commands.argument("pos", Vec3Argument.vec3())
                                         .executes(ctx -> spawnGirl(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "id"),
-                                                Vec3Argument.getVec3(ctx, "pos")))))));
+                                                Vec3Argument.getVec3(ctx, "pos")))))))
+                .then(Commands.literal("role")
+                        .then(Commands.argument("role", StringArgumentType.word())
+                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
+                                        List.of("idle", "worker", "guard", "cook"), builder))
+                                .executes(ctx -> applyRole(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "role")))));
     }
 
     private static int reloadProfiles(CommandSourceStack source) {
@@ -81,5 +93,33 @@ public class GirlsCommand {
         source.sendSuccess(() -> Component.translatable(
                 "commands.pleasurehorizons.girls.spawned", profile.name()), true);
         return 1;
+    }
+
+    /** Applies one survival role to every loaded girl owned by the commanding player. */
+    private static int applyRole(CommandSourceStack source, String roleId) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.players_only"));
+            return 0;
+        }
+
+        GirlRole role = GirlRole.fromId(roleId);
+        List<TameableGirlEntity> girls = player.level().getEntitiesOfClass(
+                TameableGirlEntity.class,
+                new AABB(player.blockPosition()).inflate(128.0D),
+                girl -> girl.isTamed() && girl.isOwner(player));
+
+        if (girls.isEmpty()) {
+            source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.no_girls"));
+            return 0;
+        }
+
+        for (TameableGirlEntity girl : girls) {
+            girl.setRole(role);
+        }
+
+        source.sendSuccess(() -> Component.translatable(
+                "commands.pleasurehorizons.girls.role_applied",
+                Component.translatable("role.pleasurehorizons." + role.id()), girls.size()), true);
+        return girls.size();
     }
 }

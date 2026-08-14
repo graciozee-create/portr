@@ -84,6 +84,7 @@ public class PleasureHorizonsClientEvents {
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(PleasureHorizonsKeybinds.THRUST_KEY);
         event.register(PleasureHorizonsKeybinds.CUM_KEY);
+        event.register(PleasureHorizonsKeybinds.SHIFT_ROLES_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_TOGGLE_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_PLAYER_CONTROL_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_TRIPOD_RESET_KEY);
@@ -95,7 +96,7 @@ public class PleasureHorizonsClientEvents {
      */
     @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAbove(VanillaGuiLayers.HOTBAR,
+                event.registerAbove(VanillaGuiLayers.HOTBAR,
                 ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "scene_progress_overlay"),
                 (guiGraphics, deltaTracker) -> {
                     LocalPlayer player = Minecraft.getInstance().player;
@@ -108,5 +109,8 @@ public class PleasureHorizonsClientEvents {
                         SceneProgressOverlay.setActive(false);
                     }
                 });
+        event.registerAbove(VanillaGuiLayers.HOTBAR,
+                ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "girl_status_overlay"),
+                (guiGraphics, deltaTracker) -> com.sandymandy.pleasurehorizons.client.gui.screen.hud.GirlStatusOverlay.render(guiGraphics));
     }
 }

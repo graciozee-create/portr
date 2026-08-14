@@ -4,6 +4,7 @@ import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.networking.C2S.CumKeybindC2SPacket;
+import com.sandymandy.pleasurehorizons.networking.C2S.ShiftRolesC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.ThrustKeybindC2SPacket;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -33,6 +34,11 @@ public class PleasureHorizonsClientTickHandler {
         if (mc.player == null) return;
 
         boolean inScene = mc.player.getVehicle() instanceof GirlSceneEntity;
+
+        // The shift switch is global and works outside scenes.
+        if (PleasureHorizonsKeybinds.SHIFT_ROLES_KEY.consumeClick()) {
+            PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
+        }
 
         // Drain the click queue even when not in a scene, otherwise presses buffer up
         // and all fire at once the moment a scene starts.

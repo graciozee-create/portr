@@ -28,6 +28,13 @@ public class PleasureHorizonsKeybinds {
             org.lwjgl.glfw.GLFW.GLFW_KEY_V,
             CATEGORY);
 
+    /** One-button shift switch: advances every owned girl to the next survival role. */
+    public static final KeyMapping SHIFT_ROLES_KEY = new KeyMapping(
+            "key.pleasurehorizons.shift_roles",
+            InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_B,
+            CATEGORY);
+
     /**
      * Freecam controls, mirroring upstream's {@code ModBindings}.
      *
