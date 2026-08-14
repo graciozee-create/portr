@@ -19,14 +19,19 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.List;
+
 import static com.sandymandy.pleasurehorizons.util.PleasureHorizonsIcons.*;
 
 public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventoryScreenHandler> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "textures/gui/inventory.png");
     private static final int GUI_WIDTH = 176;
     private static final int GUI_HEIGHT = 170;
+    private static final int TAB_MAIN = 0;
+    private static final int TAB_SURVIVAL = 1;
     private final TameableGirlEntity girl;
     private final Player player;
+    private int tabIndex = TAB_MAIN;
 
     public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
@@ -155,42 +160,92 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         int startY = centerY + 15;
 
         if (girl.isTamed()) {
-            for (int i = 0; i < InventoryButtonRegistry.BUTTONS_LEFT.size(); i++) {
-                InventoryButtonAction action = InventoryButtonRegistry.BUTTONS_LEFT.get(i);
+            initTabs(centerX, centerY);
+
+            List<InventoryButtonAction> left = tabIndex == TAB_SURVIVAL
+                    ? InventoryButtonRegistry.BUTTONS_SURVIVAL_LEFT
+                    : InventoryButtonRegistry.BUTTONS_MAIN_LEFT;
+            List<InventoryButtonAction> right = tabIndex == TAB_SURVIVAL
+                    ? InventoryButtonRegistry.BUTTONS_SURVIVAL_RIGHT
+                    : InventoryButtonRegistry.BUTTONS_MAIN_RIGHT;
+
+            for (int i = 0; i < left.size(); i++) {
+                InventoryButtonAction action = left.get(i);
                 int y = startY + i * (buttonHeight + paddingY);
-                Component dynamicLabel = action.label();
-
-                // Dynamic labels for AI toggles - show Stop when enabled
-                if ("gui.pleasurehorizons.button.guardBase".equals(action.labelKey()) && girl.isGuardBaseEnabled()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGuardBase");
-                } else if ("gui.pleasurehorizons.button.guardOwner".equals(action.labelKey()) && girl.isGuardOwnerEnabled()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGuardOwner");
-                } else if ("gui.pleasurehorizons.button.stayNearBase".equals(action.labelKey()) && girl.isStayNearBaseEnabled()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopStayNearBase");
-                }
-
-                this.drawButton(dynamicLabel, action, startX, y, buttonWidth, buttonHeight);
+                this.drawButton(dynamicLabel(action), action, startX, y, buttonWidth, buttonHeight);
             }
 
-            for (int i = 0; i < InventoryButtonRegistry.BUTTONS_RIGHT.size(); i++) {
-                InventoryButtonAction action = InventoryButtonRegistry.BUTTONS_RIGHT.get(i);
+            for (int i = 0; i < right.size(); i++) {
+                InventoryButtonAction action = right.get(i);
                 int y = startY + i * (buttonHeight + paddingY);
-                Component dynamicLabel = action.label();
-
-                if ("gui.pleasurehorizons.button.sit".equals(action.labelKey()) && girl.isSitting()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stand");
-                } else if ("gui.pleasurehorizons.button.follow".equals(action.labelKey()) && girl.isFollowing()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopFollowing");
-                } else if ("gui.pleasurehorizons.button.strip".equals(action.labelKey()) && girl.isStripped()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.dressUp");
-                } else if ("gui.pleasurehorizons.button.gather".equals(action.labelKey()) && girl.isGatherEnabled()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopGather");
-                } else if ("gui.pleasurehorizons.button.harvest".equals(action.labelKey()) && girl.isHarvestEnabled()) {
-                    dynamicLabel = Component.translatable("gui.pleasurehorizons.button.stopHarvest");
-                }
-
-                this.drawButton(dynamicLabel, action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);
+                this.drawButton(dynamicLabel(action), action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);
             }
         }
+    }
+
+    /** Two small tab buttons above the panel; the active tab is rendered disabled. */
+    private void initTabs(int centerX, int centerY) {
+        int tabWidth = 84;
+        int tabHeight = 16;
+        int tabY = centerY - 46;
+
+        Button mainTab = Button.builder(
+                        Component.translatable("gui.pleasurehorizons.tab.main"),
+                        b -> switchTab(TAB_MAIN))
+                .bounds(centerX, tabY, tabWidth, tabHeight)
+                .build();
+        mainTab.active = tabIndex != TAB_MAIN;
+        this.addRenderableWidget(mainTab);
+
+        Button survivalTab = Button.builder(
+                        Component.translatable("gui.pleasurehorizons.tab.survival"),
+                        b -> switchTab(TAB_SURVIVAL))
+                .bounds(centerX + tabWidth + 4, tabY, tabWidth, tabHeight)
+                .build();
+        survivalTab.active = tabIndex != TAB_SURVIVAL;
+        this.addRenderableWidget(survivalTab);
+    }
+
+    private void switchTab(int tab) {
+        if (this.tabIndex != tab) {
+            this.tabIndex = tab;
+            this.rebuildWidgets();
+        }
+    }
+
+    /** Toggle buttons read the live state and show "Stop ..." when enabled. */
+    private Component dynamicLabel(InventoryButtonAction action) {
+        String key = action.labelKey();
+        if ("gui.pleasurehorizons.button.guardBase".equals(key) && girl.isGuardBaseEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopGuardBase");
+        }
+        if ("gui.pleasurehorizons.button.guardOwner".equals(key) && girl.isGuardOwnerEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopGuardOwner");
+        }
+        if ("gui.pleasurehorizons.button.stayNearBase".equals(key) && girl.isStayNearBaseEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopStayNearBase");
+        }
+        if ("gui.pleasurehorizons.button.sit".equals(key) && girl.isSitting()) {
+            return Component.translatable("gui.pleasurehorizons.button.stand");
+        }
+        if ("gui.pleasurehorizons.button.follow".equals(key) && girl.isFollowing()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopFollowing");
+        }
+        if ("gui.pleasurehorizons.button.strip".equals(key) && girl.isStripped()) {
+            return Component.translatable("gui.pleasurehorizons.button.dressUp");
+        }
+        if ("gui.pleasurehorizons.button.gather".equals(key) && girl.isGatherEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopGather");
+        }
+        if ("gui.pleasurehorizons.button.harvest".equals(key) && girl.isHarvestEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopHarvest");
+        }
+        if ("gui.pleasurehorizons.button.chopTrees".equals(key) && girl.isChopTreesEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopChopTrees");
+        }
+        if ("gui.pleasurehorizons.button.feedOwner".equals(key) && girl.isFeedOwnerEnabled()) {
+            return Component.translatable("gui.pleasurehorizons.button.stopFeedOwner");
+        }
+        return action.label();
     }
 }
