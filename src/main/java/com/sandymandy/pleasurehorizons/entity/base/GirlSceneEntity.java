@@ -404,7 +404,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
         for (com.mojang.authlib.properties.Property property : textures) {
             try {
-                byte[] decoded = java.util.Base64.getDecoder().decode(property.getValue());
+                byte[] decoded = java.util.Base64.getDecoder().decode(property.value());
                 com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(
                         new String(decoded, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
                 com.google.gson.JsonObject texturesObj = root.getAsJsonObject("textures");
