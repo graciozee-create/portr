@@ -372,6 +372,11 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
         if (!player.startRiding(this, true)) return;
 
+        // The partner skeleton bakes both Alex (slim) and Steve (wide) arm subtrees; pick the
+        // one matching the rider's skin so the renderer hides the other. The flag is synched
+        // entity data owned by the server - the renderer deliberately never writes it.
+        this.setIsPlayerModelSlim(isSlimPlayerSkin(player));
+
         this.paySceneCost(getCurrentScene());
         player.setInvisible(true);
         this.setSceneProgress(0f);
@@ -382,6 +387,38 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         this.lastSceneAnim = "";
         this.setSceneState(true);
         playPhase(getCurrentScene().introAnim().isEmpty() ? ScenePhase.HAVING_SEX : ScenePhase.INTRO);
+    }
+
+    /**
+     * Resolves a player's skin model (slim/Alex vs wide/Steve) server-side.
+     *
+     * <p>1.21.1 exposes the skin model only on the client ({@code AbstractClientPlayer#getSkin}),
+     * so the server reads it from the base64 {@code textures} property of the game profile - the
+     * same data the client itself consumes. A missing or malformed payload falls back to the
+     * wide (Steve) model, matching vanilla's default.</p>
+     */
+    private static boolean isSlimPlayerSkin(Player player) {
+        java.util.Collection<com.mojang.authlib.properties.Property> textures =
+                player.getGameProfile().getProperties().get("textures");
+        if (textures == null) return false;
+
+        for (com.mojang.authlib.properties.Property property : textures) {
+            try {
+                byte[] decoded = java.util.Base64.getDecoder().decode(property.getValue());
+                com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(
+                        new String(decoded, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                com.google.gson.JsonObject texturesObj = root.getAsJsonObject("textures");
+                if (texturesObj == null) continue;
+                com.google.gson.JsonObject skin = texturesObj.getAsJsonObject("SKIN");
+                if (skin == null) continue;
+                com.google.gson.JsonObject metadata = skin.getAsJsonObject("metadata");
+                if (metadata == null) continue;
+                return "slim".equals(metadata.get("model").getAsString());
+            } catch (RuntimeException ignored) {
+                // Malformed textures payload: fall back to the wide (Steve) model.
+            }
+        }
+        return false;
     }
 
     private void startStationaryIntro(Scene option) {
