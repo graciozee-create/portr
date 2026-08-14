@@ -800,11 +800,18 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
                     if (!this.level().isClientSide()) return;
 
                     String key = event.getKeyframeData().getSound().toLowerCase();
-                    handleAnimationEventClient(key);
                     if (hasLocalScenePlayer()) {
+                        // The scene player hears the cue immediately (tight to the frame) and
+                        // reports it so the server can advance the scene and relay it to others.
+                        handleAnimationEventClient(key);
                         PacketDistributor.sendToServer(
                                 new com.sandymandy.pleasurehorizons.networking.C2S.SoundEventSyncC2SPacket(
                                         this.getId(), key));
+                    } else {
+                        // Bystanders hear the cue through the server relay (RunAnimEventsS2CPacket);
+                        // playing it locally as well would double every scene sound. They still
+                        // need the token queue for fast/slow switching, though.
+                        this.animationEventQueueClient.add(key);
                     }
                 }));
         registrar.add(new AnimationController<>(this, "girl_attack", 4, this::handleAttackAnimations));
