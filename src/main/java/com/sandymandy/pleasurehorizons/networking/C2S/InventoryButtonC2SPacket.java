@@ -141,6 +141,26 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                                     girl.isStayNearBaseEnabled() ? "msg.pleasurehorizons.stayNearBaseEnabled" : "msg.pleasurehorizons.stayNearBaseDisabled",
                                     girl.getGirlDisplayName()), true);
                 }
+                case "chopTrees" -> {
+                    girl.setChopTreesEnabled(!girl.isChopTreesEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isChopTreesEnabled() ? "msg.pleasurehorizons.chopTreesEnabled" : "msg.pleasurehorizons.chopTreesDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "feedOwner" -> {
+                    girl.setFeedOwnerEnabled(!girl.isFeedOwnerEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isFeedOwnerEnabled() ? "msg.pleasurehorizons.feedOwnerEnabled" : "msg.pleasurehorizons.feedOwnerDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
+                case "dropLoot" -> {
+                    girl.giveBackpackTo(ctx.player());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    "msg.pleasurehorizons.lootTransferred", girl.getGirlDisplayName()), true);
+                }
                 default -> { /* Unknown actions are untrusted input; ignore without log spam. */ }
             }
         });

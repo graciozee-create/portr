@@ -7,6 +7,8 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlChopTreesGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFeedOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
@@ -26,6 +28,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
+import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -65,6 +68,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> CHOP_TREES =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FEED_OWNER =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     // Horizontal carry offsets, in the carrier's rotated frame. She must sit pressed against
     // the carrier's front-side hip rather than float beside it: the side offset is just outside
     // the 0.6-wide player hitbox (half-width 0.3) so the bodies touch, and a real forward
@@ -82,6 +89,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         super.defineSynchedData(builder);
         builder.define(TAMED, false);
         builder.define(OWNER_UUID, Optional.empty());
+        builder.define(CHOP_TREES, false);
+        builder.define(FEED_OWNER, false);
     }
 
     @Override
@@ -100,6 +109,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
         this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
+        this.goalSelector.addGoal(5, new GirlChopTreesGoal(this)); // toggleable via isChopTreesEnabled
+        this.goalSelector.addGoal(5, new GirlFeedOwnerGoal(this)); // toggleable via isFeedOwnerEnabled
         this.goalSelector.addGoal(5, new GirlStayNearBaseGoal(this, 1.0D, 3.0F, 10.0F)); // toggleable
         this.goalSelector.addGoal(6, new GirlTemptGoal(this, 1.0D, false));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
@@ -172,6 +183,43 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     public boolean isOwner(LivingEntity entity) {
         return entity != null && entity.getUUID().equals(this.getOwnerUUID());
+    }
+
+    // ------------------------------------------------- survival utility toggles
+
+    public void setChopTreesEnabled(boolean enabled) {
+        this.entityData.set(CHOP_TREES, enabled);
+    }
+
+    public boolean isChopTreesEnabled() {
+        return this.entityData.get(CHOP_TREES);
+    }
+
+    public void setFeedOwnerEnabled(boolean enabled) {
+        this.entityData.set(FEED_OWNER, enabled);
+    }
+
+    public boolean isFeedOwnerEnabled() {
+        return this.entityData.get(FEED_OWNER);
+    }
+
+    /**
+     * Hands her gathered backpack contents to a player.
+     *
+     * <p>{@code Inventory#add} mutates the passed stack down to whatever did not fit, so the
+     * leftover stays in her backpack. This keeps loot flowing to the owner without dropping it
+     * on the ground or silently deleting a full inventory.</p>
+     */
+    public void giveBackpackTo(Player player) {
+        if (this.level().isClientSide()) return;
+
+        GirlInventory inv = this.getInventory();
+        for (int i = GirlInventory.BACKPACK_START; i <= GirlInventory.BACKPACK_END; i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack.isEmpty()) continue;
+            player.getInventory().add(stack);
+            inv.setItem(i, stack);
+        }
     }
 
     public void setTamedBy(Player player) {
@@ -628,6 +676,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Tamed", this.isTamed());
+        tag.putBoolean("ChopTrees", this.isChopTreesEnabled());
+        tag.putBoolean("FeedOwner", this.isFeedOwnerEnabled());
         if (this.getOwnerUUID() != null) {
             tag.putUUID("Owner", this.getOwnerUUID());
         }
@@ -637,6 +687,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setTamed(tag.getBoolean("Tamed"));
+        if (tag.contains("ChopTrees")) this.setChopTreesEnabled(tag.getBoolean("ChopTrees"));
+        if (tag.contains("FeedOwner")) this.setFeedOwnerEnabled(tag.getBoolean("FeedOwner"));
         if (tag.hasUUID("Owner")) {
             this.setOwnerUUID(tag.getUUID("Owner"));
         }
