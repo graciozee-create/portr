@@ -53,13 +53,13 @@ public class GirlsCommand {
                                 .then(Commands.argument("pos", Vec3Argument.vec3())
                                         .executes(ctx -> spawnGirl(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "id"),
-                                                Vec3Argument.getVec3(ctx, "pos")))))))
+                                                Vec3Argument.getVec3(ctx, "pos"))))))
                 .then(Commands.literal("role")
                         .then(Commands.argument("role", StringArgumentType.word())
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(
                                         List.of("idle", "worker", "guard", "cook"), builder))
                                 .executes(ctx -> applyRole(ctx.getSource(),
-                                        StringArgumentType.getString(ctx, "role")))));
+                                        StringArgumentType.getString(ctx, "role"))))));
     }
 
     private static int reloadProfiles(CommandSourceStack source) {
