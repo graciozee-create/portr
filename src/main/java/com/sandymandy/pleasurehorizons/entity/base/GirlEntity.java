@@ -1016,20 +1016,6 @@ public abstract class GirlEntity extends PathfinderMob {
         return true;
     }
 
-    public boolean hasHugAnimation() {
-        return false;
-    }
-
-    public boolean hasCarryAnimation() {
-        return false;
-    }
-
-    public String getCarryAnimation() {
-        if (hasCarryAnimation()) return "carry_slow1";
-        if (hasHugAnimation()) return "hugidle";
-        return "sit";
-    }
-
     /**
      * Returns the highest relationship level required by this girl's scenes.
      *

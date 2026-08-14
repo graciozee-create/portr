@@ -850,16 +850,18 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         }
 
         if (isPassenger() && getVehicle() instanceof Player) {
-            // getCarryAnimation() predates physical player carrying and names scene/sitting
-            // clips (Mika's "carry_slow1" is a scene animation). Start from neutral idle for
-            // every rig, then let GirlRenderer layer the dedicated carried pose on top.
+            // Start from neutral idle for every rig, then let GirlRenderer layer the dedicated
+            // carried pose on top. Mika's "carry_slow1" is a scene animation and must not be
+            // reused as a physical carry pose.
             return state.setAndContinue(
                     RawAnimation.begin().then(getAnimationPath("idle"), Animation.LoopType.LOOP));
         }
 
         if (isSitting()) {
+            // The "sit" clip exists in every rig; getCarryAnimation() previously mapped Mika's
+            // sitting pose onto "carry_slow1", which is the Face fuck scene animation, not a sit.
             return state.setAndContinue(
-                    RawAnimation.begin().then(getAnimationPath(getCarryAnimation()), Animation.LoopType.LOOP));
+                    RawAnimation.begin().then(getAnimationPath("sit"), Animation.LoopType.LOOP));
         }
 
         if (state.isMoving()) {
