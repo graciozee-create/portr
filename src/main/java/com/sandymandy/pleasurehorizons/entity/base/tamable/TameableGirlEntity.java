@@ -11,6 +11,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlChopTreesGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlCookGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFeedOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHuntGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTemptGoal;
@@ -78,6 +79,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> COOK =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HUNT =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> ROLE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.STRING);
     // Horizontal carry offsets, in the carrier's rotated frame. She must sit pressed against
@@ -103,6 +106,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         builder.define(CHOP_TREES, false);
         builder.define(FEED_OWNER, false);
         builder.define(COOK, false);
+        builder.define(HUNT, false);
         builder.define(ROLE, GirlRole.IDLE.id());
     }
 
@@ -159,6 +163,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
         this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
+        // Hunting is the lowest-priority target source: hostiles always take precedence.
+        this.targetSelector.addGoal(2, new GirlHuntGoal(this));
     }
 
     /** Overridden by weapon-capable subclasses; plain melee by default. */
@@ -223,6 +229,14 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     public boolean isCookEnabled() {
         return this.entityData.get(COOK);
+    }
+
+    public void setHuntEnabled(boolean enabled) {
+        this.entityData.set(HUNT, enabled);
+    }
+
+    public boolean isHuntEnabled() {
+        return this.entityData.get(HUNT);
     }
 
     /** Role label for the HUD and the inventory "Next Role" button. */
@@ -759,6 +773,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         tag.putBoolean("ChopTrees", this.isChopTreesEnabled());
         tag.putBoolean("FeedOwner", this.isFeedOwnerEnabled());
         tag.putBoolean("Cook", this.isCookEnabled());
+        tag.putBoolean("Hunt", this.isHuntEnabled());
         tag.putString("Role", this.getRole().id());
         if (this.getOwnerUUID() != null) {
             tag.putUUID("Owner", this.getOwnerUUID());
@@ -772,6 +787,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (tag.contains("ChopTrees")) this.setChopTreesEnabled(tag.getBoolean("ChopTrees"));
         if (tag.contains("FeedOwner")) this.setFeedOwnerEnabled(tag.getBoolean("FeedOwner"));
         if (tag.contains("Cook")) this.setCookEnabled(tag.getBoolean("Cook"));
+        if (tag.contains("Hunt")) this.setHuntEnabled(tag.getBoolean("Hunt"));
         // The role is only a label; the individual toggles above are the authoritative state, so
         // re-applying the preset here would clobber whatever the player saved.
         if (tag.contains("Role")) this.entityData.set(ROLE, GirlRole.fromId(tag.getString("Role")).id());

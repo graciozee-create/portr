@@ -168,6 +168,13 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                                     girl.isCookEnabled() ? "msg.pleasurehorizons.cookEnabled" : "msg.pleasurehorizons.cookDisabled",
                                     girl.getGirlDisplayName()), true);
                 }
+                case "hunt" -> {
+                    girl.setHuntEnabled(!girl.isHuntEnabled());
+                    ctx.player().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable(
+                                    girl.isHuntEnabled() ? "msg.pleasurehorizons.huntEnabled" : "msg.pleasurehorizons.huntDisabled",
+                                    girl.getGirlDisplayName()), true);
+                }
                 case "cycleRole" -> {
                     com.sandymandy.pleasurehorizons.util.variables.GirlRole next =
                             girl.getRole().next();

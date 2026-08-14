@@ -50,10 +50,13 @@ public enum GirlRole {
         girl.setChopTreesEnabled(false);
         girl.setFeedOwnerEnabled(false);
         girl.setCookEnabled(false);
+        girl.setHuntEnabled(false);
 
         switch (this) {
             case WORKER -> {
-                // Full production chain: gather drops, harvest crops, chop wood, cook food.
+                // Full production chain: hunt livestock, gather drops, harvest crops, chop
+                // wood and cook the food in a furnace.
+                girl.setHuntEnabled(true);
                 girl.setGatherEnabled(true);
                 girl.setHarvestEnabled(true);
                 girl.setChopTreesEnabled(true);

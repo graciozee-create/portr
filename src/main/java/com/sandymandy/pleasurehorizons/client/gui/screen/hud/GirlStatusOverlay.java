@@ -101,6 +101,7 @@ public class GirlStatusOverlay {
         if (girl.isGatherEnabled()) parts.add(t("gui.pleasurehorizons.button.gather"));
         if (girl.isHarvestEnabled()) parts.add(t("gui.pleasurehorizons.button.harvest"));
         if (girl.isChopTreesEnabled()) parts.add(t("gui.pleasurehorizons.button.chopTrees"));
+        if (girl.isHuntEnabled()) parts.add(t("gui.pleasurehorizons.button.hunt"));
         if (girl.isCookEnabled()) parts.add(t("gui.pleasurehorizons.button.cook"));
         if (girl.isFeedOwnerEnabled()) parts.add(t("gui.pleasurehorizons.button.feedOwner"));
         if (parts.isEmpty()) parts.add(t("hud.pleasurehorizons.activity.idle"));

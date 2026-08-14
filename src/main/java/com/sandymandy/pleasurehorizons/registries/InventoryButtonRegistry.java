@@ -89,6 +89,10 @@ public class InventoryButtonRegistry {
                     (girl, player) -> send(girl.getId(), "chopTrees")),
 
             new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.hunt", 3,
+                    (girl, player) -> send(girl.getId(), "hunt")),
+
+            new InventoryButtonAction(
                     "gui.pleasurehorizons.button.feedOwner", 3,
                     (girl, player) -> send(girl.getId(), "feedOwner")),
 
