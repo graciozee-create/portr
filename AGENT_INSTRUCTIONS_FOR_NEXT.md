@@ -314,6 +314,60 @@ copper, chain, leather, turtle). Не работало сразу три зве�
 клиент не имеет profile scenes или профиль повреждён, используется tracked fallback минимум 4.
 Не возвращать Fabric-подход с mutation во время чтения — экран вызывает getter и на клиенте.
 
+### 5.8. Повторный аудит анимаций/сцен/переноски (сессия `arena/01a000a8-portr`, PR #6)
+
+Повторная сверка трёх систем с реальным кодом, JSON-ассетами и исходниками vanilla 1.21.1
+(`Yeet-Masta/MCP-1.21`) и GeckoLib 4.9.2 (branch `1.21.1`). Ранее принятые решения подтверждены:
+
+- Carry-sync корректен: `ChunkMap.TrackedEntity#updatePlayer` начинается с `if (player != entity)`;
+  `ServerEntity#sendChanges` для пассажира шлёт только поворот; клиент позиционирует пассажира
+  каждый кадр через `ClientLevel#tickPassenger → rideTick → positionRider`. `snapToCarrier` не нужен.
+- `setCarryBoneRotation` использует то же преобразование `X=-X, Y=-Y, Z=Z`, что и
+  `BakedAnimationsAdapter` 4.9.2 (проверено по исходникам).
+- Snapshot/restore общих костей: snapshot снимается в основном проходе, восстановление в
+  `postRender`; override-слой (`isReRender=true`) snapshot не трогает.
+- Дерево `steve` скрыто в основном проходе и открывается только в override-слое; slim/wide
+  поддеревья рук взаимоисключаются по серверному флагу.
+- Все 14 ригов (7 dressed + 7 nude) содержат carry-кости `legL/R, shinL/R, armL/R, lowerArmL/R`
+  (у `arm*` ненулевой rest-roll, который учитывает `setCarryBoneRotation`).
+- Все animation id из `getScenes()` каждой девушки существуют в её `*.animation.json`
+  (у kobold нет `strip` и у default нет `blink` — намеренно, см. `hasStripAnim`/`hasBlinkAnimation`).
+- Вертикаль carry: `girl.center = player.center − 0.12`; формула консистентна с vanilla
+  (`passenger = vehicle.getPassengerRidingPosition − passenger.getVehicleAttachmentPoint`),
+  размеры учитываются ровно один раз, двойного смещения нет.
+
+Исправлены три доказанных дефекта (отдельными коммитами, CI зелёный, headSha сверен):
+
+1. `170ba2f` — сидящая Mika играла `carry_slow1` (анимация сцены Face fuck) вместо `sit`.
+   Теперь сидение всегда играет `sit`; удалены мёртвые `getCarryAnimation`/`hasCarryAnimation`/`hasHugAnimation`.
+2. `55164f4` — партнёр всегда рендерился с wide (Steve) руками: серверный флаг `PLAYER_MODEL_SLIM`
+   никто не выставлял. Теперь `startRidingScene` резолвит модель скина участника из `textures`
+   профиля (`Property.value()` → base64 → `SKIN.metadata.model == "slim"`) и пишет флаг.
+3. `3f58a99` — наблюдатели слышали keyframe-звук дважды (локальный рендер + relay
+   `RunAnimEventsS2CPacket`). Теперь звук локально играет только участник сцены; наблюдатели
+   получают его только через relay, а в локальную очередь кладут только токен fast/slow-переключения.
+4. `c40907a` — фикс компиляции #2: в authlib 1.21.1 у `Property` аксессор `value()`, не `getValue()`.
+
+Точный CI: run `31811648988`, job `94803450595`, `SUCCESS`; headSha `c40907a` сверен.
+
+#### Игровой checklist (нужен runtime-тест именно этого артефакта)
+
+- **Сцены:** Talk → список; пройти каждую сцену Mika/Lucy/Kobold/Momo/Coppie/Slime (custom — из
+  профиля) по полному циклу strip→path/contact→intro→loop→thrust→cum→завершение; reservation
+  освобождается после завершения, снятия, disconnect/dimension change игрока и разрушения кровати.
+- **Переноска:** взять/снять (Shift+ПКМ) в 1-м и 3-м лице; поворот носильщика на 360° без дрожания;
+  ходьба; снятие перед игроком без застревания; rescue downed-девушки; смерть/выход носильщика
+  сбрасывает `noGravity`; повторное взятие после снятия.
+- **Кадрирование 1-го лица:** полноразмерная девушка ≤ ~50% экрана; freecam без first-person сдвига;
+  3-е лицо и другие игроки без first-person framing.
+- **Партнёр сцены:** отсутствует в NONE/BED_IDLE/LAYING_DOWN/DIALOG и при `hidePlayer=true`; кожа
+  партнёра = скин участника; **проверить slim-скин (Alex) — руки партнёра должны быть slim**;
+  wide/slim не смешиваются.
+- **Звук сцен:** участник слышит keyframe-звук один раз; **наблюдатель (2-й клиент в пределах 32
+  блоков) слышит каждый звук ровно один раз**; шаги (`startstep`) слышны всем без дублей.
+- **Сидение:** у Mika сидение играет `sit`, а не `carry_slow1`.
+- **Атака:** замах виден у других игроков (tracker-scoped `PlayAttackAnimation`).
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
