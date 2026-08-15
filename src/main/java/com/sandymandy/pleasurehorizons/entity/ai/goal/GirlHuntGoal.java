@@ -23,13 +23,13 @@ import java.util.List;
  * hunt -&gt; gather -&gt; cook food chain.</p>
  *
  * <p>Only a fixed set of adult livestock is hunted - never babies, tamables, villagers or other
- * girls - and an escaped animal (further than 24 blocks) is given up so the girl does not chase
+ * girls - and an escaped animal (further than 40 blocks) is given up so the girl does not chase
  * it across the world.</p>
  */
 public class GirlHuntGoal extends Goal {
-    private static final double SCAN_RANGE = 12.0D;
-    private static final double SCAN_HEIGHT = 4.0D;
-    private static final double GIVE_UP_DISTANCE_SQ = 24.0D * 24.0D;
+    private static final double SCAN_RANGE = 24.0D;
+    private static final double SCAN_HEIGHT = 6.0D;
+    private static final double GIVE_UP_DISTANCE_SQ = 40.0D * 40.0D;
 
     private final TameableGirlEntity girl;
     private LivingEntity target;
