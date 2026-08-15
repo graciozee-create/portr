@@ -1,16 +1,34 @@
 package com.sandymandy.pleasurehorizons.entity.base.tamable;
 
+import com.sandymandy.pleasurehorizons.entity.ai.goal.BedGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlAttackWithOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTrackOwnerAttackerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFollowOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGatherItemsGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlGuardOwnerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTemptGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.MoveToPlayerGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StationaryContactGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -18,7 +36,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -48,6 +65,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> OWNER_UUID =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final double CARRY_RIGHT_OFFSET = 0.36D;
+    private static final double CARRY_FORWARD_OFFSET = 0.03D;
+    private static final double CARRY_VERTICAL_OFFSET = -0.12D;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -62,14 +82,60 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     @Override
     protected void registerGoals() {
+        // Scene goals run before everything else so a scene cannot be interrupted by idle AI.
+        this.goalSelector.addGoal(0, new StationaryContactGoal(this));
+        this.goalSelector.addGoal(0, new MoveToPlayerGoal(this, 1.25D));
+        this.goalSelector.addGoal(0, new BedGoal(this, 1.25D));
+        this.goalSelector.addGoal(0, new StripGoal(this));
+        this.goalSelector.addGoal(0, new StopMovementGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
+        // Combat goal is added by SettlementGirlEntityAI, which is the level that can
+        // actually fire a bow (it implements RangedAttackMob).
+        this.registerCombatGoals();
         this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
+        this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
+        this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
+        this.goalSelector.addGoal(5, new GirlStayNearBaseGoal(this, 1.0D, 3.0F, 10.0F)); // toggleable
+        this.goalSelector.addGoal(6, new GirlTemptGoal(this, 1.0D, false));
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.9D));
-        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        // These two are the reason a carried girl kept spinning on the spot: the vanilla
+        // look goals do not know about being a passenger, so they carried on picking new
+        // look targets and rotating her while the player carried her.
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+            @Override
+            public boolean canUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !TameableGirlEntity.this.isCarried() && super.canContinueToUse();
+            }
+        });
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // Defend the owner: retaliate against whoever hurt them, and join their fights.
+        this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
+        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
+        this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
+        this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
+    }
+
+    /** Overridden by weapon-capable subclasses; plain melee by default. */
+    protected void registerCombatGoals() {
+        this.goalSelector.addGoal(2,
+                new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2D, true));
     }
 
     // ------------------------------------------------------------ ownership
@@ -107,6 +173,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public void setTamedBy(Player player) {
         this.setTamed(true);
         this.setOwnerUUID(player.getUUID());
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            com.sandymandy.pleasurehorizons.advancement.criterion.PleasureHorizonsCriteria
+                    .TAME_GIRL.get().trigger(serverPlayer, this);
+        }
     }
 
     // ------------------------------------------------------------ interaction
@@ -146,6 +216,28 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     protected InteractionResult interactTamed(Player player, ItemStack stack) {
+        if (this.isDowned()) {
+            // Allow carrying wounded girl on hands even when downed (rescue)
+            if (player.isShiftKeyDown() && stack.isEmpty() && this.isOwner(player)) {
+                return this.toggleCarry(player);
+            }
+
+            boolean isFood = stack.get(DataComponents.FOOD) != null;
+            if (stack.is(this.isAttractedTo()) || isFood || stack.is(Items.GOLDEN_APPLE) || stack.is(Items.ENCHANTED_GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT)) {
+                if (!player.getAbilities().instabuild) {
+                    stack.shrink(1);
+                }
+                this.setDowned(false);
+                this.setHealth(this.getMaxHealth());
+                this.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.0F);
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_revived", this.getGirlDisplayName()), true);
+                return InteractionResult.SUCCESS;
+            } else {
+                player.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_downed_need_food", this.getGirlDisplayName()), true);
+                return InteractionResult.SUCCESS;
+            }
+        }
+
         if (!this.isOwner(player)) {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.alreadyInRelationship"), true);
@@ -161,7 +253,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.likedGift"), true);
 
-            List<String> replies = this.getCurrentRelationshipLevel() < 4
+            List<Component> replies = this.getCurrentRelationshipLevel() < 4
                     ? this.giftRepliesLike()
                     : this.giftRepliesLove();
             if (!replies.isEmpty()) {
@@ -173,6 +265,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
+        if (!this.isSceneActive() && player.isShiftKeyDown() && stack.isEmpty()) {
+            return this.toggleCarry(player);
+        }
+
         if (!this.isSceneActive() && player.isShiftKeyDown()) {
             this.setSitting(!this.isSitting());
             this.jumping = false;
@@ -181,17 +277,234 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
 
         if (!this.isSceneActive()) {
-            // The full inventory/scene GUI is not ported yet; toggling following keeps her useful.
-            this.setFollowing(!this.isFollowing());
-            player.displayClientMessage(Component.translatable(
-                    this.isFollowing()
-                            ? "msg.pleasurehorizons.nowFollowing"
-                            : "msg.pleasurehorizons.nowStaying",
-                    this.getGirlDisplayName()), true);
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(new GirlInventoryScreenHandlerFactory(this), buf -> buf.writeVarInt(this.getId()));
+                this.setGUIOpenState(true, player);
+            }
             return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.FAIL;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        // Administrative removal and falling out of the world must remain able to remove a girl;
+        // neither movement lock nor the downed-state substitution should intercept them.
+        if (source.is(DamageTypes.GENERIC_KILL) || source.is(DamageTypes.FELL_OUT_OF_WORLD)) {
+            return super.hurt(source, amount);
+        }
+        if (this.isDowned() || this.isMovementLocked()) {
+            return false;
+        }
+        // No fall damage while being carried on hands - princess carry should be safe
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            if (source.type().msgId().equals("fall") || source.type().msgId().equals("inWall")) {
+                return false;
+            }
+        }
+        float currentHealth = this.getHealth();
+        if (amount >= currentHealth) {
+            this.setDowned(true);
+            this.setHealth(1.0F);
+            this.getNavigation().stop();
+            this.setTarget(null);
+            if (this.getOwner() instanceof Player owner) {
+                owner.displayClientMessage(Component.translatable("msg.pleasurehorizons.girl_heavily_wounded", this.getGirlDisplayName()), true);
+            }
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
+    /**
+     * Picks the girl up onto the player's hands, or puts her down if already carried.
+     *
+     * <p>This used to look like it worked but froze the girl on the carrying player's own
+     * screen. The cause is vanilla entity tracking, not the mount itself:</p>
+     *
+     * <ul>
+     *   <li>{@code ChunkMap.TrackedEntity#updatePlayer} opens with {@code if (player != this.entity)},
+     *       so a player is never sent tracking updates about <em>themselves</em>. When the vehicle
+     *       is a player, the {@link ClientboundSetPassengersPacket} that vanilla would normally
+     *       broadcast from {@code ServerEntity#sendChanges} is therefore never delivered to the
+     *       carrier's own client.</li>
+     *   <li>Meanwhile {@code ServerEntity#sendChanges} stops sending position updates for an
+     *       entity that {@code isPassenger()}, because passengers are positioned client-side by
+     *       their vehicle.</li>
+     * </ul>
+     *
+     * <p>So the carrier's client kept the girl at her last broadcast position with no vehicle link
+     * and no further movement packets - a girl frozen in mid-air. Other players saw her carried
+     * correctly, which matches the reported symptom exactly.</p>
+     *
+     * <p>The fix is to explicitly send the passenger list to the carrying player, since the server
+     * will not do it for them. Everything else (goal suppression, gravity) already worked.</p>
+     */
+    protected InteractionResult toggleCarry(Player player) {
+        if (this.isPassenger() && this.getVehicle() == player) {
+            this.stopRiding();
+            // Place her in front of the player so she does not spawn inside him.
+            float yawRad = (float) Math.toRadians(player.getYRot());
+            double forwardX = -Math.sin(yawRad);
+            double forwardZ = Math.cos(yawRad);
+            this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ,
+                    this.getYRot(), this.getXRot());
+            this.setNoGravity(false);
+            this.setSitting(false);
+            this.syncCarryState(player);
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.isVehicle()) {
+            // She must not be carrying anyone while being carried herself.
+            this.ejectPassengers();
+        }
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setSitting(false);
+
+        // startRiding(force = true) skips canRide()/canAddPassenger(); it only fails on a
+        // ride cycle. Bail out without touching gravity if the mount did not take, otherwise
+        // she would float in place - the previous behaviour.
+        if (!this.startRiding(player, true)) {
+            return InteractionResult.FAIL;
+        }
+
+        this.setNoGravity(true);
+        this.syncCarryState(player);
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
+        return InteractionResult.SUCCESS;
+    }
+
+    /** True while she is riding a player, i.e. being carried. */
+    public boolean isCarried() {
+        return this.isPassenger() && this.getVehicle() instanceof Player;
+    }
+
+    /**
+     * Sends the vehicle's passenger list to the vehicle player themselves.
+     *
+     * <p>Required because vanilla entity tracking never informs a player about their own entity,
+     * so a player-as-vehicle mount is invisible to the carrier without this.</p>
+     */
+    private void syncCarryState(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetPassengersPacket(player));
+        }
+    }
+
+    @Override
+    protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        // Girls should not carry other entities while being carried themselves
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            return false;
+        }
+        return super.canAddPassenger(passenger);
+    }
+
+    /**
+     * Defines the complete carry position relative to a player vehicle.
+     *
+     * <p>Vanilla positions a passenger at
+     * {@code vehicle.getPassengerRidingPosition() - passenger.getVehicleAttachmentPoint()}.
+     * A player's riding point is at the top of its current dimensions, while the normal vehicle
+     * point on a passenger is its feet. Returning feet here therefore puts the girl on the
+     * player's head. The old renderer tried to compensate after the fact with another
+     * translation, a {@code 0.62} scale and render-time entity movement; those overlapping
+     * coordinate systems caused the reported hovering and shrinking.</p>
+     *
+     * <p>The vertical component aligns the full-size hitboxes, then lowers her slightly into a
+     * supported hip-height hold. The much smaller horizontal offsets place her against the
+     * carrier's right/front side instead of leaving a visible body gap. Because this is the sole
+     * positional calculation, normal passenger ticking keeps the server, carrier and observers on
+     * the same coordinates.</p>
+     */
+    @Override
+    public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+        if (vehicle instanceof Player player) {
+            float yawRadians = player.yBodyRot * ((float) Math.PI / 180.0F);
+            double rightX = Math.cos(yawRadians);
+            double rightZ = Math.sin(yawRadians);
+            double forwardX = -Math.sin(yawRadians);
+            double forwardZ = Math.cos(yawRadians);
+            double offsetX = rightX * CARRY_RIGHT_OFFSET + forwardX * CARRY_FORWARD_OFFSET;
+            double offsetZ = rightZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
+            double centeredHeight = (vehicle.getBbHeight() + this.getBbHeight()) * 0.5D;
+
+            // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset
+            // and subtraction of the desired (negative/downward) vertical offset.
+            return new net.minecraft.world.phys.Vec3(
+                    -offsetX, centeredHeight - CARRY_VERTICAL_OFFSET, -offsetZ);
+        }
+        return super.getVehicleAttachmentPoint(vehicle);
+    }
+
+    /** She is baggage while carried - no collision pushing against the carrier. */
+    @Override
+    public boolean canBeCollidedWith() {
+        if (this.isPassenger() && this.getVehicle() instanceof Player) {
+            return false;
+        }
+        return super.canBeCollidedWith();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // While being carried, ensure she stays nicely positioned and doesn't suffocate
+        if (this.isPassenger() && this.getVehicle() instanceof Player player) {
+            this.setNoGravity(true);
+            // Suppress leftover AI motion; the vehicle positions her every tick.
+            this.getNavigation().stop();
+            this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+
+            // Lock her rotation to the carrier. Without this she keeps her own yaw and any
+            // leftover look target spins her around while carried. All four
+            // rotation fields have to be written, including the "O" (previous tick) ones,
+            // or the renderer interpolates between the old and new yaw and she jitters.
+            //
+            // This follows the carrier's BODY yaw, not getYRot(). For a player getYRot() is
+            // the head/look yaw, so using it turned her whole body every time the carrier
+            // moved the mouse - she swung around to face wherever he glanced. yBodyRot only
+            // changes when he actually turns his body, which is what a passenger rides with.
+            float carrierYaw = player.yBodyRot;
+            this.setYRot(carrierYaw);
+            this.yRotO = carrierYaw;
+            this.setYBodyRot(carrierYaw);
+            this.yBodyRotO = carrierYaw;
+            // Head follows the body, but GirlRenderer's head tracking is free to turn it
+            // within its own limits, so she can still glance around while being carried.
+            this.setYHeadRot(carrierYaw);
+            this.yHeadRotO = carrierYaw;
+            this.setXRot(0.0F);
+            this.xRotO = 0.0F;
+
+            // Drop her safely if the carrier dies or leaves, otherwise she would be stuck
+            // riding a removed entity.
+            if (!player.isAlive() || player.isRemoved()) {
+                this.stopRiding();
+                this.setNoGravity(false);
+                this.syncCarryState(player);
+            }
+        } else if (this.isNoGravity() && !this.isSceneActive() && !this.level().isClientSide()) {
+            // Failsafe: never leave her weightless once the carry has ended.
+            this.setNoGravity(false);
+        }
+    }
+
+    public void talkToPlayer(Player player) {
+        if (this.level().isClientSide()) return;
+        List<Component> replies = this.getCurrentRelationshipLevel() < 4
+                ? this.giftRepliesLike()
+                : this.giftRepliesLove();
+        if (!replies.isEmpty()) {
+            this.messageAsEntity(player, replies.get(RANDOM.nextInt(replies.size())));
+        }
+        this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
     }
 
     protected InteractionResult interactNotTamed(Player player, ItemStack stack) {
@@ -203,9 +516,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
-        player.displayClientMessage(Component.literal(
-                "She ignores you. Maybe try giving her "
-                        + this.isAttractedTo().getDescription().getString() + "."), true);
+        player.displayClientMessage(Component.translatable(
+                "msg.pleasurehorizons.girl_ignores",
+                this.isAttractedTo().getDescription().getString()), true);
         return InteractionResult.FAIL;
     }
 
@@ -216,8 +529,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             this.setTarget(null);
             this.setBasePos(this.blockPosition());
             this.playSound(SoundEvents.PLAYER_LEVELUP, 0.8F, 1.6F);
-            player.displayClientMessage(Component.literal(
-                    "You asked " + this.getGirlDisplayName() + " out and she said §aYes"), true);
+            player.displayClientMessage(Component.translatable(
+                    "msg.pleasurehorizons.tame_success", this.getGirlDisplayName()), true);
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,
                         this.getX(), this.getY() + 1.5D, this.getZ(), 7, 0.4D, 0.4D, 0.4D, 0.1D);
@@ -261,6 +574,16 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
     }
 
+    protected void messageAsEntity(Player player, Component message) {
+        player.displayClientMessage(
+                Component.translatable("chat.pleasurehorizons.girlSays", this.getGirlDisplayName(), message), false);
+    }
+
+    @Override
+    public String getSceneDisplayName() {
+        return getGirlDisplayName();
+    }
+
     public String getGirlDisplayName() {
         if (this.hasCustomName()) {
             return this.getCustomName().getString();
@@ -269,13 +592,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return id.isEmpty() ? "Girl" : Character.toUpperCase(id.charAt(0)) + id.substring(1);
     }
 
-    public List<String> giftRepliesLike() {
-        return List.of("Wow, for me? Thanks!", "That's so nice of you...!", "Ahah, this is great!");
+    public List<Component> giftRepliesLike() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_like.1"),
+                Component.translatable("chat.pleasurehorizons.gift_like.2"),
+                Component.translatable("chat.pleasurehorizons.gift_like.3")
+        );
     }
 
-    public List<String> giftRepliesLove() {
-        return List.of("Oh, another one? Well, you're the real gift here~.",
-                "Babe, you're too nice.", "You always know what I like~.");
+    public List<Component> giftRepliesLove() {
+        return List.of(
+                Component.translatable("chat.pleasurehorizons.gift_love.1"),
+                Component.translatable("chat.pleasurehorizons.gift_love.2"),
+                Component.translatable("chat.pleasurehorizons.gift_love.3")
+        );
     }
 
     // ------------------------------------------------------------ misc

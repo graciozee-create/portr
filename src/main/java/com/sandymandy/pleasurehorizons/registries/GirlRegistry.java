@@ -57,10 +57,6 @@ public class GirlRegistry {
         ENTITY_TYPES.register(bus);
     }
 
-    public static void registerGirls() {
-        PleasureHorizons.LOGGER.info("Registering girls for " + PleasureHorizons.MOD_NAME);
-    }
-
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(LUCY.get(), LucyEntity.createAttributes().build());

@@ -5,16 +5,13 @@ import com.sandymandy.pleasurehorizons.block.PleasureHorizonsBlocks;
 import com.sandymandy.pleasurehorizons.block.entity.PleasureHorizonsBlockEntities;
 import com.sandymandy.pleasurehorizons.command.Commands;
 import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTypes;
-import com.sandymandy.pleasurehorizons.entity.ai.brain.GirlMemoryTypes;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
-import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsEntities;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
-import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsSoundEventRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import net.minecraft.core.BlockPos;
@@ -24,7 +21,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,19 +47,19 @@ public class PleasureHorizons {
         PleasureHorizonsSpawnEggs.register(modEventBus);
         PleasureHorizonsBlocks.register(modEventBus);
         PleasureHorizonsBlockEntities.register(modEventBus);
-        PleasureHorizonsEntities.register(modEventBus);
-        PleasureHorizonsSoundEventRegistry.register(modEventBus);
+        GirlRegistry.register(modEventBus);
         PleasureHorizonsScreenHandlerRegistry.register(modEventBus);
         PleasureHorizonsDataComponentTypes.register(modEventBus);
 
         // Other systems
-        GirlMemoryTypes.register(modEventBus);
         PleasureHorizonsCriteria.register(modEventBus);
         PleasureHorizonsTrackedDataRegistry.register(modEventBus);
-        PleasureHorizonsDispenserBehavior.register();
+        PleasureHorizonsDispenserBehavior.register(modEventBus);
         PleasureHorizonsItemGroups.register(modEventBus);
         Commands.register();
-        CustomGirlLoader.register();
+        // Girl profiles reference items by id, so they must load after the item registry
+        // is populated - see onServerStarting below. Loading them here would resolve every
+        // tame_item to air.
 
         // Networking
         PleasureHorizonsPackets.register();
@@ -72,16 +68,18 @@ public class PleasureHorizons {
         NeoForge.EVENT_BUS.register(this);
 
         if (dist == Dist.CLIENT) {
-            modEventBus.addListener(PleasureHorizonsClient::onClientSetup);
+            // Freecam settings live in a CLIENT config; registering it during mod loading is
+            // required because NeoForge reads the spec before client setup events run.
+            com.sandymandy.pleasurehorizons.freecam.FreecamConfig.register(container);
         }
     }
 
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
-        // Cleanup disabled for stub to avoid dependency on TamedGirlManager with ServerLevel
-        // var server = event.getServer();
-        // if (server != null) {
-        //     TamedGirlManager.get(server.overworld()).cleanupDeadGirls(server.overworld());
-        // }
+    public void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
+        // Integrated servers can stop and restart in the same JVM. Runtime-only reservations
+        // from the previous world must never block players or beds in the next one.
+        usedBeds.clear();
+        activeScenes.clear();
+        CustomGirlLoader.register();
     }
 }

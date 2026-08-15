@@ -18,7 +18,9 @@ public enum TripodSlot {
     }
 
     public static TripodSlot valueOf(int number) throws IndexOutOfBoundsException {
-        if (inRange(number)) {
+        // Upstream has the condition inverted here, so this throws for every valid slot and
+        // returns garbage for invalid ones. Corrected while porting.
+        if (!inRange(number)) {
             throw new IndexOutOfBoundsException("Cannot get TripodSlot for number %d: must be %d-%d.".formatted(number, MIN, MAX));
         }
         return valueOfUnsafe(number);
