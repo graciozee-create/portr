@@ -3,9 +3,11 @@ package com.sandymandy.pleasurehorizons.client;
 import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.client.gui.screen.hud.GirlStatusOverlay;
 import com.sandymandy.pleasurehorizons.networking.C2S.CumKeybindC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.ShiftRolesC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.ThrustKeybindC2SPacket;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -38,6 +40,15 @@ public class PleasureHorizonsClientTickHandler {
         // The shift switch is global and works outside scenes.
         if (PleasureHorizonsKeybinds.SHIFT_ROLES_KEY.consumeClick()) {
             PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
+        }
+
+        // Status HUD is purely client-side and off by default.
+        if (PleasureHorizonsKeybinds.TOGGLE_STATUS_HUD_KEY.consumeClick()) {
+            GirlStatusOverlay.toggle();
+            mc.player.displayClientMessage(Component.translatable(
+                    GirlStatusOverlay.isShown()
+                            ? "msg.pleasurehorizons.statusHudOn"
+                            : "msg.pleasurehorizons.statusHudOff"), true);
         }
 
         // Drain the click queue even when not in a scene, otherwise presses buffer up

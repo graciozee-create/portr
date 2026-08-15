@@ -28,10 +28,23 @@ public class GirlStatusOverlay {
 
     private static final double TRACK_RANGE = 24.0D;
 
+    /** Off by default so the panel never obscures normal play; toggled with a keybind. */
+    private static boolean show = false;
+
     private GirlStatusOverlay() {
     }
 
+    public static void toggle() {
+        show = !show;
+    }
+
+    public static boolean isShown() {
+        return show;
+    }
+
     public static void render(GuiGraphics guiGraphics) {
+        if (!show) return;
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         LocalPlayer player = mc.player;

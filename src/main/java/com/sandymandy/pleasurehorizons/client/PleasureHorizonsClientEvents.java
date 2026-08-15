@@ -85,6 +85,7 @@ public class PleasureHorizonsClientEvents {
         event.register(PleasureHorizonsKeybinds.THRUST_KEY);
         event.register(PleasureHorizonsKeybinds.CUM_KEY);
         event.register(PleasureHorizonsKeybinds.SHIFT_ROLES_KEY);
+        event.register(PleasureHorizonsKeybinds.TOGGLE_STATUS_HUD_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_TOGGLE_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_PLAYER_CONTROL_KEY);
         event.register(PleasureHorizonsKeybinds.FREECAM_TRIPOD_RESET_KEY);

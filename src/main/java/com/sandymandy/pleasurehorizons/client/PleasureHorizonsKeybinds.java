@@ -35,6 +35,13 @@ public class PleasureHorizonsKeybinds {
             org.lwjgl.glfw.GLFW.GLFW_KEY_B,
             CATEGORY);
 
+    /** Toggles the girl status HUD (off by default). */
+    public static final KeyMapping TOGGLE_STATUS_HUD_KEY = new KeyMapping(
+            "key.pleasurehorizons.toggle_status_hud",
+            InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_N,
+            CATEGORY);
+
     /**
      * Freecam controls, mirroring upstream's {@code ModBindings}.
      *
