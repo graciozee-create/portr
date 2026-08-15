@@ -8,12 +8,14 @@ import com.sandymandy.pleasurehorizons.client.render.GirlRenderer;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
+import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -27,6 +29,10 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  */
 @EventBusSubscriber(modid = PleasureHorizons.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class PleasureHorizonsClientEvents {
+    @SubscribeEvent
+    public static void loadCustomGirlProfiles(FMLClientSetupEvent event) {
+        event.enqueueWork(CustomGirlLoader::register);
+    }
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

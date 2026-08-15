@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -72,6 +73,14 @@ public class CustomGirlEntity extends SettlementGirlEntityAI {
     // ------------------------------------------------------------------ profile
 
     public CustomGirlProfile getProfile() {
+        if (this.level().isClientSide()) {
+            // The server owns the profile and synchronizes its id and display values. Resolve that
+            // id against the client's config so custom scenes and GUI values match the server.
+            String syncedId = this.entityData.get(GIRL_ID);
+            if (this.profile == null || !this.profile.id().equals(syncedId)) {
+                this.profile = CustomGirlLoader.getGirlOrDefault(syncedId);
+            }
+        }
         return profile != null ? profile : CustomGirlProfile.DEFAULT;
     }
 
@@ -227,8 +236,12 @@ public class CustomGirlEntity extends SettlementGirlEntityAI {
     @Override
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
+        float savedHealth = this.getHealth();
         String id = compound.contains("GirlProfileID") ? compound.getString("GirlProfileID") : "default";
         setProfile(CustomGirlLoader.getGirlOrDefault(id), compound.getBoolean("IsPermanent"));
+        // Applying a profile updates its maximum health, but loading a world must not heal a
+        // previously wounded girl. Clamp only when the profile changed the maximum downward.
+        this.setHealth(Mth.clamp(savedHealth, 0.0F, this.getMaxHealth()));
     }
 
     @Override
