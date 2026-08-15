@@ -85,10 +85,16 @@ public class PleasureHorizons {
 
     @SubscribeEvent
     public void onPlayerDisconnect(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
-        // Clean up scene reservations when a player disconnects. Without this, a player who
-        // gets stuck in a scene (due to error, force-quit, or dimension change) remains
-        // reserved forever, blocking both that girl and any future scene start for other players.
+        // A disconnected player can no longer be in a scene. GirlSceneEntity.tick() already
+        // clears this while the girl is loaded (getScenePlayer() resolves to null), but when her
+        // chunk is unloaded the girl never ticks, so both maps below would otherwise leak until
+        // the next server restart. activeScenes is keyed by player (blocks only that player);
+        // usedBeds is keyed by girl (blocks that bed for everyone), so the matching bed marker
+        // is dropped too.
         java.util.UUID playerId = event.getEntity().getUUID();
-        activeScenes.remove(playerId);
+        java.util.UUID girlId = activeScenes.remove(playerId);
+        if (girlId != null) {
+            usedBeds.remove(girlId);
+        }
     }
 }
