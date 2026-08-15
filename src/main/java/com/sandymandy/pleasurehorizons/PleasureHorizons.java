@@ -82,4 +82,13 @@ public class PleasureHorizons {
         activeScenes.clear();
         CustomGirlLoader.register();
     }
+
+    @SubscribeEvent
+    public void onPlayerDisconnect(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        // Clean up scene reservations when a player disconnects. Without this, a player who
+        // gets stuck in a scene (due to error, force-quit, or dimension change) remains
+        // reserved forever, blocking both that girl and any future scene start for other players.
+        java.util.UUID playerId = event.getEntity().getUUID();
+        activeScenes.remove(playerId);
+    }
 }
