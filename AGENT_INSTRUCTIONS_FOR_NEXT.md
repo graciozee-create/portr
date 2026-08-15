@@ -520,6 +520,27 @@ CI: run `31894812079`, job `95036383427`, `SUCCESS`, headSha `90253d7` свер�
 
 CI: `31903257241`, job `95057142173`, `SUCCESS`, headSha `a579137` сверен.
 
+### 5.16. Ревизия двух «находок» стороннего аудита (false positives — НЕ чинить)
+
+Сторонняя сессия заявила два бага в `GirlRenderer`. Оба проверены по коду — **не дефекты**:
+
+1. **«Не очищается `boneTextureOverridesLayer3`».** Факт: карта layer3 объявлена
+   (`GirlEntity:134`) и ЧИТАЕТСЯ в `BoneOverrideRenderLayer.render()`, но **нигде в порту не
+   записывается** (grep: только объявление + чтение; setter-а `overrideBoneTexture*` в порту
+   вообще нет — карты пишет только `GirlRenderer.updatePartnerSkin`, и только layer1/layer2).
+   Значит layer3 всегда пуст, «не очищать» его — нулевой эффект, утечки нет. «Использована в
+   слое» ≠ «заполнена». Не добавлять `.clear()` ради стиля.
+
+2. **«Carry-поза перетирает анимацию сцены в ON_PLAYER».** Факт: в ON_PLAYER-сценах
+   `startRidingScene` делает `player.startRiding(this, true)` — **игрок катает девушку**, то есть
+   девушка — vehicle, а не passenger. Условие `applyCarryPose` (`getVehicle() instanceof Player`)
+   в сцене ложно. Взятие на руки блокировано при активной сцене (`toggleCarry` только через
+   `!isSceneActive()` в `mobInteract`; `StartSceneC2SPacket` отвергает `girl.isPassenger()`;
+   `startScene` сам делает `stopRiding()`). Пересечение состояний недостижимо.
+   Guard `!animatable.isSceneActive()` не нужен (референдум — будущее, а не баг).
+
+Вердикт: код не менять. Обе позиции — про «гипотетическую будущую» проблему, не про реальную.
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
