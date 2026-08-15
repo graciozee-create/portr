@@ -849,10 +849,21 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         return true;
     }
 
+    /**
+     * One-shot flag consumed by the attack controller.
+     *
+     * <p>Vanilla's {@code swinging} flag cannot be used: 1.21.1 only resets it from
+     * {@code Player#serverAiStep()}, so a mob's swing would stay true forever and the attack
+     * animation would loop long after she stopped hitting. This flag is instead cleared the
+     * moment the animation is queued, so each swing plays exactly once.</p>
+     */
+    private boolean attackAnimationPending = false;
+
     /** Set by {@code PlayAttackAnimationS2CPacket} so remote clients see her swing too. */
     public void triggerSwing() {
         this.swinging = true;
         this.swingTime = 0;
+        this.attackAnimationPending = true;
     }
 
     @Override
@@ -870,7 +881,8 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
     private PlayState handleAttackAnimations(AnimationState<GirlSceneEntity> state) {
         AnimationController<?> controller = state.getController();
 
-        if (this.swinging && controller.getAnimationState() == AnimationController.State.STOPPED) {
+        if (this.attackAnimationPending && controller.getAnimationState() == AnimationController.State.STOPPED) {
+            this.attackAnimationPending = false;
             controller.forceAnimationReset();
             return state.setAndContinue(RawAnimation.begin()
                     .then(getAnimationPath("attack" + RANDOM.nextInt(3)), Animation.LoopType.PLAY_ONCE));
