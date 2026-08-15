@@ -1,6 +1,414 @@
 {
     "format_version": "1.8.0",
     "animations": {
+        "animation.mika.cook": {
+            "loop": true,
+            "animation_length": 2.0,
+            "bones": {
+                "torso": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -8,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -30,
+                                -5,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -50,
+                                -10,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                -30,
+                                -5,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -30,
+                                5,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -50,
+                                10,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                -30,
+                                5,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -15,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -30,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                -15,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -15,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -30,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                -15,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "animation.mika.chop": {
+            "loop": true,
+            "animation_length": 1.6,
+            "bones": {
+                "torso": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                4,
+                                0,
+                                0
+                            ]
+                        },
+                        "0.8": {
+                            "vector": [
+                                -12,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "1.6": {
+                            "vector": [
+                                4,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -140,
+                                -5,
+                                0
+                            ]
+                        },
+                        "0.8": {
+                            "vector": [
+                                -35,
+                                -5,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "1.6": {
+                            "vector": [
+                                -140,
+                                -5,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -140,
+                                5,
+                                0
+                            ]
+                        },
+                        "0.8": {
+                            "vector": [
+                                -35,
+                                5,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "1.6": {
+                            "vector": [
+                                -140,
+                                5,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -20,
+                                0,
+                                0
+                            ]
+                        },
+                        "0.8": {
+                            "vector": [
+                                -10,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "1.6": {
+                            "vector": [
+                                -20,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                -20,
+                                0,
+                                0
+                            ]
+                        },
+                        "0.8": {
+                            "vector": [
+                                -10,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "1.6": {
+                            "vector": [
+                                -20,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "animation.mika.harvest": {
+            "loop": true,
+            "animation_length": 2.0,
+            "bones": {
+                "torso": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                -22,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                35,
+                                -5,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "armR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                35,
+                                5,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmL": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                20,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                },
+                "lowerArmR": {
+                    "rotation": {
+                        "0.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        },
+                        "1.0": {
+                            "vector": [
+                                20,
+                                0,
+                                0
+                            ],
+                            "easing": "easeinoutsine"
+                        },
+                        "2.0": {
+                            "vector": [
+                                0,
+                                0,
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "animation.mika.blink": {
             "loop": true,
             "animation_length": 4.16,

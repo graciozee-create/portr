@@ -77,6 +77,7 @@ public class GirlChopTreesGoal extends Goal {
 
     @Override
     public void start() {
+        girl.setDailyActivity("chop");
         if (targetLog != null) {
             girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.0D);
         }
@@ -99,6 +100,9 @@ public class GirlChopTreesGoal extends Goal {
     public void stop() {
         targetLog = null;
         girl.getNavigation().stop();
+        if ("chop".equals(girl.getDailyActivity())) {
+            girl.setDailyActivity("");
+        }
         cooldown = 10;
     }
 }

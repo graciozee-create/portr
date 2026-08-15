@@ -65,6 +65,9 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
             SynchedEntityData.defineId(GirlSceneEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> CURRENT_SEX_ANIM =
             SynchedEntityData.defineId(GirlSceneEntity.class, EntityDataSerializers.STRING);
+    /** Survival task currently being performed (e.g. "cook"), selecting the daily animation. */
+    private static final EntityDataAccessor<String> DAILY_ACTIVITY =
+            SynchedEntityData.defineId(GirlSceneEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Float> SCENE_PROGRESS =
             SynchedEntityData.defineId(GirlSceneEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> CUM_THRESHOLD =
@@ -119,6 +122,7 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
         builder.define(CURRENT_SCENE_NAME, "");
         builder.define(CURRENT_SCENE_PHASE, ScenePhase.NONE.ordinal());
         builder.define(CURRENT_SEX_ANIM, "");
+        builder.define(DAILY_ACTIVITY, "");
         builder.define(SCENE_PROGRESS, 0f);
         builder.define(CUM_THRESHOLD, 5f);
         builder.define(STATIONARY_LOOP, 0);
@@ -169,6 +173,19 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
 
     public void setCurrentSexAnim(String anim) { this.entityData.set(CURRENT_SEX_ANIM, anim); }
     public String getCurrentSexAnim() { return this.entityData.get(CURRENT_SEX_ANIM); }
+
+    /**
+     * Server-set label of the survival task currently being performed. The goals set it while
+     * working and clear it in {@code stop()}; the client animation selector reads it to pick the
+     * matching daily loop animation ("cook", "chop", "harvest"). Clients never write it.
+     */
+    public void setDailyActivity(String activity) {
+        this.entityData.set(DAILY_ACTIVITY, activity == null ? "" : activity);
+    }
+
+    public String getDailyActivity() {
+        return this.entityData.get(DAILY_ACTIVITY);
+    }
 
     public void setSceneProgress(float progress) { this.entityData.set(SCENE_PROGRESS, progress); }
     public float getSceneProgress() { return this.entityData.get(SCENE_PROGRESS); }
@@ -906,6 +923,14 @@ public abstract class GirlSceneEntity extends GirlEntity implements GeoEntity {
             // sitting pose onto "carry_slow1", which is the Face fuck scene animation, not a sit.
             return state.setAndContinue(
                     RawAnimation.begin().then(getAnimationPath("sit"), Animation.LoopType.LOOP));
+        }
+
+        // Daily survival tasks: cook/chop/harvest. While pathing to the target the normal walk
+        // animation still plays; the task loop only replaces idle once she is standing at work.
+        String daily = getDailyActivity();
+        if (!daily.isEmpty() && !state.isMoving()) {
+            return state.setAndContinue(
+                    RawAnimation.begin().then(getAnimationPath(daily), Animation.LoopType.LOOP));
         }
 
         if (state.isMoving()) {

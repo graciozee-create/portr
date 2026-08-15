@@ -55,6 +55,7 @@ public class GirlHarvestCropsGoal extends Goal {
 
     @Override
     public void start() {
+        girl.setDailyActivity("harvest");
         if (targetCrop != null) {
             girl.getNavigation().moveTo(targetCrop.getX() + 0.5D, targetCrop.getY(), targetCrop.getZ() + 0.5D, 1.0D);
         }
@@ -64,6 +65,9 @@ public class GirlHarvestCropsGoal extends Goal {
     public void stop() {
         targetCrop = null;
         girl.getNavigation().stop();
+        if ("harvest".equals(girl.getDailyActivity())) {
+            girl.setDailyActivity("");
+        }
         cooldown = 20;
     }
 

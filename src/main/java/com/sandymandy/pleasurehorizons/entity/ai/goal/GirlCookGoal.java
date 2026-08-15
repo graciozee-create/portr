@@ -137,6 +137,7 @@ public class GirlCookGoal extends Goal {
     @Override
     public void start() {
         this.repath = 0;
+        girl.setDailyActivity("cook");
     }
 
     @Override
@@ -218,6 +219,9 @@ public class GirlCookGoal extends Goal {
     public void stop() {
         furnacePos = null;
         girl.getNavigation().stop();
+        if ("cook".equals(girl.getDailyActivity())) {
+            girl.setDailyActivity("");
+        }
         cooldown = 20;
     }
 }
