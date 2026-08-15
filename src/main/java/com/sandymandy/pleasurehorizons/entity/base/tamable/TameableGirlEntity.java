@@ -547,12 +547,14 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
         if (vehicle instanceof Player player) {
             float yawRadians = player.yBodyRot * ((float) Math.PI / 180.0F);
-            double rightX = Math.cos(yawRadians);
-            double rightZ = Math.sin(yawRadians);
+            // Side vector pointing to the carrier's RIGHT hand. With yaw=0 the carrier faces
+            // south (+Z), so his right hand is west (-X): ( -cos, -sin ).
+            double sideX = -Math.cos(yawRadians);
+            double sideZ = -Math.sin(yawRadians);
             double forwardX = -Math.sin(yawRadians);
             double forwardZ = Math.cos(yawRadians);
-            double offsetX = rightX * CARRY_RIGHT_OFFSET + forwardX * CARRY_FORWARD_OFFSET;
-            double offsetZ = rightZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
+            double offsetX = sideX * CARRY_RIGHT_OFFSET + forwardX * CARRY_FORWARD_OFFSET;
+            double offsetZ = sideZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
             double centeredHeight = (vehicle.getBbHeight() + this.getBbHeight()) * 0.5D;
 
             // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset
