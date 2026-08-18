@@ -83,11 +83,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> ROLE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.STRING);
-    // The girl is carried directly in front of the carrier, pressed against their body, and
-    // faces the carrier (GirlRenderer yaw-flips the model 180°). Only a forward offset remains:
-    // her center sits just outside the player's front face (half-width 0.3) so the bodies touch.
-    private static final double CARRY_FORWARD_OFFSET = 0.30D;
-    private static final double CARRY_VERTICAL_OFFSET = -0.12D;
+    // The girl is carried directly in front of the carrier, facing them (GirlRenderer yaw-flips
+    // the model 180°). The forward offset puts her center just in front of the player's front
+    // face, and the positive vertical offset holds her up at chest height instead of letting her
+    // sink toward the ground.
+    private static final double CARRY_FORWARD_OFFSET = 0.35D;
+    private static final double CARRY_VERTICAL_OFFSET = 0.10D;
 
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
     private int lastSentBackpackSlots = -1;
