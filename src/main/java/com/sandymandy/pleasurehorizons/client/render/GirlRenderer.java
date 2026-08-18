@@ -126,6 +126,10 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
 
         if (animatable.getVehicle() instanceof net.minecraft.world.entity.player.Player carrier) {
+            // She is held in front of the carrier, facing them: the model was just oriented to
+            // the carrier's body yaw, so flip it 180° around its own up axis so her front turns
+            // toward the carrier. (Her entity yaw stays locked to the carrier's - see tick().)
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.mulPose(Axis.ZP.rotationDegrees(CARRY_INWARD_LEAN));
 
             float walk = carrier.walkAnimation.position(partialTick);

@@ -83,12 +83,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> ROLE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.STRING);
-    // Horizontal carry offsets, in the carrier's rotated frame. She must sit pressed against
-    // the carrier's front-side hip rather than float beside it: the side offset is just outside
-    // the 0.6-wide player hitbox (half-width 0.3) so the bodies touch, and a real forward
-    // component pulls her onto the front of the hip instead of anchoring her to the side plane.
-    private static final double CARRY_RIGHT_OFFSET = 0.30D;
-    private static final double CARRY_FORWARD_OFFSET = 0.10D;
+    // The girl is carried directly in front of the carrier, pressed against their body, and
+    // faces the carrier (GirlRenderer yaw-flips the model 180°). Only a forward offset remains:
+    // her center sits just outside the player's front face (half-width 0.3) so the bodies touch.
+    private static final double CARRY_FORWARD_OFFSET = 0.30D;
     private static final double CARRY_VERTICAL_OFFSET = -0.12D;
 
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
@@ -538,23 +536,21 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * coordinate systems caused the reported hovering and shrinking.</p>
      *
      * <p>The vertical component aligns the full-size hitboxes, then lowers her slightly into a
-     * supported hip-height hold. The much smaller horizontal offsets place her against the
-     * carrier's right/front side instead of leaving a visible body gap. Because this is the sole
-     * positional calculation, normal passenger ticking keeps the server, carrier and observers on
-     * the same coordinates.</p>
+     * supported hold. The horizontal component places her directly in front of the carrier, with
+     * her front turned toward them (the renderer yaw-flips the model 180°). Because this is the
+     * sole positional calculation, normal passenger ticking keeps the server, carrier and
+     * observers on the same coordinates.</p>
      */
     @Override
     public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
         if (vehicle instanceof Player player) {
             float yawRadians = player.yBodyRot * ((float) Math.PI / 180.0F);
-            // Side vector pointing to the carrier's RIGHT hand. With yaw=0 the carrier faces
-            // south (+Z), so his right hand is west (-X): ( -cos, -sin ).
-            double sideX = -Math.cos(yawRadians);
-            double sideZ = -Math.sin(yawRadians);
+            // Forward vector in the carrier's facing direction. With yaw=0 the carrier faces
+            // south (+Z), so forward = ( -sin, cos ) = (0, 1). She sits directly in front.
             double forwardX = -Math.sin(yawRadians);
             double forwardZ = Math.cos(yawRadians);
-            double offsetX = sideX * CARRY_RIGHT_OFFSET + forwardX * CARRY_FORWARD_OFFSET;
-            double offsetZ = sideZ * CARRY_RIGHT_OFFSET + forwardZ * CARRY_FORWARD_OFFSET;
+            double offsetX = forwardX * CARRY_FORWARD_OFFSET;
+            double offsetZ = forwardZ * CARRY_FORWARD_OFFSET;
             double centeredHeight = (vehicle.getBbHeight() + this.getBbHeight()) * 0.5D;
 
             // Entity#positionRider subtracts this vector, hence the negated desired X/Z offset
