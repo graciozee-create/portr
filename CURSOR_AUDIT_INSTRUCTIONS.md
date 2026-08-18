@@ -85,10 +85,11 @@ src/main/resources/assets/pleasurehorizons/
 
 Чтобы не тратить время и не плодить ложные срабатывания, прими как факт:
 
-- **Сторона переноски:** девушка на ПРАВОЙ руке носильщика. Боковой вектор =
-  `(-cos(yaw), -sin(yaw))`. Константы в `TameableGirlEntity`: `CARRY_RIGHT_OFFSET=0.30`,
-  `CARRY_FORWARD_OFFSET=0.10`, `CARRY_VERTICAL_OFFSET=-0.12`. Carry-поза в `GirlRenderer`:
-  lean `-8°`, sway `1.5°`, бедро `-82°`, голень `+72°` (градусы Blockbench).
+- **Переноска:** девушка сидит ПРЯМО ПЕРЕД носителем и повёрнута к нему лицом (рендер
+  доворачивает модель на 180° вокруг Y после ориентации на yaw носителя). Позиция — только
+  вперёд, без бокового вектора. Константы в `TameableGirlEntity`: `CARRY_FORWARD_OFFSET=0.35`,
+  `CARRY_VERTICAL_OFFSET=0.10` (положительный = держит её на уровне груди). Carry-поза в
+  `GirlRenderer`: lean `-8°`, sway `1.5°`, бедро `-82°`, голень `+72°` (градусы Blockbench).
 - **Замах атаки:** vanilla 1.21.1 сбрасывает `swinging` ТОЛЬКО в `Player#serverAiStep()`,
   поэтому мод использует одноразовый `attackAnimationPending` (НЕ `swinging`).
 - **Резервирование сцен:** `activeScenes` = `Map<игрок → девушка>` (per-player); `usedBeds` =
