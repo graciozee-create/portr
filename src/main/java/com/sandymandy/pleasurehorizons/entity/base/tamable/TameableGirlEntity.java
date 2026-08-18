@@ -87,7 +87,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     // the model 180°). The forward offset puts her center just in front of the player's front
     // face, and the positive vertical offset holds her up at chest height instead of letting her
     // sink toward the ground.
-    private static final double CARRY_FORWARD_OFFSET = 0.35D;
+    private static final double CARRY_FORWARD_OFFSET = 0.45D;
     private static final double CARRY_VERTICAL_OFFSET = 0.10D;
 
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
