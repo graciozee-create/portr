@@ -2,10 +2,12 @@ package com.sandymandy.pleasurehorizons.client.rendering.layers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoRenderer;
@@ -78,15 +80,41 @@ public class BoneOverrideRenderLayer<T extends GirlSceneEntity> extends GeoRende
                 bone.setHidden(false);
                 bone.setChildrenHidden(false);
 
+                // Render layers run after the main model pass, at a pose-stack level that no
+                // longer has the entity's body-yaw rotation applied. Re-enter the model space
+                // (scale + yaw + the 0.01 unit offset GeoEntityRenderer applies before
+                // descending into the bone tree) so an overridden bone such as the partner
+                // skeleton lines up with the animated girl instead of staying in world space.
+                poseStack.pushPose();
+                applyModelSpaceTransform(poseStack, animatable, partialTick);
+
                 // isReRender = true: this is an extra pass over a bone the main pass already
                 // drew, so GeckoLib must not re-apply the model transforms. Colour is left
                 // white (-1) so the override texture is shown as-is.
                 this.getRenderer().renderRecursively(poseStack, animatable, bone, overrideType,
                         bufferSource, overrideBuffer, true, partialTick, packedLight, packedOverlay, -1);
+                poseStack.popPose();
 
                 bone.setHidden(wasHidden);
                 bone.setChildrenHidden(childrenWereHidden);
             });
         });
+    }
+
+    /**
+     * Re-applies the model-space transforms that {@code GeoEntityRenderer#actuallyRender} wraps
+     * around the main bone-tree render: native scale, body-yaw rotation and the 0.01 unit offset.
+     *
+     * <p>The main pass applies these inside its own {@code poseStack} push/pop, so by the time a
+     * render layer runs they are gone. The partner skeleton is a top-level bone whose position
+     * is animated by the scene animation, so without these transforms it would be drawn at its
+     * un-rotated world position and drift away from the girl whenever she turns.</p>
+     */
+    private void applyModelSpaceTransform(PoseStack poseStack, T animatable, float partialTick) {
+        float scale = animatable.getScale();
+        poseStack.scale(scale, scale, scale);
+        float lerpBodyRot = Mth.rotLerp(partialTick, animatable.yBodyRotO, animatable.yBodyRot);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - lerpBodyRot));
+        poseStack.translate(0.0F, 0.01F, 0.0F);
     }
 }
