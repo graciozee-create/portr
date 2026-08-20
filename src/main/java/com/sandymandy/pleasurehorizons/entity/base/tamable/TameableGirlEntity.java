@@ -13,6 +13,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFeedOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHuntGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlOpenDoorGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSelfHealGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTemptGoal;
@@ -135,6 +136,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(1, new GirlOpenDoorGoal(this));
+        // Self-healing declares no flags, so it never preempts anything; it just eats when hurt.
+        this.goalSelector.addGoal(3, new GirlSelfHealGoal(this));
         // Combat goal is added by SettlementGirlEntityAI, which is the level that can
         // actually fire a bow (it implements RangedAttackMob).
         this.registerCombatGoals();

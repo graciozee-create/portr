@@ -69,6 +69,9 @@ public class PleasureHorizons {
         // Networking
         PleasureHorizonsPackets.register();
 
+        // Server-side girl tuning (stats + self-healing); file config/pleasurehorizons-girls.toml.
+        com.sandymandy.pleasurehorizons.config.GirlsConfig.register(container);
+
         // Server tick
         NeoForge.EVENT_BUS.register(this);
 
