@@ -21,7 +21,7 @@ public class CoppieEntity extends SettlementGirlEntityAI {
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes()
                 .add(Attributes.MAX_HEALTH, 15.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 

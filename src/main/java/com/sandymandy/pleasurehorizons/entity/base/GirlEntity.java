@@ -166,9 +166,13 @@ public abstract class GirlEntity extends PathfinderMob {
     public static AttributeSupplier.Builder createDefaultAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.FOLLOW_RANGE, 100.0)
-                .add(Attributes.ATTACK_DAMAGE, 2.0);
+                .add(Attributes.ATTACK_DAMAGE, 2.0)
+                // Positive water-movement efficiency makes LivingEntity#travel lerp the fixed
+                // 0.02 swim speed toward her land speed, so crossing water while following the
+                // owner is no longer a crawl (vanilla default is 0.0 = 0.02 blocks/tick).
+                .add(Attributes.WATER_MOVEMENT_EFFICIENCY, 0.6);
     }
 
     @Override
