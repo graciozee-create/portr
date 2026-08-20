@@ -43,7 +43,7 @@ public class GirlHuntGoal extends Goal {
     @Override
     public boolean canUse() {
         if (!girl.isHuntEnabled()) return false;
-        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive()
+        if (girl.isSitting() || girl.isSceneActive()
                 || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
@@ -66,7 +66,7 @@ public class GirlHuntGoal extends Goal {
                 && target != null && target.isAlive()
                 && girl.getTarget() == target
                 && girl.distanceToSqr(target) <= GIVE_UP_DISTANCE_SQ
-                && !girl.isSitting() && !girl.isFollowing()
+                && !girl.isSitting()
                 && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger();
     }
 

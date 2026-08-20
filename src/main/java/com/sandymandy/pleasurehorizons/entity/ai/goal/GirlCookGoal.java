@@ -66,7 +66,7 @@ public class GirlCookGoal extends Goal {
     }
 
     private boolean forbidden() {
-        return girl.isSitting() || girl.isFollowing() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger();
+        return girl.isSitting() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger();
     }
 
     private AbstractFurnaceBlockEntity findFurnace() {

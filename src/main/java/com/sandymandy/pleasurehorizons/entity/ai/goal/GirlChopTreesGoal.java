@@ -28,7 +28,7 @@ public class GirlChopTreesGoal extends Goal {
     @Override
     public boolean canUse() {
         if (!girl.isChopTreesEnabled()) return false;
-        if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
+        if (girl.isSitting() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
         if (cooldown > 0) {
@@ -71,7 +71,7 @@ public class GirlChopTreesGoal extends Goal {
     public boolean canContinueToUse() {
         return girl.isChopTreesEnabled() && targetLog != null
                 && girl.level().getBlockState(targetLog).is(BlockTags.LOGS)
-                && !girl.isSitting() && !girl.isFollowing()
+                && !girl.isSitting()
                 && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger();
     }
 

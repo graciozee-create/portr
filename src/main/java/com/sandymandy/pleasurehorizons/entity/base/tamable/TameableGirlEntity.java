@@ -138,7 +138,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // Combat goal is added by SettlementGirlEntityAI, which is the level that can
         // actually fire a bow (it implements RangedAttackMob).
         this.registerCombatGoals();
-        this.goalSelector.addGoal(3, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
+        // Following is the fallback, not the default: every survival task above this priority
+        // (harvest/gather/chop/feed/cook/stay-near-base) preempts it whenever it has work to do,
+        // so a girl with a role assigned both works and follows her owner when idle. It sits at
+        // the same priority as tempt/stroll but is registered first, so it still wins that tie.
+        this.goalSelector.addGoal(6, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
         this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
         this.goalSelector.addGoal(5, new GirlChopTreesGoal(this)); // toggleable via isChopTreesEnabled
