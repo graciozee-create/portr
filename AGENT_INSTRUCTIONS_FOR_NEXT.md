@@ -996,9 +996,12 @@ Runtime-only (в чеклист): замороженная за стеной г�
 кнопки настроек не закрывают GUI и подписи обновляются сразу; кнопки неактивны при rel ниже
 порога (followTeleport rel 2, остальные rel 1).
 
-CI: см. ниже (фикс компиляции 1.21.1: у `Tooltip` нет List-оверлоада — использован двухстрочный
-`create(desc, value)`; `EnchantmentHelper.hasBindingCurse` и статический `getEquipmentSlotForItem`
-в 1.21.1 отсутствуют — слот берётся из `ArmorItem#getEquipmentSlot()`).
+Фикс компиляции под 1.21.1 (прогон `32425845862` упал ровно на трёх API): у `Tooltip` нет
+List-оверлоада — использован двухстрочный `create(desc, value)`; `EnchantmentHelper.hasBindingCurse`
+и статический `Mob.getEquipmentSlotForItem` в 1.21.1 отсутствуют — слот берётся из
+`ArmorItem#getEquipmentSlot()`, curse-check убран (крайний кейс, не стоит своего API).
+
+CI: run `32426080199` (коммит `39e7e9e`), `SUCCESS`, headSha сверен.
 
 
 ### 5.31. Аудит `mine-log.txt`: единственный PH-warn — `misc.plob` (наследственный, НЕ чинить)
