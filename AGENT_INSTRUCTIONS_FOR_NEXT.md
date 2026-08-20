@@ -739,6 +739,28 @@ CI: run `32393723053`, job `96505599955`, `SUCCESS`, headSha `1f0b2d3` свер�
 
 CI: run `32395863728`, job `96512403824`, `SUCCESS`, headSha `108a4b2` сверен.
 
+### 5.25. Реестр прирученных — персистентность (фикс «пишет нет девушек»)
+
+Симптом: «когда девушка вне прогрузки, пишет нет девушек». Причина: вызов из незагруженных
+чанков (`TamedGirlRegistry`) был **in-memory** и чистился на `ServerStarting`. Если игрок
+заспавнился далеко от прирученной и её чанк после рестарта не грузился — реестр пуст → «0 девушек».
+
+Фикс (`f56b2c1`):
+- `TamedGirlSavedData extends SavedData` — персистентное хранилище записей
+  (girlId/ownerId/dimension/x/y/z/rigId/customName) в `overworld.getDataStorage()`,
+  `computeIfAbsent(factory(), "pleasurehorizons_tamed_girls")`. Фабрика: `SavedData.Factory<>`
+  (constructor, `load(CompoundTag, HolderLookup.Provider)`, `DataFixTypes.SAVED_DATA_RANDOM_SEQUENCES`).
+  Сломанная запись пропускается, не роняя загрузку.
+- `TamedGirlRegistry` теперь статическая фаска над приаттаченным `TamedGirlSavedData`
+  (`attach` на `ServerStarting`; на клиенте/до attach — no-op). `update/remove` пишут в SavedData
+  и `setDirty()`.
+- Сообщение `no_girls` уточнено (en/ru): «возможно, их чанки ещё не загружались — зайдите один раз».
+
+Остаточный (принятый) лимит: девушка, приручённая ДО появления персистентности и чей чанк с тех
+пор ни разу не грузился, в реестре не появится, пока её область не посетят один раз.
+
+CI: run `32398007536`, job `96519257295`, `SUCCESS`, headSha `f56b2c1` сверен.
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
