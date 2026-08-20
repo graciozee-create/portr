@@ -16,6 +16,7 @@ import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerR
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import com.sandymandy.pleasurehorizons.util.managers.TamedGirlRegistry;
+import com.sandymandy.pleasurehorizons.util.managers.TamedGirlSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.api.distmarker.Dist;
@@ -84,8 +85,11 @@ public class PleasureHorizons {
         // from the previous world must never block players or beds in the next one.
         usedBeds.clear();
         activeScenes.clear();
-        TamedGirlRegistry.clear();
         TameableGirlEntity.clearPendingCalls();
+        // Attach the persisted tamed-girl registry so "call girls" can reach girls whose chunks
+        // have not been loaded since the last restart.
+        TamedGirlRegistry.attach(event.getServer().overworld().getDataStorage()
+                .computeIfAbsent(TamedGirlSavedData.factory(), TamedGirlSavedData.name()));
         CustomGirlLoader.register();
     }
 

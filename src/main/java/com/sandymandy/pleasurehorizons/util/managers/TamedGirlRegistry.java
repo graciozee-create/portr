@@ -5,10 +5,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -19,9 +16,9 @@ import java.util.UUID;
  * which lets the "call girls" feature force-load her chunk and teleport her to the player even
  * from across the world.</p>
  *
- * <p>It is a runtime cache, not persisted state: it is rebuilt whenever a girl loads (her owner
- * is read from NBT), and entries are dropped only when a girl actually dies or is discarded. A
- * girl whose chunk has never been loaded since the server started is simply not known yet.</p>
+ * <p>This class is a thin static facade over {@link TamedGirlSavedData}, which persists the record
+ * across server restarts. The data is attached once on server start; before that (or on the
+ * client) every operation is a harmless no-op.</p>
  */
 public final class TamedGirlRegistry {
 
@@ -46,22 +43,28 @@ public final class TamedGirlRegistry {
         }
     }
 
-    private static final Map<UUID, Entry> GIRLS = new HashMap<>();
+    @Nullable
+    private static TamedGirlSavedData data;
 
     private TamedGirlRegistry() {
     }
 
+    /** Attaches the persistent registry for the current server. */
+    public static void attach(TamedGirlSavedData savedData) {
+        data = savedData;
+    }
+
     /** Records (or refreshes) a tamed girl's location. No-op on the client and for wild girls. */
     public static void update(TameableGirlEntity girl) {
-        if (girl.level().isClientSide()) {
+        if (girl.level().isClientSide() || data == null) {
             return;
         }
         UUID owner = girl.getOwnerUUID();
         if (owner == null || !girl.isTamed()) {
-            GIRLS.remove(girl.getUUID());
+            data.remove(girl.getUUID());
             return;
         }
-        GIRLS.put(girl.getUUID(), new Entry(
+        data.put(girl.getUUID(), new Entry(
                 girl.getUUID(),
                 owner,
                 girl.level().dimension(),
@@ -71,27 +74,18 @@ public final class TamedGirlRegistry {
     }
 
     public static void remove(UUID girlId) {
-        GIRLS.remove(girlId);
+        if (data != null) {
+            data.remove(girlId);
+        }
     }
 
     @Nullable
     public static Entry get(UUID girlId) {
-        return GIRLS.get(girlId);
+        return data == null ? null : data.get(girlId);
     }
 
     /** All known entries owned by the given player, optionally filtered by a name. */
     public static List<Entry> ownedBy(UUID ownerId, @Nullable String name) {
-        List<Entry> result = new ArrayList<>();
-        for (Entry entry : GIRLS.values()) {
-            if (!entry.ownerId.equals(ownerId) || !entry.matchesName(name)) {
-                continue;
-            }
-            result.add(entry);
-        }
-        return result;
-    }
-
-    public static void clear() {
-        GIRLS.clear();
+        return data == null ? List.of() : data.ownedBy(ownerId, name);
     }
 }
