@@ -97,6 +97,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
     private int lastSentBackpackSlots = -1;
 
+    /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
+    private boolean carrierSneaking = false;
+
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
         // Let her path through (and open) wooden doors like a villager, so following/guarding
@@ -104,6 +107,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (this.getNavigation() instanceof GroundPathNavigation navigation) {
             navigation.setCanOpenDoors(true);
         }
+        // Make survival tasks route around water instead of wading in and swimming slowly.
+        // Following still crosses water: GirlFollowOwnerGoal temporarily zeroes this malus.
+        this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 8.0F);
     }
 
     @Override
@@ -661,18 +667,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      */
     protected InteractionResult toggleCarry(Player player) {
         if (this.isPassenger() && this.getVehicle() == player) {
-            this.stopRiding();
-            // Place her in front of the player so she does not spawn inside him.
-            float yawRad = (float) Math.toRadians(player.getYRot());
-            double forwardX = -Math.sin(yawRad);
-            double forwardZ = Math.cos(yawRad);
-            this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ,
-                    this.getYRot(), this.getXRot());
-            this.setNoGravity(false);
-            this.setSitting(false);
-            this.syncCarryState(player);
-            player.displayClientMessage(
-                    Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
+            this.putDown(player);
             return InteractionResult.SUCCESS;
         }
 
@@ -691,11 +686,37 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.FAIL;
         }
 
+        // Picking her up requires sneaking, so remember that the carrier is already sneaking:
+        // only a fresh sneak press later will put her down, not the held one.
+        this.carrierSneaking = true;
+
         this.setNoGravity(true);
         this.syncCarryState(player);
         player.displayClientMessage(
                 Component.translatable("msg.pleasurehorizons.girl_picked_up", this.getGirlDisplayName()), true);
         return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * Dismounts her from the carrier and places her in front of him.
+     *
+     * <p>Called both by shift+right-click and by a fresh sneak press while carried. Sneaking is
+     * the reliable fallback because in first person the framed model is rendered offset from her
+     * actual hitbox, which made her very hard to target with the crosshair.</p>
+     */
+    private void putDown(Player player) {
+        this.stopRiding();
+        float yawRad = (float) Math.toRadians(player.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+        this.moveTo(player.getX() + forwardX, player.getY(), player.getZ() + forwardZ,
+                this.getYRot(), this.getXRot());
+        this.setNoGravity(false);
+        this.setSitting(false);
+        this.carrierSneaking = false;
+        this.syncCarryState(player);
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.girl_put_down", this.getGirlDisplayName()), true);
     }
 
     /** True while she is riding a player, i.e. being carried. */
@@ -838,6 +859,19 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.stopRiding();
                 this.setNoGravity(false);
                 this.syncCarryState(player);
+                return;
+            }
+
+            // A fresh sneak press while carried puts her down. The crosshair is unreliable in
+            // first person (the framed model is drawn offset from her real hitbox), so sneaking
+            // is the dependable way to release her.
+            if (!this.level().isClientSide()) {
+                boolean sneaking = player.isShiftKeyDown();
+                if (sneaking && !this.carrierSneaking) {
+                    this.putDown(player);
+                    return;
+                }
+                this.carrierSneaking = sneaking;
             }
         } else if (this.isNoGravity() && !this.isSceneActive() && !this.level().isClientSide()) {
             // Failsafe: never leave her weightless once the carry has ended.

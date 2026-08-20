@@ -153,7 +153,7 @@ public class GirlCookGoal extends Goal {
         if (girl.distanceToSqr(x, y, z) > USE_DISTANCE_SQ) {
             if (--repath <= 0) {
                 repath = this.adjustedTickDelay(10);
-                girl.getNavigation().moveTo(x, y, z, 1.0D);
+                girl.getNavigation().moveTo(x, y, z, 1.3D);
             }
             return;
         }

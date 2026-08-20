@@ -79,7 +79,7 @@ public class GirlChopTreesGoal extends Goal {
     public void start() {
         girl.setDailyActivity("chop");
         if (targetLog != null) {
-            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.0D);
+            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.3D);
         }
     }
 
@@ -92,7 +92,7 @@ public class GirlChopTreesGoal extends Goal {
             girl.level().destroyBlock(targetLog, true, girl);
             targetLog = null;
         } else if (girl.getNavigation().isDone()) {
-            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.0D);
+            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.3D);
         }
     }
 

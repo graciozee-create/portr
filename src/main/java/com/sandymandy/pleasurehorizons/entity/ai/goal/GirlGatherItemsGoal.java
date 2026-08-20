@@ -42,7 +42,7 @@ public class GirlGatherItemsGoal extends Goal {
     @Override
     public void start() {
         if (targetItem != null) {
-            girl.getNavigation().moveTo(targetItem, 1.1D);
+            girl.getNavigation().moveTo(targetItem, 1.3D);
         }
     }
 
@@ -77,7 +77,7 @@ public class GirlGatherItemsGoal extends Goal {
                     }
                 }
             } else if (girl.getNavigation().isDone()) {
-                girl.getNavigation().moveTo(targetItem, 1.1D);
+                girl.getNavigation().moveTo(targetItem, 1.3D);
             }
         }
     }

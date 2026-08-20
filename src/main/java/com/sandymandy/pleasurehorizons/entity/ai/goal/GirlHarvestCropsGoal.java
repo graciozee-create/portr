@@ -57,7 +57,7 @@ public class GirlHarvestCropsGoal extends Goal {
     public void start() {
         girl.setDailyActivity("harvest");
         if (targetCrop != null) {
-            girl.getNavigation().moveTo(targetCrop.getX() + 0.5D, targetCrop.getY(), targetCrop.getZ() + 0.5D, 1.0D);
+            girl.getNavigation().moveTo(targetCrop.getX() + 0.5D, targetCrop.getY(), targetCrop.getZ() + 0.5D, 1.3D);
         }
     }
 
@@ -84,7 +84,7 @@ public class GirlHarvestCropsGoal extends Goal {
                     targetCrop = null;
                 }
             } else if (girl.getNavigation().isDone()) {
-                girl.getNavigation().moveTo(targetCrop.getX() + 0.5D, targetCrop.getY(), targetCrop.getZ() + 0.5D, 1.0D);
+                girl.getNavigation().moveTo(targetCrop.getX() + 0.5D, targetCrop.getY(), targetCrop.getZ() + 0.5D, 1.3D);
             }
         }
     }
