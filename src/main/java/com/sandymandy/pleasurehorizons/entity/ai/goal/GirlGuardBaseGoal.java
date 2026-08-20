@@ -29,9 +29,11 @@ public class GirlGuardBaseGoal extends TargetGoal {
             center = girl.blockPosition();
         }
         AABB box = new AABB(center).inflate(16.0D, 6.0D, 16.0D);
-        Monster found = girl.level().getNearestEntity(Monster.class,
+        java.util.List<Monster> candidates = girl.level().getEntitiesOfClass(Monster.class, box,
+                monster -> monster.isAlive() && !girl.isAvoidCreepersEnabled(monster));
+        Monster found = girl.level().getNearestEntity(candidates,
                 TargetingConditions.forCombat().range(16.0D), girl,
-                girl.getX(), girl.getY(), girl.getZ(), box);
+                girl.getX(), girl.getY(), girl.getZ());
         if (found != null && found.isAlive()) {
             girl.setTarget(found);
             return true;
