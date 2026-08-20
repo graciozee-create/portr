@@ -12,6 +12,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlCookGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlFeedOwnerGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHarvestCropsGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlHuntGoal;
+import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlOpenDoorGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlSitGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlStayNearBaseGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.GirlTemptGoal;
@@ -45,6 +46,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
@@ -95,6 +97,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
+        // Let her path through (and open) wooden doors like a villager, so following/guarding
+        // the owner does not leave her stuck behind closed doors.
+        if (this.getNavigation() instanceof GroundPathNavigation navigation) {
+            navigation.setCanOpenDoors(true);
+        }
     }
 
     @Override
@@ -119,6 +126,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(0, new StopMovementGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
+        this.goalSelector.addGoal(1, new GirlOpenDoorGoal(this));
         // Combat goal is added by SettlementGirlEntityAI, which is the level that can
         // actually fire a bow (it implements RangedAttackMob).
         this.registerCombatGoals();
