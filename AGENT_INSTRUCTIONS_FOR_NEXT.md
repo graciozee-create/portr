@@ -814,6 +814,44 @@ Runtime-only: проверить в игре фактическую скорос
 
 CI: run `32404039420`, `SUCCESS`, headSha `74fe493` сверен.
 
+### 5.28. Самохил едой + больше HP + серверный конфиг (`cc6da06`, `6c73f47`)
+
+Запрос пользователя: «чтобы лечилась сама едой из инвентаря», «добавь HP», «настроек для
+продвинутой игры».
+
+**Самохил (`GirlSelfHealGoal`).** Новый гол **без флагов** (не вытесняет движение/бой/look),
+зарегистрирован только у приручённых (`TameableGirlEntity.registerGoals`, приоритет 3). Раз в
+`intervalTicks` (default 40) съедает 1 предмет с `DataComponents.FOOD` из своего инвентаря и
+лечит `2 * nutrition` (та же формула, что ручное кормление в `mobInteract`), играет
+`GENERIC_EAT`. Ест только если HP < `belowHealthPercent` (default 0.8) от максимума; пропускает
+downed/scene/passenger. Однократный (`canContinueToUse=false`), кулдаун тикает в `canUse`.
+
+**Больше HP (×2):** база `GirlEntity` 20→40 (Lucy/Momo), Mika 30→60, Coppie/Slime 15→30,
+Kobold атрибут 15→30 и случайный диапазон `MIN/MAX_HEALTH` 4-12 → 8-24, `CustomGirlProfile.DEFAULT`
+20→40.
+
+**Серверный конфиг `config/pleasurehorizons-girls.toml` (`GirlsConfig`).** Первый серверный
+конфиг мода (до этого были только in-memory `ModConfig` и клиентский freecam):
+- `girls.healthMultiplier` (default 1.0, 0.25–10) и `girls.speedMultiplier` (default 1.0, 0.25–5) —
+  применяются в конструкторе `GirlEntity#applyConfigScaledStats` (покрывает и спавн, и загрузку
+  чанка; идемпотентно, т.к. база каждый раз пересоздаётся из `createDefaultAttributes()`);
+  Kobold применяет множитель и к своему случайному HP в `randomizeAppearance`.
+- `selfHeal.enabled` / `selfHeal.belowHealthPercent` / `selfHeal.intervalTicks`.
+Регистрация: `GirlsConfig.register(container)` в конструкторе `PleasureHorizons`
+(`ModConfig.Type.SERVER`). Значения читаются геттерами напрямую (`ConfigValue.get()`), без
+mirror/sync — вызовы холодные. `ModConfigSpec` в 1.21.1 имеет только generic-оверлоады
+`define/defineInRange(..., Class<T>)` (см. FreecamConfig), типизированных `IntValue`-версий нет.
+
+**Квоты (принятые, не баги):** самохил может съесть сырое мясо, которое иначе пошло бы в печь
+(когда она ранена — приоритет выживания, настраивается порогом); загруженный из чанка Kobold
+получает атрибутное HP (30), а не свой случайный диапазон — наследственная нестыковка
+(раньше 15 vs 4-12), сознательно не чинится здесь (сохранение max-health — отдельная задача).
+
+Runtime-only: проверить в игре порог/кулдаун самохила, новые HP-значения и что множители из
+конфига реально меняют HP/скорость после рестарта.
+
+CI: run `32407001840`, `SUCCESS`, headSha `6c73f47` сверен.
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
