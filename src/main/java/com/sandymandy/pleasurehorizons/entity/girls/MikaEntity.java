@@ -20,7 +20,7 @@ public class MikaEntity extends SettlementGirlEntityAI {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes()
-                .add(Attributes.MAX_HEALTH, 30.0)
+                .add(Attributes.MAX_HEALTH, 60.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.28)
                 .add(Attributes.ATTACK_DAMAGE, 5.0);
     }

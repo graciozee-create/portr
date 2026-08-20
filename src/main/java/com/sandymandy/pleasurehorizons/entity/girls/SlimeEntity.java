@@ -21,7 +21,7 @@ public class SlimeEntity extends WildGirlEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes()
-                .add(Attributes.MAX_HEALTH, 15.0)
+                .add(Attributes.MAX_HEALTH, 30.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.ATTACK_DAMAGE, 2.0);
     }

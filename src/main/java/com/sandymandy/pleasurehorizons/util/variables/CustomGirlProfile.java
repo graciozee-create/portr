@@ -50,7 +50,7 @@ public record CustomGirlProfile(
             0.0625F,
             150f,
             Items.APPLE,
-            20.0,
+            40.0,
             0.30,
             2.0,
             List.of()

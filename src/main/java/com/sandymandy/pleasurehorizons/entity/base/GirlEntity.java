@@ -1,5 +1,6 @@
 package com.sandymandy.pleasurehorizons.entity.base;
 
+import com.sandymandy.pleasurehorizons.config.GirlsConfig;
 import com.sandymandy.pleasurehorizons.networking.S2C.ClothingArmorVisibilityS2CPacket;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.core.BlockPos;
@@ -161,11 +162,40 @@ public abstract class GirlEntity extends PathfinderMob {
 
     protected GirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
+        applyConfigScaledStats();
+    }
+
+    /**
+     * Applies the {@code healthMultiplier}/{@code speedMultiplier} server settings to this
+     * entity's base attributes.
+     *
+     * <p>Runs in the constructor, so it covers both fresh spawns and chunk loads (unlike
+     * {@code finalizeSpawn}, which only fires for new spawns). It is deliberately idempotent:
+     * the base value is re-created from {@link #createDefaultAttributes()} on every construction,
+     * so multiplying the base here never stacks. The server config is synced to clients and the
+     * authoritative attribute values are re-sent by vanilla anyway, so both sides stay consistent.</p>
+     */
+    private void applyConfigScaledStats() {
+        double healthMultiplier = GirlsConfig.healthMultiplier();
+        if (healthMultiplier != 1.0D) {
+            var maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+            if (maxHealth != null) {
+                maxHealth.setBaseValue(maxHealth.getBaseValue() * healthMultiplier);
+                this.setHealth(this.getMaxHealth());
+            }
+        }
+        double speedMultiplier = GirlsConfig.speedMultiplier();
+        if (speedMultiplier != 1.0D) {
+            var speed = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speed != null) {
+                speed.setBaseValue(speed.getBaseValue() * speedMultiplier);
+            }
+        }
     }
 
     public static AttributeSupplier.Builder createDefaultAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0)
+                .add(Attributes.MAX_HEALTH, 40.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.FOLLOW_RANGE, 100.0)
                 .add(Attributes.ATTACK_DAMAGE, 2.0)

@@ -52,8 +52,8 @@ public class KoboldEntity extends SettlementGirlEntityAI {
     public static final int MAX_BODY_SIZE = 115;
     public static final int MIN_BREAST_SIZE = 60;
     public static final int MAX_BREAST_SIZE = 160;
-    private static final int MIN_HEALTH = 4;
-    private static final int MAX_HEALTH = 12;
+    private static final int MIN_HEALTH = 8;
+    private static final int MAX_HEALTH = 24;
 
     /** Avoids recomputing dimensions every tick when nothing changed. */
     private float lastHitboxHeight = 1.0f;
@@ -66,7 +66,7 @@ public class KoboldEntity extends SettlementGirlEntityAI {
 
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes()
-                .add(Attributes.MAX_HEALTH, 15.0)
+                .add(Attributes.MAX_HEALTH, 30.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.2)
                 .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
@@ -302,6 +302,9 @@ public class KoboldEntity extends SettlementGirlEntityAI {
 
     private void randomizeAppearance(RandomSource random) {
         int health = MIN_HEALTH + random.nextInt(MAX_HEALTH - MIN_HEALTH + 1);
+        // The base GirlEntity constructor already applied healthMultiplier to the placeholder
+        // attribute; apply it to the randomised value as well so the setting also governs Kobolds.
+        health = (int) Math.round(health * com.sandymandy.pleasurehorizons.config.GirlsConfig.healthMultiplier());
         AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealth != null) {
             maxHealth.setBaseValue(health);
