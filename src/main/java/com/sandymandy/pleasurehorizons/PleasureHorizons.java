@@ -8,19 +8,23 @@ import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTy
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
+import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
+import com.sandymandy.pleasurehorizons.util.managers.TamedGirlRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +84,17 @@ public class PleasureHorizons {
         // from the previous world must never block players or beds in the next one.
         usedBeds.clear();
         activeScenes.clear();
+        TamedGirlRegistry.clear();
+        TameableGirlEntity.clearPendingCalls();
         CustomGirlLoader.register();
+    }
+
+    @SubscribeEvent
+    public void onServerTick(ServerTickEvent.Post event) {
+        // Complete summons whose target girl lives in a chunk that had to be force-loaded.
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            TameableGirlEntity.tickPendingCalls(level);
+        }
     }
 
     @SubscribeEvent

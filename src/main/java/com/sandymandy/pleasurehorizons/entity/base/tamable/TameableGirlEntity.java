@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
+import com.sandymandy.pleasurehorizons.util.managers.TamedGirlRegistry;
 import com.sandymandy.pleasurehorizons.util.variables.GirlRole;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -217,6 +218,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     public void setOwnerUUID(@Nullable UUID uuid) {
         this.entityData.set(OWNER_UUID, Optional.ofNullable(uuid));
+        // Keep the summon registry in sync: remember a tamed girl's location, drop her when she
+        // is released, and ignore the client (the registry is server-only).
+        if (!this.level().isClientSide()) {
+            if (uuid == null) {
+                TamedGirlRegistry.remove(this.getUUID());
+            } else {
+                TamedGirlRegistry.update(this);
+            }
+        }
     }
 
     @Nullable
@@ -282,14 +292,32 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return this.getGirlID().equalsIgnoreCase(name);
     }
 
+    @Override
+    public void remove(net.minecraft.world.entity.Entity.RemovalReason reason) {
+        // Chunk unload goes through Entity#setRemoved directly (not through remove()), so the
+        // registry keeps her last known position and the call can still reach her. Only actual
+        // removal (death, discard) drops the entry.
+        if (!this.level().isClientSide() && reason.shouldDestroy()) {
+            TamedGirlRegistry.remove(this.getUUID());
+        }
+        super.remove(reason);
+    }
+
     /**
-     * Teleports every loaded, owned girl to the player. Pass a non-empty {@code name} to limit
-     * the call to a single girl matching her custom name or rig id. Returns the count of girls
-     * actually teleported.
+     * Teleports every owned girl to the player. Pass a non-empty {@code name} to limit the call
+     * to a single girl matching her custom name or rig id. Returns the count of girls that will
+     * be summoned.
+     *
+     * <p>Loaded girls are teleported immediately. Girls in unloaded chunks are looked up in the
+     * server-side {@link TamedGirlRegistry}, their chunk is force-loaded, and they are teleported
+     * once the chunk actually loads (see {@link #tickPendingCalls}).</p>
      */
     public static int callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
         int called = 0;
-        for (net.minecraft.world.entity.Entity entity : owner.serverLevel().getAllEntities()) {
+        ServerLevel level = owner.serverLevel();
+
+        // Loaded girls: teleport now.
+        for (net.minecraft.world.entity.Entity entity : level.getAllEntities()) {
             if (entity instanceof TameableGirlEntity girl
                     && girl.isTamed()
                     && girl.isOwner(owner)
@@ -298,7 +326,66 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 called++;
             }
         }
+
+        // Unloaded girls: force-load their chunk and teleport once they load.
+        for (TamedGirlRegistry.Entry entry : TamedGirlRegistry.ownedBy(owner.getUUID(), name)) {
+            if (level.getEntity(entry.girlId()) != null) {
+                continue; // already handled above as a loaded entity
+            }
+            if (!level.dimension().equals(entry.dimension())) {
+                continue; // cannot cross dimensions; she will be reachable from her own dimension
+            }
+
+            net.minecraft.world.level.ChunkPos chunk = new net.minecraft.world.level.ChunkPos(
+                    net.minecraft.util.Mth.floor(entry.x()) >> 4,
+                    net.minecraft.util.Mth.floor(entry.z()) >> 4);
+            level.setChunkForced(chunk.x, chunk.z, true);
+            PENDING_CALLS.add(new PendingCall(entry.girlId(), owner.getUUID(),
+                    level.dimension(), chunk, level.getGameTime() + 100));
+            called++;
+        }
         return called;
+    }
+
+    /** A summon request waiting for a force-loaded chunk to actually load. */
+    private record PendingCall(UUID girlId, UUID ownerId,
+                               net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension,
+                               net.minecraft.world.level.ChunkPos chunk, long deadlineTick) {
+    }
+
+    private static final java.util.List<PendingCall> PENDING_CALLS = new java.util.ArrayList<>();
+
+    /** Completes pending summons for one level; called from the server tick. */
+    public static void tickPendingCalls(ServerLevel level) {
+        if (PENDING_CALLS.isEmpty()) {
+            return;
+        }
+
+        java.util.Iterator<PendingCall> it = PENDING_CALLS.iterator();
+        while (it.hasNext()) {
+            PendingCall call = it.next();
+            if (!level.dimension().equals(call.dimension())) {
+                continue;
+            }
+
+            net.minecraft.world.entity.Entity entity = level.getEntity(call.girlId());
+            if (entity instanceof TameableGirlEntity girl && girl.isTamed()) {
+                ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
+                if (owner != null && girl.isOwner(owner)) {
+                    girl.callToOwner(owner);
+                }
+                level.setChunkForced(call.chunk().x, call.chunk().z, false);
+                it.remove();
+            } else if (level.getGameTime() > call.deadlineTick()) {
+                level.setChunkForced(call.chunk().x, call.chunk().z, false);
+                it.remove();
+            }
+        }
+    }
+
+    /** Drops every pending summon (e.g. when the integrated server restarts). */
+    public static void clearPendingCalls() {
+        PENDING_CALLS.clear();
     }
 
     // ------------------------------------------------- survival utility toggles
@@ -709,6 +796,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     @Override
     public void tick() {
         super.tick();
+        if (!this.level().isClientSide() && this.isTamed() && this.tickCount % 40 == 0) {
+            // Refresh her last known location so the summon registry can reach her after her
+            // chunk unloads.
+            TamedGirlRegistry.update(this);
+        }
         if (!this.level().isClientSide() && this.tickCount % 20 == 0) {
             updateBackpackStatusIfChanged();
         }
