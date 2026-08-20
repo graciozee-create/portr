@@ -165,7 +165,26 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 return !TameableGirlEntity.this.isCarried() && super.canContinueToUse();
             }
         });
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+            @Override
+            public boolean canUse() {
+                // Friendly fire (a swept sword, an AoE, an accidental hit) marks the owner as the
+                // last attacker; never retaliate against the owner.
+                LivingEntity lastHurt = TameableGirlEntity.this.getLastHurtByMob();
+                if (lastHurt != null && TameableGirlEntity.this.isOwner(lastHurt)) {
+                    return false;
+                }
+                return super.canUse();
+            }
+
+            @Override
+            protected boolean canAttack(@Nullable LivingEntity target, net.minecraft.world.entity.ai.targeting.TargetingConditions conditions) {
+                if (target != null && TameableGirlEntity.this.isOwner(target)) {
+                    return false;
+                }
+                return super.canAttack(target, conditions);
+            }
+        });
         // Defend the owner: retaliate against whoever hurt them, and join their fights.
         this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
         this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
@@ -491,6 +510,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (source.is(DamageTypes.GENERIC_KILL) || source.is(DamageTypes.FELL_OUT_OF_WORLD)) {
             return super.hurt(source, amount);
         }
+        // The owner always has authority over her life: their damage passes straight through, so
+        // they can finish off even a downed girl. Mobs instead only knock her down (below) and
+        // cannot land the killing blow.
+        if (this.isDamageFromOwner(source)) {
+            return super.hurt(source, amount);
+        }
         if (this.isDowned() || this.isMovementLocked()) {
             return false;
         }
@@ -512,6 +537,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return false;
         }
         return super.hurt(source, amount);
+    }
+
+    /** True when the damage was dealt by her owner (covers both melee and owner-fired arrows). */
+    private boolean isDamageFromOwner(DamageSource source) {
+        net.minecraft.world.entity.Entity attacker = source.getEntity();
+        return attacker != null
+                && attacker != this
+                && this.getOwnerUUID() != null
+                && attacker.getUUID().equals(this.getOwnerUUID());
     }
 
     /**
