@@ -4,6 +4,7 @@ import com.sandymandy.pleasurehorizons.PleasureHorizons;
 import com.sandymandy.pleasurehorizons.config.ModConfig;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.client.gui.screen.hud.GirlStatusOverlay;
+import com.sandymandy.pleasurehorizons.networking.C2S.CallGirlsC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.CumKeybindC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.ShiftRolesC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.ThrustKeybindC2SPacket;
@@ -40,6 +41,11 @@ public class PleasureHorizonsClientTickHandler {
         // The shift switch is global and works outside scenes.
         if (PleasureHorizonsKeybinds.SHIFT_ROLES_KEY.consumeClick()) {
             PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
+        }
+
+        // Call every owned girl to the player.
+        if (PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()) {
+            PacketDistributor.sendToServer(new CallGirlsC2SPacket());
         }
 
         // Status HUD is purely client-side and off by default.

@@ -22,6 +22,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -210,6 +211,75 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     public boolean isOwner(LivingEntity entity) {
         return entity != null && entity.getUUID().equals(this.getOwnerUUID());
+    }
+
+    // ------------------------------------------------------------ summoning
+
+    /**
+     * Teleports her to her owner (same dimension). Used by the "call girls" keybind and
+     * {@code /girls call}, so a tamed girl can always reach and defend the player no matter how
+     * far away she was left. Only loaded girls can be teleported - an unloaded entity does not
+     * exist in memory, so she is skipped if her chunk is not loaded.
+     */
+    public boolean callToOwner(Player owner) {
+        if (this.level().isClientSide() || owner == null || this.isSceneActive()) {
+            return false;
+        }
+
+        BlockPos target = findSafeSpotNear(this.level(), owner);
+        this.stopRiding();
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        this.setNoGravity(false);
+        this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        return true;
+    }
+
+    /** Nearest air block with air above it around the player, to avoid suffocating on arrival. */
+    private static BlockPos findSafeSpotNear(Level level, Player player) {
+        BlockPos center = player.blockPosition();
+        int[] ring = {0, 1, -1, 2, -2};
+        for (int dx : ring) {
+            for (int dz : ring) {
+                BlockPos candidate = center.offset(dx, 0, dz);
+                if (level.getBlockState(candidate).isAir()
+                        && level.getBlockState(candidate.above()).isAir()) {
+                    return candidate;
+                }
+            }
+        }
+        return center;
+    }
+
+    /** Matches a user-supplied name against her custom name or her rig id (case-insensitive). */
+    public boolean matchesName(String name) {
+        if (name == null || name.isEmpty()) {
+            return true;
+        }
+        if (this.hasCustomName() && this.getCustomName().getString().equalsIgnoreCase(name)) {
+            return true;
+        }
+        return this.getGirlID().equalsIgnoreCase(name);
+    }
+
+    /**
+     * Teleports every loaded, owned girl to the player. Pass a non-empty {@code name} to limit
+     * the call to a single girl matching her custom name or rig id. Returns the count of girls
+     * actually teleported.
+     */
+    public static int callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
+        int called = 0;
+        for (net.minecraft.world.entity.Entity entity : owner.serverLevel().getAllEntities()) {
+            if (entity instanceof TameableGirlEntity girl
+                    && girl.isTamed()
+                    && girl.isOwner(owner)
+                    && girl.matchesName(name)
+                    && girl.callToOwner(owner)) {
+                called++;
+            }
+        }
+        return called;
     }
 
     // ------------------------------------------------- survival utility toggles

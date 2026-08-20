@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -59,7 +60,12 @@ public class GirlsCommand {
                                 .suggests((context, builder) -> SharedSuggestionProvider.suggest(
                                         List.of("idle", "worker", "guard", "cook"), builder))
                                 .executes(ctx -> applyRole(ctx.getSource(),
-                                        StringArgumentType.getString(ctx, "role"))))));
+                                        StringArgumentType.getString(ctx, "role")))))
+                .then(Commands.literal("call")
+                        .executes(ctx -> callGirls(ctx.getSource(), null))
+                        .then(Commands.argument("name", StringArgumentType.string())
+                                .executes(ctx -> callGirls(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "name"))))));
     }
 
     private static int reloadProfiles(CommandSourceStack source) {
@@ -121,5 +127,23 @@ public class GirlsCommand {
                 "commands.pleasurehorizons.girls.role_applied",
                 Component.translatable("role.pleasurehorizons." + role.id()), girls.size()), true);
         return girls.size();
+    }
+
+    /** Teleports every loaded, owned girl to the commanding player (optionally a named one). */
+    private static int callGirls(CommandSourceStack source, @Nullable String name) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.players_only"));
+            return 0;
+        }
+
+        int called = TameableGirlEntity.callOwnedGirlsTo(player, name);
+        if (called == 0) {
+            source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.no_girls"));
+            return 0;
+        }
+
+        source.sendSuccess(() -> Component.translatable(
+                "commands.pleasurehorizons.girls.called", called), true);
+        return called;
     }
 }

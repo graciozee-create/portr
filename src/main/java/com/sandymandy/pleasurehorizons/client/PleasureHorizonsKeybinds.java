@@ -42,6 +42,13 @@ public class PleasureHorizonsKeybinds {
             org.lwjgl.glfw.GLFW.GLFW_KEY_N,
             CATEGORY);
 
+    /** Teleports every owned girl to the player - the "come defend me" button. */
+    public static final KeyMapping CALL_GIRLS_KEY = new KeyMapping(
+            "key.pleasurehorizons.call_girls",
+            InputConstants.Type.KEYSYM,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_G,
+            CATEGORY);
+
     /**
      * Freecam controls, mirroring upstream's {@code ModBindings}.
      *

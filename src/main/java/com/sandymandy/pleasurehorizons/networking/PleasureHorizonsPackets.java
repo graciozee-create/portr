@@ -30,6 +30,7 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(KoboldCustomizeC2SPacket.TYPE, KoboldCustomizeC2SPacket.STREAM_CODEC, KoboldCustomizeC2SPacket::handle);
         registrar.playToServer(RemovePreviewEntityC2SPacket.TYPE, RemovePreviewEntityC2SPacket.STREAM_CODEC, RemovePreviewEntityC2SPacket::handle);
         registrar.playToServer(ShiftRolesC2SPacket.TYPE, ShiftRolesC2SPacket.STREAM_CODEC, ShiftRolesC2SPacket::handle);
+        registrar.playToServer(CallGirlsC2SPacket.TYPE, CallGirlsC2SPacket.STREAM_CODEC, CallGirlsC2SPacket::handle);
         registrar.playToClient(ClothingArmorVisibilityS2CPacket.TYPE, ClothingArmorVisibilityS2CPacket.STREAM_CODEC, ClothingArmorVisibilityS2CPacket::handle);
         registrar.playToClient(GirlStatusS2CPacket.TYPE, GirlStatusS2CPacket.STREAM_CODEC, GirlStatusS2CPacket::handle);
         registrar.playToClient(SceneOptionsS2CPacket.TYPE, SceneOptionsS2CPacket.STREAM_CODEC, SceneOptionsS2CPacket::handle);
