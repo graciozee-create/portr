@@ -202,8 +202,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // Defend the owner: retaliate against whoever hurt them, and join their fights.
         this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
         this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
+        // Owner guard is checked before base guard, so a girl with both toggles on (the GUARD
+        // role enables both) defends her owner first and only falls back to guarding the base
+        // when no hostile threatens the owner.
+        this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
-        this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this)); // guard owner when enabled - new advanced AI
         // Hunting is the lowest-priority target source: hostiles always take precedence.
         this.targetSelector.addGoal(2, new GirlHuntGoal(this));
     }

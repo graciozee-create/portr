@@ -10,11 +10,23 @@ import net.minecraft.world.phys.AABB;
 import java.util.EnumSet;
 
 /**
- * Advanced AI: Guard owner within radius - attacks monsters near owner.
- * Controlled via AI toggle button.
+ * Bodyguard behaviour: while {@code guardOwner} is on, the girl keeps engaging hostile mobs
+ * around her owner, one after another, on a short scan cooldown.
+ *
+ * <p>The previous version aborted a chase as soon as the girl stepped more than 20 blocks from
+ * the owner. A fleeing or kiting mob (a skeleton backing away, a creeper wandering off) therefore
+ * made her stop mid-fight and turn back - the reported "she sometimes just stops". Give-up is now
+ * measured from the target instead of the owner, and a cooldown re-scan picks up the next hostile
+ * once the current one is dead, so she sweeps through a whole pack around the owner.</p>
  */
 public class GirlGuardOwnerGoal extends TargetGoal {
+    private static final double SCAN_RANGE = 12.0D;
+    private static final double SCAN_HEIGHT = 6.0D;
+    private static final double GIVE_UP_RANGE_SQ = 32.0D * 32.0D;
+    private static final int SCAN_INTERVAL = 10;
+
     private final TameableGirlEntity girl;
+    private int scanCooldown = 0;
 
     public GirlGuardOwnerGoal(TameableGirlEntity girl) {
         super(girl, false);
@@ -24,17 +36,39 @@ public class GirlGuardOwnerGoal extends TargetGoal {
 
     @Override
     public boolean canUse() {
-        if (!girl.isGuardOwnerEnabled()) return false;
-        if (girl.isSitting() || girl.isSceneActive() || girl.isDowned()) return false;
-        if (girl.isPassenger()) return false;
+        if (scanCooldown > 0) {
+            scanCooldown--;
+            return false;
+        }
+        scanCooldown = SCAN_INTERVAL;
+        if (!guardActive()) return false;
 
         LivingEntity owner = girl.getOwner();
         if (owner == null) return false;
 
-        AABB box = new AABB(owner.blockPosition()).inflate(12.0D, 6.0D, 12.0D);
-        Monster found = girl.level().getNearestEntity(Monster.class,
-                TargetingConditions.forCombat().range(12.0D), girl,
-                owner.getX(), owner.getY(), owner.getZ(), box);
+        // Never steal a target that another (equal- or higher-priority) goal already set.
+        LivingEntity current = girl.getTarget();
+        if (current != null && current.isAlive()) return false;
+
+        return pickTarget(owner);
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        if (!guardActive()) return false;
+        LivingEntity target = girl.getTarget();
+        if (target == null || !target.isAlive()) return false;
+        return girl.distanceToSqr(target) <= GIVE_UP_RANGE_SQ;
+    }
+
+    private boolean guardActive() {
+        return girl.isGuardOwnerEnabled()
+                && !girl.isSitting() && !girl.isSceneActive()
+                && !girl.isDowned() && !girl.isPassenger();
+    }
+
+    private boolean pickTarget(LivingEntity owner) {
+        Monster found = findNearestMonster(owner);
         if (found != null && found.isAlive()) {
             girl.setTarget(found);
             return true;
@@ -42,11 +76,10 @@ public class GirlGuardOwnerGoal extends TargetGoal {
         return false;
     }
 
-    @Override
-    public boolean canContinueToUse() {
-        return girl.isGuardOwnerEnabled()
-                && !girl.isSitting() && !girl.isSceneActive() && !girl.isDowned() && !girl.isPassenger()
-                && girl.getTarget() != null && girl.getTarget().isAlive()
-                && girl.getOwner() != null && girl.distanceToSqr(girl.getOwner()) < 400; // within 20 blocks of owner
+    private Monster findNearestMonster(LivingEntity owner) {
+        AABB box = new AABB(owner.blockPosition()).inflate(SCAN_RANGE, SCAN_HEIGHT, SCAN_RANGE);
+        return girl.level().getNearestEntity(Monster.class,
+                TargetingConditions.forCombat().range(SCAN_RANGE), girl,
+                owner.getX(), owner.getY(), owner.getZ(), box);
     }
 }
