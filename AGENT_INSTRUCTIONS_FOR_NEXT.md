@@ -687,6 +687,24 @@ structure-spawned мобов, как жители/коты в деревнях).
 
 CI: run см. следующий коммит.
 
+### 5.23. Двери + вызов девушек к игроку (запрос «защищали везде / не застревали»)
+
+- **Двери** (`a7a5e3d`): `TameableGirlEntity` в конструкторе делает
+  `((GroundPathNavigation) getNavigation()).setCanOpenDoors(true)` (как ванильный житель,
+  `Villager` строка 185), а новый `GirlOpenDoorGoal extends DoorInteractGoal` физически
+  открывает дверь в `start()` и закрывает в `stop()`. Гол пропускает scene/downed/passenger/sit.
+  Действует на всех приручённых (включая settlement-ИИ). Проверено по исходникам:
+  `WalkNodeEvaluator` пускает путь через закрытую деревянную дверь при `canOpenDoors() && canPassDoors()`.
+- **Вызов** (`dc33075`): клавиша **G** (`key.pleasurehorizons.call_girls`) → `CallGirlsC2SPacket`
+  → `TameableGirlEntity.callOwnedGirlsTo(player, null)` — телепортирует ВСЕХ загруженных
+  прирученных девушек игрока к нему (найденный air-блок рядом, сброс скорости/навигации/гравитации,
+  пропуск scene-active). Команда `/girls call` — всех, `/girls call <имя>` — одну по кастомному
+  имени или girl id. Ограничение: только ЗАГРУЖЕННЫЕ сущности (в выгруженном чанке сущности в
+  памяти нет) — итерация через `ServerLevel.getAllEntities()`. Связка «вызов + Guard Me» = защита
+  везде. Не добавлять cooldown без необходимости.
+
+CI: `a7a5e3d` run `32381452137`, `dc33075` run `32381642441` — оба SUCCESS, headSha сверены.
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
