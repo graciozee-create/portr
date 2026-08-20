@@ -660,6 +660,22 @@ CI: run `32129653305`, job `95687752605`, `SUCCESS`, headSha `60ca3e5` свер�
 
 CI: run `32133809458`, job `95700498308`, `SUCCESS`, headSha `d7482f9` сверен.
 
+### 5.22. «Девушки не спавнятся в деревне» — проверено: НЕ баг, а генерация мира
+
+Проверено по коду и исходникам 1.21.1:
+- Спавн девушек в girl_village — ванильный механизм jigsaw + сущности в `.nbt`
+  (`SinglePoolElement.place → StructureTemplate.placeInWorld → placeEntities → spawnEntityInWorld`).
+  NBT lucy/momo/mika содержат `id` + `PersistenceRequired: true` + Pos/Health; дом ссылается на
+  пул `girl_village/entities`.
+- Деспавн не происходит: `Mob.checkDespawn` обёрнут в `!isPersistenceRequired()`, NBT ставит
+  PersistenceRequired, `Mob.readAdditionalSaveData` его читает. Переопределённый
+  `removeWhenFarAway() { return !isTamed(); }` вызывается только внутри этой ветки → не деспавнит.
+- Biome-тег корректен: `#c:is_plains` и `#c:is_plateau` существуют в NeoForge 1.21.1.
+- Причины «не встретил»: структура только в НОВЫХ чанках и в биомах равнин/луга/тайги/плато;
+  редкая (spacing 34); в старом мире не появится. Проверка: `/locate structure pleasurehorizons:girl_village`.
+
+НЕ «чинить» спавн — дефекта нет. Если дом есть, а девушек нет — смотреть лог генерации мира.
+
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
