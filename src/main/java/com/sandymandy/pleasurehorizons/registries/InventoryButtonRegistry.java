@@ -2,13 +2,13 @@ package com.sandymandy.pleasurehorizons.registries;
 
 import com.sandymandy.pleasurehorizons.networking.C2S.InventoryButtonC2SPacket;
 import com.sandymandy.pleasurehorizons.screen.InventoryButtonAction;
-import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 
 /**
- * The buttons shown in the girl inventory screen.
+ * The buttons shown in the girl inventory screen, split into a main tab (relationship and
+ * comfort actions) and a survival tab (the AI behaviours that make her useful around a base).
  *
  * <p>Every action previously had an empty body, so the buttons did nothing at all.
  * They now send {@link InventoryButtonC2SPacket} to the server, which applies the
@@ -17,40 +17,88 @@ import java.util.List;
  */
 public class InventoryButtonRegistry {
 
-    public static final List<InventoryButtonAction> BUTTONS_LEFT = List.of(
+    public static final List<InventoryButtonAction> BUTTONS_MAIN_LEFT = List.of(
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.breakUp"), 0,
+                    "gui.pleasurehorizons.button.breakUp", 0,
                     (girl, player) -> send(girl.getId(), "breakUp")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.setBase"), 1,
+                    "gui.pleasurehorizons.button.setBase", 1,
                     (girl, player) -> send(girl.getId(), "setBase")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.goToBase"), 1,
+                    "gui.pleasurehorizons.button.goToBase", 1,
                     (girl, player) -> send(girl.getId(), "goToBase")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.customize"), 1,
+                    "gui.pleasurehorizons.button.customize", 1, true,
                     (girl, player) -> send(girl.getId(), "customize"))
     );
 
-    public static final List<InventoryButtonAction> BUTTONS_RIGHT = List.of(
+    public static final List<InventoryButtonAction> BUTTONS_MAIN_RIGHT = List.of(
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.sit"), 2,
+                    "gui.pleasurehorizons.button.sit", 2,
                     (girl, player) -> send(girl.getId(), "sit")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.follow"), 3,
+                    "gui.pleasurehorizons.button.follow", 3,
                     (girl, player) -> send(girl.getId(), "follow")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.strip"), 4,
+                    "gui.pleasurehorizons.button.strip", 4,
                     (girl, player) -> send(girl.getId(), "stripOrDressup")),
 
             new InventoryButtonAction(
-                    Component.translatable("gui.pleasurehorizons.button.talk"), 4,
+                    "gui.pleasurehorizons.button.talk", 4, true,
                     (girl, player) -> send(girl.getId(), "talk"))
+    );
+
+    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_LEFT = List.of(
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.guardBase", 1,
+                    (girl, player) -> send(girl.getId(), "guardBase")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.guardOwner", 2,
+                    (girl, player) -> send(girl.getId(), "guardOwner")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.stayNearBase", 1,
+                    (girl, player) -> send(girl.getId(), "stayNearBase")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.gather", 2,
+                    (girl, player) -> send(girl.getId(), "gather")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.harvest", 2,
+                    (girl, player) -> send(girl.getId(), "harvest")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.cook", 3,
+                    (girl, player) -> send(girl.getId(), "cook")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.cycleRole", 2,
+                    (girl, player) -> send(girl.getId(), "cycleRole"))
+    );
+
+    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_RIGHT = List.of(
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.chopTrees", 2,
+                    (girl, player) -> send(girl.getId(), "chopTrees")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.hunt", 3,
+                    (girl, player) -> send(girl.getId(), "hunt")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.feedOwner", 3,
+                    (girl, player) -> send(girl.getId(), "feedOwner")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.dropLoot", 1,
+                    (girl, player) -> send(girl.getId(), "dropLoot"))
     );
 
     private static void send(int entityId, String actionId) {

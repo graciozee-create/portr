@@ -1,13 +1,19 @@
 package com.sandymandy.pleasurehorizons.entity.base;
 
+import com.sandymandy.pleasurehorizons.config.GirlsConfig;
+import com.sandymandy.pleasurehorizons.networking.S2C.ClothingArmorVisibilityS2CPacket;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -29,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * Base class for every girl entity.
@@ -46,8 +54,6 @@ public abstract class GirlEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> IS_TEMPORARY =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> CREATED_CLONE =
-            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> LOCKED_STATE =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> WAITING_FOR_PLAYER =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
@@ -97,21 +103,42 @@ public abstract class GirlEntity extends PathfinderMob {
     // NOTE: deliberately uses the vanilla VECTOR3 serializer rather than a custom one.
     // defineId() runs during class initialisation, which can happen before a modded
     // serializer registry is populated - that would hard-crash on startup.
-    private static final EntityDataAccessor<Vector3f> PASSENGER_BONE_POSITION =
-            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Vector3f> BREAST_OFFSET =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.VECTOR3);
+    private static final EntityDataAccessor<Boolean> IS_DOWNED =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+
+    // --- AI Task toggles (new advanced AI system) ---
+    private static final EntityDataAccessor<Boolean> AI_GUARD_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GUARD_OWNER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_GATHER =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_HARVEST =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AI_STAY_NEAR_BASE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
 
     public static final Random RANDOM = new Random();
 
     public Map<String, Boolean> boneVisibility = new HashMap<>();
     public Map<String, Integer> boneColorOverrides = new HashMap<>();
+    /**
+     * Per-bone texture overrides, drawn by {@code BoneOverrideRenderLayer}.
+     *
+     * <p>Client-side only and never saved: they are rebuilt from the scene state each time.
+     * Three layers exist so a bone can be stacked (base skin, then overlays).</p>
+     */
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverrides = new HashMap<>();
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer2 = new HashMap<>();
+    public Map<String, net.minecraft.resources.ResourceLocation> boneTextureOverridesLayer3 = new HashMap<>();
+    /** Per-bone UV shift, used to pick the armour material column. Client-side only. */
+    public Map<String, org.joml.Vector2f> boneUVOffsets = new HashMap<>();
     public Map<String, Vec3> boneSizeOverrides = new HashMap<>();
     public Map<String, Vec3> bonePositionOffset = new HashMap<>();
     public final Map<EquipmentSlot, Boolean> armorVisibility = new EnumMap<>(EquipmentSlot.class);
 
-    public Vec3 previousVelocity = Vec3.ZERO;
-    public float previousYaw = 0;
     public float passengerYOffset = -1f;
     public boolean currentLoopState = false;
     public boolean currentHoldState = false;
@@ -123,16 +150,59 @@ public abstract class GirlEntity extends PathfinderMob {
     @Nullable
     private Player lookAtTarget = null;
 
+    // Preview authorization is intentionally server-only: clients receive entity ids for rendering,
+    // but may not choose which entity a customization/removal packet is allowed to affect.
+    @Nullable
+    private UUID previewRequesterId;
+    @Nullable
+    private UUID activePreviewId;
+    private int activePreviewEntityId = -1;
+    @Nullable
+    private UUID previewSourceId;
+
     protected GirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
+        applyConfigScaledStats();
+    }
+
+    /**
+     * Applies the {@code healthMultiplier}/{@code speedMultiplier} server settings to this
+     * entity's base attributes.
+     *
+     * <p>Runs in the constructor, so it covers both fresh spawns and chunk loads (unlike
+     * {@code finalizeSpawn}, which only fires for new spawns). It is deliberately idempotent:
+     * the base value is re-created from {@link #createDefaultAttributes()} on every construction,
+     * so multiplying the base here never stacks. The server config is synced to clients and the
+     * authoritative attribute values are re-sent by vanilla anyway, so both sides stay consistent.</p>
+     */
+    private void applyConfigScaledStats() {
+        double healthMultiplier = GirlsConfig.healthMultiplier();
+        if (healthMultiplier != 1.0D) {
+            var maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+            if (maxHealth != null) {
+                maxHealth.setBaseValue(maxHealth.getBaseValue() * healthMultiplier);
+                this.setHealth(this.getMaxHealth());
+            }
+        }
+        double speedMultiplier = GirlsConfig.speedMultiplier();
+        if (speedMultiplier != 1.0D) {
+            var speed = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speed != null) {
+                speed.setBaseValue(speed.getBaseValue() * speedMultiplier);
+            }
+        }
     }
 
     public static AttributeSupplier.Builder createDefaultAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0)
+                .add(Attributes.MAX_HEALTH, 40.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
-                .add(Attributes.FOLLOW_RANGE, 32.0)
-                .add(Attributes.ATTACK_DAMAGE, 2.0);
+                .add(Attributes.FOLLOW_RANGE, 100.0)
+                .add(Attributes.ATTACK_DAMAGE, 2.0)
+                // Positive water-movement efficiency makes LivingEntity#travel lerp the fixed
+                // 0.02 swim speed toward her land speed, so crossing water while following the
+                // owner is no longer a crawl (vanilla default is 0.0 = 0.02 blocks/tick).
+                .add(Attributes.WATER_MOVEMENT_EFFICIENCY, 0.6);
     }
 
     @Override
@@ -141,7 +211,6 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(WAITING_AT_BED, false);
         builder.define(IS_TEMPORARY, false);
         builder.define(CREATED_CLONE, false);
-        builder.define(LOCKED_STATE, false);
         builder.define(FROZEN_STATE, false);
         builder.define(WAITING_FOR_PLAYER, false);
         builder.define(STRIPPED, false);
@@ -161,11 +230,16 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(BREAST_SIZE, 100);
         builder.define(MILKED_AMOUNT, 0);
         builder.define(BREAST_OFFSET, new Vector3f());
-        builder.define(PASSENGER_BONE_POSITION, new Vector3f());
         builder.define(BASE_POS, BlockPos.ZERO);
         builder.define(OVERRIDE_ANIM, "");
         builder.define(SCENE_ANIM, "");
         builder.define(CONSUMING_STACK, Items.COOKED_BEEF.getDefaultInstance());
+        builder.define(IS_DOWNED, false);
+        builder.define(AI_GUARD_BASE, false);
+        builder.define(AI_GUARD_OWNER, false);
+        builder.define(AI_GATHER, true); // gather by default is useful and non-intrusive
+        builder.define(AI_HARVEST, false);
+        builder.define(AI_STAY_NEAR_BASE, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -177,6 +251,22 @@ public abstract class GirlEntity extends PathfinderMob {
     public boolean isFollowing() {
         return this.entityData.get(FOLLOWING);
     }
+
+    // --- AI toggles ---
+    public void setGuardBaseEnabled(boolean enabled) { this.entityData.set(AI_GUARD_BASE, enabled); }
+    public boolean isGuardBaseEnabled() { return this.entityData.get(AI_GUARD_BASE); }
+
+    public void setGuardOwnerEnabled(boolean enabled) { this.entityData.set(AI_GUARD_OWNER, enabled); }
+    public boolean isGuardOwnerEnabled() { return this.entityData.get(AI_GUARD_OWNER); }
+
+    public void setGatherEnabled(boolean enabled) { this.entityData.set(AI_GATHER, enabled); }
+    public boolean isGatherEnabled() { return this.entityData.get(AI_GATHER); }
+
+    public void setHarvestEnabled(boolean enabled) { this.entityData.set(AI_HARVEST, enabled); }
+    public boolean isHarvestEnabled() { return this.entityData.get(AI_HARVEST); }
+
+    public void setStayNearBaseEnabled(boolean enabled) { this.entityData.set(AI_STAY_NEAR_BASE, enabled); }
+    public boolean isStayNearBaseEnabled() { return this.entityData.get(AI_STAY_NEAR_BASE); }
 
     public void setStripped(boolean stripped) {
         this.entityData.set(STRIPPED, stripped);
@@ -190,21 +280,70 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(FROZEN_STATE, locked);
     }
 
+    public boolean isDowned() {
+        return this.entityData.get(IS_DOWNED);
+    }
+
+    public void setDowned(boolean downed) {
+        this.entityData.set(IS_DOWNED, downed);
+    }
+
     public boolean isFrozenInPlace() {
         return this.entityData.get(FROZEN_STATE);
     }
 
-    public void setMovementLockedState(boolean locked) {
-        this.entityData.set(LOCKED_STATE, locked);
+    /**
+     * Movement lock is derived from its already-synchronised source states. Keeping a second
+     * tracked flag here previously left it permanently false because nothing updated it; deriving
+     * the value also makes transitions visible immediately on both logical sides without any
+     * client-side tracked-data writes.
+     */
+    public boolean isMovementLocked() {
+        return this.isFrozenInPlace()
+                || this.isWaitingAtBed()
+                || this.isSceneActive()
+                || this.isWaitingForPlayer();
     }
 
-    public boolean isMovementLocked() {
-        return this.entityData.get(LOCKED_STATE);
+    @Override
+    public boolean isPushable() {
+        return !this.isMovementLocked() && super.isPushable();
+    }
+
+    @Override
+    public void push(Entity entity) {
+        if (!this.isMovementLocked()) {
+            super.push(entity);
+        }
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
+        if (!this.isMovementLocked()) {
+            super.push(x, y, z);
+        }
+    }
+
+    @Override
+    public void knockback(double strength, double x, double z) {
+        if (this.isMovementLocked()) {
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        super.knockback(strength, x, z);
     }
 
     public void setGUIOpenState(boolean state, @Nullable Player lookAt) {
         this.guiOpenState = state;
         this.lookAtTarget = lookAt;
+
+        if (!state && !this.level().isClientSide() && this.activePreviewId != null
+                && this.level() instanceof ServerLevel serverLevel) {
+            if (serverLevel.getEntity(this.activePreviewId) instanceof GirlEntity preview) {
+                preview.discard();
+            }
+            clearPreviewSession();
+        }
     }
 
     public void setGUIOpenState(boolean state) {
@@ -284,12 +423,439 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(IS_TEMPORARY, state);
     }
 
+    @Override
+    public boolean shouldBeSaved() {
+        return !isTemporary() && super.shouldBeSaved();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!this.level().isClientSide() && isTemporary() && this.level() instanceof ServerLevel serverLevel) {
+            GirlEntity source = null;
+            if (this.previewSourceId != null
+                    && serverLevel.getEntity(this.previewSourceId) instanceof GirlEntity sourceGirl) {
+                source = sourceGirl;
+            }
+            boolean validSession = this.previewRequesterId != null
+                    && serverLevel.getPlayerByUUID(this.previewRequesterId) != null
+                    && source != null
+                    && source.referencesPreview(this);
+            if (!validSession) {
+                if (source != null && this.getUUID().equals(source.activePreviewId)) {
+                    source.clearPreviewSession();
+                }
+                this.discard();
+            }
+        }
+    }
+
+    /**
+     * Shows/hides the armour bones baked into the rig and picks the right armour material.
+     *
+     * <p>Girls do not render vanilla armour models; every rig carries its own armour geometry
+     * whose texture sheet holds one column per material. Choosing a material is therefore a
+     * horizontal UV shift, and dyed leather is additionally tinted.</p>
+     *
+     * <p>This was an empty method in the port, so equipping armour on a girl did nothing at
+     * all. Client-side only: the maps it writes are read by {@code GirlRenderer} every frame,
+     * and {@code armorVisibility} arrives from the server via
+     * {@code ClothingArmorVisibilityS2CPacket}.</p>
+     */
+    public void applyClothingAndArmor() {
+        if (!this.level().isClientSide()) return;
+
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!isGirlArmorSlot(slot)) continue;
+
+            List<String> armorBones = getArmorBones().get(slot);
+            if (armorBones != null) {
+                boolean visible = this.armorVisibility.getOrDefault(slot, false);
+                setBoneVisibility(armorBones, visible);
+
+                // Leg armour covers the crotch, so the bare bone underneath must go.
+                if (slot == EquipmentSlot.LEGS) {
+                    setBoneVisibility("vagina", !visible);
+                }
+            }
+            displayArmor(slot);
+        }
+    }
+
+    /** Maps vanilla equipment slots onto the girl's own persistent inventory layout. */
+    private static int girlInventorySlot(EquipmentSlot slot) {
+        return switch (slot) {
+            case MAINHAND -> GirlInventory.MAIN_HAND_SLOT;
+            case OFFHAND -> GirlInventory.OFF_HAND_SLOT;
+            case FEET -> GirlInventory.ARMOR_FEET_SLOT;
+            case LEGS -> GirlInventory.ARMOR_LEGS_SLOT;
+            case CHEST -> GirlInventory.ARMOR_CHEST_SLOT;
+            case HEAD -> GirlInventory.ARMOR_HEAD_SLOT;
+            default -> -1;
+        };
+    }
+
+    /**
+     * Makes the inventory-screen equipment real vanilla equipment as well.
+     *
+     * <p>Mob combat, GeckoLib's held-item layer and Minecraft's equipment synchronization all
+     * read through this method. Without this bridge, items in the girl's equipment slots only
+     * existed inside her menu and were invisible to all three systems.</p>
+     */
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        int index = girlInventorySlot(slot);
+        return index < 0 ? super.getItemBySlot(slot) : this.inventory.getItem(index);
+    }
+
+    @Override
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
+        int index = girlInventorySlot(slot);
+        if (index < 0) {
+            super.setItemSlot(slot, stack);
+        } else {
+            this.verifyEquippedItem(stack);
+            ItemStack previous = this.inventory.getItem(index);
+            this.inventory.setItem(index, stack);
+            this.onEquipItem(slot, previous, stack);
+        }
+    }
+
+    @Override
+    public Iterable<ItemStack> getHandSlots() {
+        return List.of(
+                this.inventory.getItem(GirlInventory.MAIN_HAND_SLOT),
+                this.inventory.getItem(GirlInventory.OFF_HAND_SLOT));
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorSlots() {
+        return List.of(
+                getArmorStack(EquipmentSlot.FEET),
+                getArmorStack(EquipmentSlot.LEGS),
+                getArmorStack(EquipmentSlot.CHEST),
+                getArmorStack(EquipmentSlot.HEAD));
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorAndBodyArmorSlots() {
+        return List.of(
+                getArmorStack(EquipmentSlot.FEET),
+                getArmorStack(EquipmentSlot.LEGS),
+                getArmorStack(EquipmentSlot.CHEST),
+                getArmorStack(EquipmentSlot.HEAD),
+                super.getItemBySlot(EquipmentSlot.BODY));
+    }
+
+    public ItemStack getArmorStack(EquipmentSlot slot) {
+        int index = girlInventorySlot(slot);
+        return index < GirlInventory.ARMOR_START || index > GirlInventory.ARMOR_END
+                ? ItemStack.EMPTY
+                : this.inventory.getItem(index);
+    }
+
+    /** Builds the current server-owned visibility state in vanilla slot order. */
+    private List<Boolean> currentClothingAndArmorState() {
+        boolean stripped = this.isStripped();
+        List<Boolean> armorList = new ArrayList<>();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            boolean visible = isGirlArmorSlot(slot)
+                    && !stripped
+                    && !this.getArmorStack(slot).isEmpty();
+            armorList.add(visible);
+        }
+        return armorList;
+    }
+
+    private ClothingArmorVisibilityS2CPacket currentClothingAndArmorPacket() {
+        return new ClothingArmorVisibilityS2CPacket(this.getId(), currentClothingAndArmorState());
+    }
+
+    /**
+     * Includes visibility in the entity's initial tracking bundle.
+     *
+     * <p>Normal updates are change-driven. Without this pairing payload, a player who starts
+     * tracking an already-loaded girl can retain stale shared-rig visibility indefinitely,
+     * especially when the authoritative state is the initial all-false state.</p>
+     */
+    @Override
+    public void sendPairingData(ServerPlayer serverPlayer, Consumer<CustomPacketPayload> bundleBuilder) {
+        super.sendPairingData(serverPlayer, bundleBuilder);
+        bundleBuilder.accept(currentClothingAndArmorPacket());
+    }
+
+    /**
+     * Recomputes which armour pieces are worn and tells every tracking client.
+     *
+     * <p>Server side of {@code applyClothingAndArmor}. The visibility flags cannot be derived
+     * on the client because the girl's container is not synched, so they are sent with
+     * {@code ClothingArmorVisibilityS2CPacket}. Distribution follows vanilla entity tracking;
+     * initial state for a new tracker is supplied by {@link #sendPairingData}.</p>
+     */
+    public void updateClothingAndArmor() {
+        if (this.level().isClientSide()) return;
+
+        List<Boolean> armorList = currentClothingAndArmorState();
+        int index = 0;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            this.armorVisibility.put(slot, armorList.get(index++));
+        }
+
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntity(
+                this, new ClothingArmorVisibilityS2CPacket(this.getId(), armorList));
+    }
+
+    /**
+     * Broadcasts armour visibility only when it has actually changed.
+     *
+     * <p>Polled from {@code tick}, because neither the girl's container nor the stripped flag
+     * fires an event when it changes. Comparing first keeps this from sending a packet per
+     * girl per second forever.</p>
+     */
+    public void updateClothingAndArmorIfChanged() {
+        if (this.level().isClientSide()) return;
+
+        boolean stripped = this.isStripped();
+        boolean changed = false;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (!isGirlArmorSlot(slot)) continue;
+            boolean expected = !this.getArmorStack(slot).isEmpty() && !stripped;
+            if (this.armorVisibility.getOrDefault(slot, false) != expected) {
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            updateClothingAndArmor();
+        }
+    }
+
+    /** Which slots the rigs actually have armour geometry for. */
+    protected boolean isGirlArmorSlot(EquipmentSlot slot) {
+        return slot == EquipmentSlot.HEAD
+                || slot == EquipmentSlot.CHEST
+                || slot == EquipmentSlot.LEGS
+                || slot == EquipmentSlot.FEET;
+    }
+
+    /**
+     * Picks the armour material column for one slot.
+     *
+     * <p>The armour atlas stores the materials side by side, 9 pixels apart on a 512-wide
+     * sheet - hence the 0.017578125 step. Column 0 is the default, so an unrecognised material
+     * simply renders as that.</p>
+     */
+    private void displayArmor(EquipmentSlot slot) {
+        List<String> bones = getArmorBones().get(slot);
+        if (bones == null) return;
+
+        // Girls keep their gear in their own container, not in the vanilla equipment slots,
+        // so getItemBySlot would always come back empty here.
+        ItemStack item = this.getArmorStack(slot);
+        if (item.isEmpty()) {
+            // Nothing equipped: drop any offset/tint left over from the previous item.
+            clearBoneUV(bones);
+            clearBoneColor(bones);
+            return;
+        }
+
+        final float step = 0.017578125F;
+        float u = 0.0F;
+
+        // Matched on the item id, as upstream does, so modded armour falls back to column 0.
+        String armorType = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(item.getItem()).getPath().toLowerCase(java.util.Locale.ROOT);
+
+        if (armorType.contains("diamond")) u = step;
+        if (armorType.contains("gold")) u = step * 2;
+        if (armorType.contains("iron")) u = step * 3;
+        if (armorType.contains("copper")) u = step * 4;
+        if (armorType.contains("chain")) u = step * 5;
+        if (armorType.contains("leather")) {
+            u = step * 6;
+            overrideBoneColor(bones, getDyedArmorColor(item));
+        } else {
+            clearBoneColor(bones);
+        }
+        if (armorType.contains("turtle")) u = step * 7;
+
+        overrideBoneUV(bones, u, 0.0F);
+    }
+
+    /** Dyed leather colour, falling back to vanilla's undyed leather brown. */
+    private int getDyedArmorColor(ItemStack stack) {
+        if (stack.isEmpty()) return 0xFFFFFF;
+
+        net.minecraft.world.item.component.DyedItemColor dyed =
+                stack.get(net.minecraft.core.component.DataComponents.DYED_COLOR);
+        if (dyed != null) {
+            return dyed.rgb();
+        }
+        return 0xA06540;
+    }
+
+    // ------------------------------------------------------- bone overrides
+    // These mirror the Fabric original's helpers. They only make sense on the client,
+    // where GirlRenderer reads the maps every frame while walking the baked model.
+
+    public void setBoneVisibility(List<String> bones, boolean visible) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneVisibility.put(bone, visible);
+        }
+    }
+
+    public void setBoneVisibility(String bone, boolean visible) {
+        this.setBoneVisibility(List.of(bone), visible);
+    }
+
+    public void overrideBoneColor(List<String> bones, int argb) {
+        if (!this.level().isClientSide()) return;
+        int withAlpha = (argb & 0xFF000000) == 0 ? (argb | 0xFF000000) : argb;
+        for (String bone : bones) {
+            this.boneColorOverrides.put(bone, withAlpha);
+        }
+    }
+
+    public void overrideBoneColor(String bone, int argb) {
+        this.overrideBoneColor(List.of(bone), argb);
+    }
+
+    /** Shifts a bone's texture coordinates, used to select the armour material column. */
+    public void overrideBoneUV(List<String> bones, float uOffset, float vOffset) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneUVOffsets.put(bone, new org.joml.Vector2f(uOffset, vOffset));
+        }
+    }
+
+    public void clearBoneUV(List<String> bones) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneUVOffsets.remove(bone);
+        }
+    }
+
+    public void clearBoneColor(List<String> bones) {
+        if (!this.level().isClientSide()) return;
+        for (String bone : bones) {
+            this.boneColorOverrides.remove(bone);
+        }
+    }
+
+    public void setBonePos(String bone, float x, float y, float z) {
+        this.setBonePos(bone, new Vec3(x, y, z));
+    }
+
+    public void setBonePos(String bone, Vec3 pos) {
+        if (!this.level().isClientSide()) return;
+        this.bonePositionOffset.put(bone, pos);
+    }
+
+    /** Sizes are authored as percentages upstream (100 = unchanged). */
+    public void setBoneSize(String bone, float x, float y, float z, float min, float max) {
+        if (!this.level().isClientSide()) return;
+        if (min != 0 && max != 0) {
+            x = Mth.clamp(x, min, max);
+            y = Mth.clamp(y, min, max);
+            z = Mth.clamp(z, min, max);
+        }
+        this.boneSizeOverrides.put(bone, new Vec3(x, y, z));
+    }
+
+    public void setBoneSize(String bone, int size, int min, int max) {
+        float finalSize = size / 100f;
+        if (min == 0 && max == 0) {
+            setBoneSize(bone, finalSize, finalSize, finalSize, 0, 0);
+            return;
+        }
+        setBoneSize(bone, finalSize, finalSize, finalSize, min / 100f, max / 100f);
+    }
+
+    public void setBoneSize(String bone, int size) {
+        setBoneSize(bone, size, 0, 0);
+    }
+
+    public boolean isArmorVisible(EquipmentSlot slot) {
+        return this.armorVisibility.getOrDefault(slot, true);
+    }
+
+    public void setArmorVisible(EquipmentSlot slot, boolean visible) {
+        this.armorVisibility.put(slot, visible);
+    }
+
+    @Nullable
+    public GirlEntity createTempClone(Player requester) {
+        if (this.level().isClientSide() || requester == null || createdClone()) return null;
+
+        GirlEntity clone = (GirlEntity) this.getType().create(this.level());
+        if (clone == null) return null;
+
+        clone.setTemporaryState(true);
+        clone.setPos(this.getX(), 800, this.getZ());
+        clone.setInvisible(true);
+        clone.setInvulnerable(true);
+        clone.setNoGravity(true);
+        clone.previewRequesterId = requester.getUUID();
+        clone.previewSourceId = this.getUUID();
+
+        this.onTempCloneCreation(clone);
+
+        if (!this.level().addFreshEntity(clone)) return null;
+
+        this.previewRequesterId = requester.getUUID();
+        this.activePreviewId = clone.getUUID();
+        this.activePreviewEntityId = clone.getId();
+        this.setCreatedCloneState(true);
+        return clone;
+    }
+
+    public void onTempCloneCreation(GirlEntity clone) {
+        clone.setStripped(this.isStripped());
+    }
+
     public boolean createdClone() {
         return this.entityData.get(CREATED_CLONE);
     }
 
     public void setCreatedCloneState(boolean state) {
         this.entityData.set(CREATED_CLONE, state);
+        if (!state && !this.level().isClientSide()) {
+            clearPreviewSession();
+        }
+    }
+
+    public boolean hasPreviewSession(Player requester) {
+        return !this.level().isClientSide()
+                && createdClone()
+                && this.previewRequesterId != null
+                && this.previewRequesterId.equals(requester.getUUID())
+                && this.lookAtTarget != null
+                && this.lookAtTarget.getUUID().equals(requester.getUUID());
+    }
+
+    public boolean referencesPreview(GirlEntity preview) {
+        return preview != null
+                && preview.isTemporary()
+                && this.activePreviewId != null
+                && this.activePreviewId.equals(preview.getUUID())
+                && this.previewRequesterId != null
+                && this.previewRequesterId.equals(preview.previewRequesterId)
+                && this.getUUID().equals(preview.previewSourceId);
+    }
+
+    public boolean referencesPreviewEntityId(int entityId) {
+        return createdClone() && this.activePreviewEntityId == entityId;
+    }
+
+    public void clearPreviewSession() {
+        this.previewRequesterId = null;
+        this.activePreviewId = null;
+        this.activePreviewEntityId = -1;
+        if (!this.level().isClientSide()) {
+            this.entityData.set(CREATED_CLONE, false);
+        }
     }
 
     public boolean isWaitingForPlayer() {
@@ -356,16 +922,6 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(RELATIONSHIP_LEVEL, value);
     }
 
-    public void setPassengerBonePosition(Vec3 position) {
-        this.entityData.set(PASSENGER_BONE_POSITION,
-                new Vector3f((float) position.x, (float) position.y, (float) position.z));
-    }
-
-    public Vec3 getPassengerBonePosition() {
-        Vector3f v = this.entityData.get(PASSENGER_BONE_POSITION);
-        return new Vec3(v.x(), v.y(), v.z());
-    }
-
     public void setBasePos(BlockPos pos) {
         this.entityData.set(BASE_POS, pos);
     }
@@ -396,7 +952,7 @@ public abstract class GirlEntity extends PathfinderMob {
     }
 
     public void setBreastSize(int value) {
-        this.entityData.set(BREAST_SIZE, value);
+        this.entityData.set(BREAST_SIZE, Mth.clamp(value, getBreastMinSize(), getBreastMaxSize()));
     }
 
     public int getBreastSize() {
@@ -412,8 +968,14 @@ public abstract class GirlEntity extends PathfinderMob {
     }
 
     public void setBreastOffset(Vec3 value) {
-        this.entityData.set(BREAST_OFFSET,
-                new Vector3f((float) value.x, (float) value.y, (float) value.z));
+        if (value == null || !Double.isFinite(value.x) || !Double.isFinite(value.y)
+                || !Double.isFinite(value.z)) {
+            return;
+        }
+        this.entityData.set(BREAST_OFFSET, new Vector3f(
+                (float) Mth.clamp(value.x, -16.0D, 16.0D),
+                (float) Mth.clamp(value.y, -16.0D, 16.0D),
+                (float) Mth.clamp(value.z, -16.0D, 16.0D)));
     }
 
     public Vec3 getBreastOffset() {
@@ -445,6 +1007,16 @@ public abstract class GirlEntity extends PathfinderMob {
 
     /** Identifier used to pick models, textures and animations. */
     public abstract String getGirlID();
+
+    /**
+     * Scenes this girl offers in the "Talk" menu.
+     *
+     * <p>Every girl overrides this with her own list; the base returns an empty list so a rig
+     * without animations simply shows no options instead of crashing.</p>
+     */
+    public List<com.sandymandy.pleasurehorizons.util.variables.Scene> getScenes() {
+        return List.of();
+    }
 
     public int getBreastMinSize() {
         return 25;
@@ -478,12 +1050,38 @@ public abstract class GirlEntity extends PathfinderMob {
         return true;
     }
 
+    /**
+     * Returns the highest relationship level required by this girl's scenes.
+     *
+     * <p>The old port only returned {@link #MAX_RELATIONSHIP_LEVEL}, which is initialised to
+     * four and was never updated. Girls with later scenes therefore displayed {@code 4/4}
+     * even though content could require level ten. Keep this method as a pure calculation:
+     * writing synched entity data while an inventory screen calls it on the client is unsafe.
+     * The tracked value is only a fallback for profile-driven girls whose JSON scenes exist
+     * on the server but are not loaded on the client.</p>
+     */
     public int maxRelationshipLevel() {
-        return this.entityData.get(MAX_RELATIONSHIP_LEVEL);
+        try {
+            List<com.sandymandy.pleasurehorizons.util.variables.Scene> scenes = getScenes();
+            if (scenes == null || scenes.isEmpty()) {
+                return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
+            }
+
+            return scenes.stream()
+                    .map(com.sandymandy.pleasurehorizons.util.variables.Scene::requiredRelationshipLevel)
+                    .max(Integer::compareTo)
+                    .orElse(4);
+        } catch (RuntimeException exception) {
+            // A missing/malformed custom profile must not make relationship progress unusable.
+            return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
+        }
     }
 
-    public void setMaxRelationshipLevel(int value) {
-        this.entityData.set(MAX_RELATIONSHIP_LEVEL, value);
+    /** Server-only update for profile-driven girls; clients merely read the tracked fallback. */
+    protected void setMaxRelationshipLevel(int value) {
+        if (!this.level().isClientSide()) {
+            this.entityData.set(MAX_RELATIONSHIP_LEVEL, value);
+        }
     }
 
     protected Map<EquipmentSlot, List<String>> getArmorBones() {
@@ -508,6 +1106,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("Stripped", isStripped());
+        compound.putBoolean("Downed", isDowned());
         compound.putBoolean("Following", isFollowing());
         compound.putBoolean("Pregnant", isPregnant());
         compound.putBoolean("CanGetImpregnated", canGetImpregnated());
@@ -516,7 +1115,18 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putInt("PregnancyStage", getPregnancyStage());
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
         compound.putInt("BreastSize", getBreastSize());
+        Vec3 breastOffset = getBreastOffset();
+        compound.putDouble("BreastOffsetX", breastOffset.x);
+        compound.putDouble("BreastOffsetY", breastOffset.y);
+        compound.putDouble("BreastOffsetZ", breastOffset.z);
         compound.putInt("MilkedAmount", getMilkedAmount());
+        compound.putLong("BasePos", getBasePos().asLong());
+        // AI toggles
+        compound.putBoolean("AIGuardBase", isGuardBaseEnabled());
+        compound.putBoolean("AIGuardOwner", isGuardOwnerEnabled());
+        compound.putBoolean("AIGather", isGatherEnabled());
+        compound.putBoolean("AIHarvest", isHarvestEnabled());
+        compound.putBoolean("AIStayNearBase", isStayNearBaseEnabled());
 
         CompoundTag inventoryTag = new CompoundTag();
         ContainerHelper.saveAllItems(inventoryTag, this.inventory.getItems(), this.registryAccess());
@@ -527,6 +1137,7 @@ public abstract class GirlEntity extends PathfinderMob {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         setStripped(compound.getBoolean("Stripped"));
+        setDowned(compound.getBoolean("Downed"));
         setFollowing(compound.getBoolean("Following"));
         setPregnantState(compound.getBoolean("Pregnant"));
         canGetImpregnatedState(compound.getBoolean("CanGetImpregnated"));
@@ -537,7 +1148,25 @@ public abstract class GirlEntity extends PathfinderMob {
         if (compound.contains("BreastSize")) {
             setBreastSize(compound.getInt("BreastSize"));
         }
+        if (compound.contains("BreastOffsetX")
+                && compound.contains("BreastOffsetY")
+                && compound.contains("BreastOffsetZ")) {
+            setBreastOffset(new Vec3(
+                    compound.getDouble("BreastOffsetX"),
+                    compound.getDouble("BreastOffsetY"),
+                    compound.getDouble("BreastOffsetZ")));
+        }
         setMilkedAmount(compound.getInt("MilkedAmount"));
+        // Older port saves omitted this field. Keep ZERO as the explicit "base not set"
+        // sentinel instead of inventing a home at the entity's load position.
+        if (compound.contains("BasePos")) {
+            setBasePos(BlockPos.of(compound.getLong("BasePos")));
+        }
+        if (compound.contains("AIGuardBase")) setGuardBaseEnabled(compound.getBoolean("AIGuardBase"));
+        if (compound.contains("AIGuardOwner")) setGuardOwnerEnabled(compound.getBoolean("AIGuardOwner"));
+        if (compound.contains("AIGather")) setGatherEnabled(compound.getBoolean("AIGather"));
+        if (compound.contains("AIHarvest")) setHarvestEnabled(compound.getBoolean("AIHarvest"));
+        if (compound.contains("AIStayNearBase")) setStayNearBaseEnabled(compound.getBoolean("AIStayNearBase"));
 
         if (compound.contains("Inventory")) {
             ContainerHelper.loadAllItems(

@@ -38,7 +38,8 @@ public class GirlFollowOwnerGoal extends Goal {
         if (!this.girl.isTamed() || !this.girl.isFollowing()) {
             return false;
         }
-        if (this.girl.isSitting() || this.girl.isSceneActive() || this.girl.isMovementLocked()) {
+        if (this.girl.isSitting() || this.girl.isSceneActive() || this.girl.isMovementLocked()
+                || this.girl.isDowned() || this.girl.isPassenger()) {
             return false;
         }
         LivingEntity owner = this.girl.getOwner();
@@ -57,7 +58,8 @@ public class GirlFollowOwnerGoal extends Goal {
         if (this.navigation.isDone()) {
             return false;
         }
-        if (this.girl.isSitting() || this.girl.isSceneActive() || !this.girl.isFollowing()) {
+        if (this.girl.isSitting() || this.girl.isSceneActive() || !this.girl.isFollowing()
+                || this.girl.isDowned() || this.girl.isPassenger()) {
             return false;
         }
         return this.girl.distanceToSqr(this.owner) > (double) (this.stopDistance * this.stopDistance);
