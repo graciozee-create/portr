@@ -712,8 +712,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
     /**
      * Auto-equip: moves strictly better armour pieces from the backpack into the matching armour
-     * slot (one piece per check). Fills empty slots first; swaps only when the candidate's raw
-     * defence is strictly higher, and never touches binding-cursed gear.
+     * slot (one piece per check). Fills empty slots first and swaps only when the candidate's
+     * raw defence is strictly higher.
      */
     private void autoEquipArmorFromBackpack() {
         GirlInventory inv = this.getInventory();
@@ -722,14 +722,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             if (stack.isEmpty() || !(stack.getItem() instanceof net.minecraft.world.item.ArmorItem armor)) {
                 continue;
             }
-            EquipmentSlot slot = net.minecraft.world.entity.Mob.getEquipmentSlotForItem(stack);
+            EquipmentSlot slot = armor.getEquipmentSlot();
             if (slot.getType() != EquipmentSlot.Type.HUMANOID_ARMOR) {
                 continue;
             }
             ItemStack current = this.getItemBySlot(slot);
-            if (!current.isEmpty() && net.minecraft.world.item.enchantment.EnchantmentHelper.hasBindingCurse(current)) {
-                continue;
-            }
             boolean better = current.isEmpty()
                     || (current.getItem() instanceof net.minecraft.world.item.ArmorItem currentArmor
                         && armor.getDefense() > currentArmor.getDefense());

@@ -146,8 +146,9 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         ).bounds(x, y, buttonWidth, buttonHeight).build();
 
         java.util.List<Component> settingsTip = settingsTooltip(action.labelKey());
-        if (settingsTip != null && button.active) {
-            button.setTooltip(Tooltip.create(settingsTip));
+        if (settingsTip != null && settingsTip.size() >= 2 && button.active) {
+            // 1.21.1 Tooltip has no List overload - first line = description, second = value.
+            button.setTooltip(Tooltip.create(settingsTip.get(0), settingsTip.get(1)));
         }
 
         if (girl.getCurrentRelationshipLevel() < action.requiredRelationshipLevel()) {
