@@ -94,6 +94,10 @@ public class GirlsCommand {
         girl.finalizeSpawn(level, level.getCurrentDifficultyAt(girl.blockPosition()),
                 MobSpawnType.COMMAND, null);
         girl.setProfile(profile, true);
+        // A command spawn is a deliberate placement. Without this the untamed girl is
+        // CREATURE-category + removeWhenFarAway, so vanilla checkDespawn() discards her
+        // once the spawner walks >128 blocks away.
+        girl.setPersistenceRequired();
         level.addFreshEntity(girl);
 
         source.sendSuccess(() -> Component.translatable(
