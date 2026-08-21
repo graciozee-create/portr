@@ -327,6 +327,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.setTarget(null);
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.setNoGravity(false);
+        this.resetFallDistance();
         this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
         return true;
     }
@@ -365,6 +366,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         BlockPos target = findSafeSpotNear(this.level(), player);
         this.getNavigation().stop();
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        // Entity#teleportTo does NOT reset fall distance (unlike Mob#randomTeleport). Without
+        // this, teleporting a girl mid-fall - routine now with high jump enabled - makes her
+        // land near the owner already "fallen" and take the accumulated damage.
+        this.resetFallDistance();
         this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
         return true;
     }
