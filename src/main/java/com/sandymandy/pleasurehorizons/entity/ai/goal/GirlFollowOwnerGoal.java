@@ -27,6 +27,7 @@ public class GirlFollowOwnerGoal extends Goal {
     private LivingEntity owner;
     private int timeToRecalcPath;
     private int teleportCooldown;
+    private int failedRecalcs;
     private float oldWaterCost;
 
     public GirlFollowOwnerGoal(TameableGirlEntity girl, double speedModifier,
@@ -75,6 +76,7 @@ public class GirlFollowOwnerGoal extends Goal {
     public void start() {
         this.timeToRecalcPath = 0;
         this.teleportCooldown = 0;
+        this.failedRecalcs = 0;
         this.oldWaterCost = this.girl.getPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER);
         this.girl.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
     }
@@ -94,19 +96,31 @@ public class GirlFollowOwnerGoal extends Goal {
         }
         if (--this.timeToRecalcPath <= 0) {
             this.timeToRecalcPath = this.adjustedTickDelay(10);
-            this.navigation.moveTo(this.owner, this.speedModifier);
+            boolean pathStarted = this.navigation.moveTo(this.owner, this.speedModifier);
+            if (!pathStarted) {
+                this.failedRecalcs++;
+            } else {
+                this.failedRecalcs = 0;
+            }
         }
 
+        // Teleport rules. The old shape ("distance > 12 && navigation.isDone()") almost never
+        // fired: canContinueToUse() stops the goal the moment the path completes, so tick()
+        // rarely ran with isDone() - she just walk-stall-walk-stalled behind walls. Now a
+        // failed/partial route is detected via consecutive failed moveTo calls, and a
+        // >32-block gap teleports unconditionally (the entity-level failsafe also covers the
+        // case where another goal is holding the MOVE flag and this goal never runs).
         if (this.girl.isFollowTeleportEnabled() && this.teleportCooldown == 0
-                && this.owner.level() == this.girl.level() && !this.owner.isSpectator()) {
+                && this.owner.level() == this.girl.level() && !this.owner.isSpectator()
+                && !this.owner.isFallFlying()
+                && this.owner instanceof net.minecraft.world.entity.player.Player player) {
             double distanceSqr = this.girl.distanceToSqr(this.owner);
-            // Vanilla tamed-pet rule: teleport when the owner is beyond reach of normal
-            // pathfinding, or simply too far away to ever catch up on foot.
-            if (distanceSqr > TELEPORT_FAR_DISTANCE_SQ
-                    || (distanceSqr > TELEPORT_MIN_DISTANCE_SQ && this.navigation.isDone())) {
-                if (this.owner instanceof net.minecraft.world.entity.player.Player player
-                        && this.girl.teleportNear(player)) {
+            boolean blockedRoute = distanceSqr > TELEPORT_MIN_DISTANCE_SQ
+                    && this.failedRecalcs >= 3;
+            if (distanceSqr > TELEPORT_FAR_DISTANCE_SQ || blockedRoute) {
+                if (this.girl.teleportNear(player)) {
                     this.teleportCooldown = this.adjustedTickDelay(20);
+                    this.failedRecalcs = 0;
                 }
             }
         }

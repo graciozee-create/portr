@@ -122,6 +122,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     // sink toward the ground.
     private static final double CARRY_FORWARD_OFFSET = 0.45D;
     private static final double CARRY_VERTICAL_OFFSET = 0.10D;
+    /** Beyond this gap to a followed owner the entity-level failsafe teleports her over. */
+    private static final double FAR_FOLLOW_TELEPORT_SQ = 32.0D * 32.0D;
 
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
     private int lastSentBackpackSlots = -1;
@@ -329,16 +331,23 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return true;
     }
 
-    /** Nearest air block with air above it around the player, to avoid suffocating on arrival. */
+    /**
+     * Nearest standable spot around the player, to avoid suffocating on arrival. The old
+     * version only tested the owner's exact feet level, which on slopes/ledges could come up
+     * empty everywhere; now a small vertical scan runs per column (1 up, 2 down).
+     */
     private static BlockPos findSafeSpotNear(Level level, Player player) {
         BlockPos center = player.blockPosition();
         int[] ring = {0, 1, -1, 2, -2};
+        int[] dy = {0, 1, -1, -2};
         for (int dx : ring) {
             for (int dz : ring) {
-                BlockPos candidate = center.offset(dx, 0, dz);
-                if (level.getBlockState(candidate).isAir()
-                        && level.getBlockState(candidate.above()).isAir()) {
-                    return candidate;
+                for (int y : dy) {
+                    BlockPos candidate = center.offset(dx, y, dz);
+                    if (level.getBlockState(candidate).isAir()
+                            && level.getBlockState(candidate.above()).isAir()) {
+                        return candidate;
+                    }
                 }
             }
         }
@@ -1128,6 +1137,21 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.level().isClientSide() && this.isTamed()
                 && this.isAutoEquipArmorEnabled() && this.tickCount % 100 == 0) {
             this.autoEquipArmorFromBackpack();
+        }
+        // Follow-teleport failsafe, independent of which goal currently owns the MOVE flag:
+        // the follow goal alone cannot cover the case where a higher-priority work goal is
+        // running (or the goal was stopped by its own navigation.isDone() check), which is
+        // exactly when girls used to get stranded at "hard distances". Same guards as the
+        // goal: no teleport while sitting, downed, in a scene, carried, or off-world.
+        if (!this.level().isClientSide() && this.isTamed() && this.isFollowing()
+                && this.isFollowTeleportEnabled() && (this.tickCount & 31) == 0
+                && !this.isSitting() && !this.isDowned() && !this.isSceneActive()
+                && !this.isPassenger()
+                && this.getOwner() instanceof Player owner
+                && owner.level() == this.level() && !owner.isSpectator()
+                && !owner.isFallFlying()
+                && this.distanceToSqr(owner) > FAR_FOLLOW_TELEPORT_SQ) {
+            this.teleportNear(owner);
         }
         // While being carried, ensure she stays nicely positioned and doesn't suffocate
         if (this.isPassenger() && this.getVehicle() instanceof Player player) {
