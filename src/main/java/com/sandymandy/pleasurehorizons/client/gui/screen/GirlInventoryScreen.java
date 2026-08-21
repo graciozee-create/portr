@@ -29,16 +29,9 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
     private static final int GUI_HEIGHT = 170;
     private static final int TAB_MAIN = 0;
     private static final int TAB_SURVIVAL = 1;
-    private static final int TAB_SETTINGS = 2;
     private final TameableGirlEntity girl;
     private final Player player;
     private int tabIndex = TAB_MAIN;
-    /**
-     * Clicks made on Settings-tab buttons since the screen opened. Synched data only arrives
-     * from the server a few ticks later, so these counts let the labels/tooltips reflect the
-     * would-be state immediately (toggles flip per click, cycles advance per click).
-     */
-    private final java.util.Map<String, Integer> pendingClicks = new java.util.HashMap<>();
 
     public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
@@ -133,23 +126,12 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                         // close and SetGUIOpenState(false) before the replacement screen can use
                         // the interaction. That invalidates customization previews/confirmation
                         // and makes every scene-selection button fail server authorization.
-                        // Settings buttons keep the screen open too: adjusting a stack of small
-                        // knobs must not close and reopen the inventory eleven times.
                         if (!action.opensSubscreen()) {
                             this.onClose();
-                        } else if (tabIndex == TAB_SETTINGS) {
-                            pendingClicks.merge(action.labelKey(), 1, Integer::sum);
-                            this.rebuildWidgets();
                         }
                     }
                 }
         ).bounds(x, y, buttonWidth, buttonHeight).build();
-
-        java.util.List<Component> settingsTip = settingsTooltip(action.labelKey());
-        if (settingsTip != null && settingsTip.size() >= 2 && button.active) {
-            // 1.21.1 Tooltip has no List overload - first line = description, second = value.
-            button.setTooltip(Tooltip.create(settingsTip.get(0), settingsTip.get(1)));
-        }
 
         if (girl.getCurrentRelationshipLevel() < action.requiredRelationshipLevel()) {
             button.active = false;
@@ -180,16 +162,12 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         if (girl.isTamed()) {
             initTabs(centerX, centerY);
 
-            List<InventoryButtonAction> left = switch (tabIndex) {
-                case TAB_SURVIVAL -> InventoryButtonRegistry.BUTTONS_SURVIVAL_LEFT;
-                case TAB_SETTINGS -> InventoryButtonRegistry.BUTTONS_SETTINGS_LEFT;
-                default -> InventoryButtonRegistry.BUTTONS_MAIN_LEFT;
-            };
-            List<InventoryButtonAction> right = switch (tabIndex) {
-                case TAB_SURVIVAL -> InventoryButtonRegistry.BUTTONS_SURVIVAL_RIGHT;
-                case TAB_SETTINGS -> InventoryButtonRegistry.BUTTONS_SETTINGS_RIGHT;
-                default -> InventoryButtonRegistry.BUTTONS_MAIN_RIGHT;
-            };
+            List<InventoryButtonAction> left = tabIndex == TAB_SURVIVAL
+                    ? InventoryButtonRegistry.BUTTONS_SURVIVAL_LEFT
+                    : InventoryButtonRegistry.BUTTONS_MAIN_LEFT;
+            List<InventoryButtonAction> right = tabIndex == TAB_SURVIVAL
+                    ? InventoryButtonRegistry.BUTTONS_SURVIVAL_RIGHT
+                    : InventoryButtonRegistry.BUTTONS_MAIN_RIGHT;
 
             for (int i = 0; i < left.size(); i++) {
                 InventoryButtonAction action = left.get(i);
@@ -205,19 +183,16 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         }
     }
 
-    /** Three small tab buttons above the panel; the active tab is rendered disabled. */
+    /** Two small tab buttons above the panel; the active tab is rendered disabled. */
     private void initTabs(int centerX, int centerY) {
         int tabWidth = 84;
         int tabHeight = 16;
         int tabY = centerY - 46;
-        // The row is wider than the 176px panel, so centre it on the panel.
-        int rowWidth = tabWidth * 3 + 8;
-        int startX = centerX - (rowWidth - GUI_WIDTH) / 2;
 
         Button mainTab = Button.builder(
                         Component.translatable("gui.pleasurehorizons.tab.main"),
                         b -> switchTab(TAB_MAIN))
-                .bounds(startX, tabY, tabWidth, tabHeight)
+                .bounds(centerX, tabY, tabWidth, tabHeight)
                 .build();
         mainTab.active = tabIndex != TAB_MAIN;
         this.addRenderableWidget(mainTab);
@@ -225,93 +200,10 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         Button survivalTab = Button.builder(
                         Component.translatable("gui.pleasurehorizons.tab.survival"),
                         b -> switchTab(TAB_SURVIVAL))
-                .bounds(startX + tabWidth + 4, tabY, tabWidth, tabHeight)
+                .bounds(centerX + tabWidth + 4, tabY, tabWidth, tabHeight)
                 .build();
         survivalTab.active = tabIndex != TAB_SURVIVAL;
         this.addRenderableWidget(survivalTab);
-
-        Button settingsTab = Button.builder(
-                        Component.translatable("gui.pleasurehorizons.tab.settings"),
-                        b -> switchTab(TAB_SETTINGS))
-                .bounds(startX + (tabWidth + 4) * 2, tabY, tabWidth, tabHeight)
-                .build();
-        settingsTab.active = tabIndex != TAB_SETTINGS;
-        this.addRenderableWidget(settingsTab);
-    }
-
-    /** Tooltip shown on Settings-tab buttons: description + the (optimistic) current value. */
-    private java.util.List<Component> settingsTooltip(String key) {
-        return switch (key) {
-            case "gui.pleasurehorizons.button.followTeleport" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.followTeleport"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isFollowTeleportEnabled())));
-            case "gui.pleasurehorizons.button.closeDoors" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.closeDoors"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isCloseDoorsEnabled())));
-            case "gui.pleasurehorizons.button.avoidWater" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.avoidWater"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isAvoidWaterEnabled())));
-            case "gui.pleasurehorizons.button.autoDeliver" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.autoDeliver"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isAutoDeliverEnabled())));
-            case "gui.pleasurehorizons.button.autoEquipArmor" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.autoEquipArmor"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isAutoEquipArmorEnabled())));
-            case "gui.pleasurehorizons.button.avoidCreepers" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.avoidCreepers"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isAvoidCreepersEnabled())));
-            case "gui.pleasurehorizons.button.highJump" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.highJump"),
-                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
-                            effectiveToggle(key, girl.isHighJumpEnabled())));
-            case "gui.pleasurehorizons.button.followDistance" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.followDistance"),
-                    Component.translatable("gui.pleasurehorizons.currentValue",
-                            Component.translatable("setting.pleasurehorizons.followDistance."
-                                    + effectiveMode(key, girl.getFollowDistanceMode()))));
-            case "gui.pleasurehorizons.button.workPace" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.workPace"),
-                    Component.translatable("gui.pleasurehorizons.currentValue",
-                            Component.translatable("setting.pleasurehorizons.workPace."
-                                    + effectiveMode(key, girl.getWorkPaceMode()))));
-            case "gui.pleasurehorizons.button.workRadius" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.workRadius"),
-                    Component.translatable("gui.pleasurehorizons.currentValue",
-                            Component.translatable("setting.pleasurehorizons.workRadius."
-                                    + effectiveMode(key, girl.getWorkRadiusMode()))));
-            case "gui.pleasurehorizons.button.guardRange" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.guardRange"),
-                    Component.translatable("gui.pleasurehorizons.currentValue",
-                            Component.translatable("setting.pleasurehorizons.guardRange."
-                                    + effectiveMode(key, girl.getGuardRangeMode()))));
-            case "gui.pleasurehorizons.button.stayRadius" -> List.of(
-                    Component.translatable("gui.pleasurehorizons.desc.stayRadius"),
-                    Component.translatable("gui.pleasurehorizons.currentValue",
-                            Component.translatable("setting.pleasurehorizons.stayRadius."
-                                    + effectiveMode(key, girl.getStayRadiusMode()))));
-            default -> null;
-        };
-    }
-
-    private Component valueLine(String onKey, String offKey, boolean on) {
-        return Component.translatable("gui.pleasurehorizons.currentValue",
-                Component.translatable(on ? onKey : offKey));
-    }
-
-    /** Server state plus the clicks already made in this screen session. */
-    private boolean effectiveToggle(String key, boolean serverValue) {
-        int extra = pendingClicks.getOrDefault(key, 0);
-        return extra % 2 == 0 ? serverValue : !serverValue;
-    }
-
-    private int effectiveMode(String key, int serverValue) {
-        return Math.floorMod(serverValue + pendingClicks.getOrDefault(key, 0), 3);
     }
 
     private void switchTab(int tab) {

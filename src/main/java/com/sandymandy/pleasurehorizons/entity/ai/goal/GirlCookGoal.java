@@ -22,17 +22,14 @@ import java.util.EnumSet;
  * crops and cook at the same time when their toggles are on.</p>
  */
 public class GirlCookGoal extends Goal {
+    private static final int SEARCH_RADIUS = 12;
     private static final int SEARCH_HEIGHT = 4;
     private static final double USE_DISTANCE_SQ = 16.0D;
-    private static final int GIVE_UP_TICKS = 600;
-    private static final int GIVE_UP_COOLDOWN = 200;
 
     private final TameableGirlEntity girl;
     private BlockPos furnacePos;
     private int cooldown = 0;
     private int repath = 0;
-    private int elapsed = 0;
-    private boolean gaveUp = false;
 
     public GirlCookGoal(TameableGirlEntity girl) {
         this.girl = girl;
@@ -63,7 +60,7 @@ public class GirlCookGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (!girl.isCookEnabled() || forbidden() || elapsed > GIVE_UP_TICKS) return false;
+        if (!girl.isCookEnabled() || forbidden()) return false;
         AbstractFurnaceBlockEntity furnace = furnaceAt(furnacePos);
         return furnace != null && hasWork(furnace);
     }
@@ -73,10 +70,9 @@ public class GirlCookGoal extends Goal {
     }
 
     private AbstractFurnaceBlockEntity findFurnace() {
-        int radius = (int) Math.ceil(12.0D * girl.workRadiusScale());
         BlockPos center = girl.blockPosition();
-        BlockPos from = center.offset(-radius, -SEARCH_HEIGHT, -radius);
-        BlockPos to = center.offset(radius, SEARCH_HEIGHT, radius);
+        BlockPos from = center.offset(-SEARCH_RADIUS, -SEARCH_HEIGHT, -SEARCH_RADIUS);
+        BlockPos to = center.offset(SEARCH_RADIUS, SEARCH_HEIGHT, SEARCH_RADIUS);
         for (BlockPos pos : BlockPos.betweenClosed(from, to)) {
             BlockEntity entity = girl.level().getBlockEntity(pos);
             if (entity instanceof AbstractFurnaceBlockEntity furnace) {
@@ -93,10 +89,7 @@ public class GirlCookGoal extends Goal {
     }
 
     private boolean hasWork(AbstractFurnaceBlockEntity furnace) {
-        ItemStack output = furnace.getItem(2);
-        // Only FOOD output is hers to collect. Collecting any non-empty output made her loot
-        // the player's smelting results (iron, gold) from any furnace in range.
-        if (!output.isEmpty()) return output.get(DataComponents.FOOD) != null;
+        if (!furnace.getItem(2).isEmpty()) return true; // cooked output ready
         if (furnace.getItem(0).isEmpty()) return hasSmeltableFood(); // load raw food
         if (furnace.getItem(1).isEmpty()) return hasFuel(); // load fuel
         return false; // already has food + fuel, nothing to do right now
@@ -144,7 +137,6 @@ public class GirlCookGoal extends Goal {
     @Override
     public void start() {
         this.repath = 0;
-        this.elapsed = 0;
         girl.setDailyActivity("cook");
     }
 
@@ -152,12 +144,6 @@ public class GirlCookGoal extends Goal {
     public void tick() {
         AbstractFurnaceBlockEntity furnace = furnaceAt(furnacePos);
         if (furnace == null) return;
-
-        if (++elapsed > GIVE_UP_TICKS) {
-            // Furnace unreachable - stop blocking the other goals and retry later.
-            gaveUp = true;
-            return;
-        }
 
         double x = furnacePos.getX() + 0.5D;
         double y = furnacePos.getY();
@@ -167,7 +153,7 @@ public class GirlCookGoal extends Goal {
         if (girl.distanceToSqr(x, y, z) > USE_DISTANCE_SQ) {
             if (--repath <= 0) {
                 repath = this.adjustedTickDelay(10);
-                girl.getNavigation().moveTo(x, y, z, girl.workSpeedModifier());
+                girl.getNavigation().moveTo(x, y, z, 1.3D);
             }
             return;
         }
@@ -236,8 +222,6 @@ public class GirlCookGoal extends Goal {
         if ("cook".equals(girl.getDailyActivity())) {
             girl.setDailyActivity("");
         }
-        // stop() must not clobber the give-up cooldown set in tick().
-        cooldown = gaveUp ? GIVE_UP_COOLDOWN : 20;
-        gaveUp = false;
+        cooldown = 20;
     }
 }

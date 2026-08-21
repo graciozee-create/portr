@@ -350,26 +350,12 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
         FRAME_COUNTER++;
 
         // Driving force: change in velocity plus a contribution from turning on the spot.
-        // Upstream explicitly zeroes the force while ANY screen is open: the world keeps
-        // rendering behind a GUI (and the girl-inventory preview renders the same entity a
-        // second time), so without this the model would wobble from world motion while she
-        // stands in a menu, and the GUI preview would jiggle oddly.
-        boolean inGui = net.minecraft.client.Minecraft.getInstance().screen != null;
-        net.minecraft.world.phys.Vec3 velocity = inGui
-                ? net.minecraft.world.phys.Vec3.ZERO
-                : animatable.getDeltaMovement();
-        // While a GUI is open both force terms are zero (like upstream) and the stored
-        // previous velocity freezes, so opening a menu never produces a kick of its own.
-        net.minecraft.world.phys.Vec3 deltaVelocity = inGui
-                ? net.minecraft.world.phys.Vec3.ZERO
-                : velocity.subtract(state.previousVelocity);
-        if (!inGui) {
-            state.previousVelocity = velocity;
-        }
+        net.minecraft.world.phys.Vec3 velocity = animatable.getDeltaMovement();
+        net.minecraft.world.phys.Vec3 deltaVelocity = velocity.subtract(state.previousVelocity);
+        state.previousVelocity = velocity;
 
         float currentYaw = animatable.getYRot();
-        float yawDelta = inGui ? 0.0F
-                : net.minecraft.util.Mth.wrapDegrees(currentYaw - state.previousYaw);
+        float yawDelta = net.minecraft.util.Mth.wrapDegrees(currentYaw - state.previousYaw);
         state.previousYaw = currentYaw;
 
         net.minecraft.world.phys.Vec3 force = deltaVelocity.scale(1.2)
