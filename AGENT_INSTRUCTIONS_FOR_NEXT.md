@@ -1169,6 +1169,14 @@ Teleport → equipment → наши pairing-payload (clothing + status). Это 
 и после этого воспроизводится — остаются только модовые стороны (c2me/entityculling) и
 без `latest.log` дальше идти некуда: просить лог с моментом пропадания.
 
+Реализация resync (`7a4be3a`, зелёный): Remove(id) → Add (полный публичный конструктор
+`ClientboundAddEntityPacket(id, uuid, x, y, z, xRot, yRot, type, data=0, velocity, headYaw)`) →
+`SetEntityData(getNonDefaultValues())` → `TeleportEntity` → `SetEquipment` (руки+броня) →
+наши payload (clothing/status) через PacketDistributor. `currentClothingAndArmorPacket()`
+стал protected. Первый прогон `32476368646` падал на трёх API (Entity-конструктора Add нет в
+1.21.1 — есть только (Entity, ServerEntity) и полный; `packAll()` нет; clothing-метод был
+private) — исправлено.
+
 **Админ-нота:** коммит `3dc5c62` случайно откатил дерево к базе (восстановление после
 переклонирования выполнилось по частичному состоянию); исправлено следующим коммитом
 (дерево восстановлено из `0b39efc` + заново применены правки телепорта).
