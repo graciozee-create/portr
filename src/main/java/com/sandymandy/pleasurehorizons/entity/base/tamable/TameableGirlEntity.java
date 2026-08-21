@@ -28,6 +28,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -52,6 +53,7 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -88,18 +90,54 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<String> ROLE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.STRING);
+    // ---- fine-tuning settings (Settings tab). Booleans default to the pre-settings behaviour,
+    // ---- except followTeleport which matches vanilla tamed pets. Modes: 0 = low, 1 = normal,
+    // ---- 2 = high; the derived helpers below translate them into gameplay numbers.
+    private static final EntityDataAccessor<Boolean> FOLLOW_TELEPORT =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CLOSE_DOORS =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AVOID_WATER =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AUTO_DELIVER =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AUTO_EQUIP_ARMOR =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> AVOID_CREEPERS =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HIGH_JUMP =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> FOLLOW_DISTANCE_MODE =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> WORK_PACE_MODE =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> WORK_RADIUS_MODE =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> GUARD_RANGE_MODE =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> STAY_RADIUS_MODE =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
     // The girl is carried directly in front of the carrier, facing them (GirlRenderer yaw-flips
     // the model 180°). The forward offset puts her center just in front of the player's front
     // face, and the positive vertical offset holds her up at chest height instead of letting her
     // sink toward the ground.
     private static final double CARRY_FORWARD_OFFSET = 0.45D;
     private static final double CARRY_VERTICAL_OFFSET = 0.10D;
+    /** Beyond this gap to a followed owner the entity-level failsafe teleports her over. */
+    private static final double FAR_FOLLOW_TELEPORT_SQ = 32.0D * 32.0D;
 
     /** Last backpack fill broadcast, so the HUD status only syncs when it actually changes. */
     private int lastSentBackpackSlots = -1;
 
     /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
     private boolean carrierSneaking = false;
+
+    /**
+     * Game time of the last tracking resync sent for this girl. Recent teleports schedule
+     * follow-up resyncs so a wedged client copy (visible again only after relogging) is
+     * rebuilt within seconds instead of requiring a relog.
+     */
+    private long lastTrackingResyncTick = Long.MIN_VALUE;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -123,6 +161,18 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         builder.define(COOK, false);
         builder.define(HUNT, false);
         builder.define(ROLE, GirlRole.IDLE.id());
+        builder.define(FOLLOW_TELEPORT, true);
+        builder.define(CLOSE_DOORS, true);
+        builder.define(AVOID_WATER, true);
+        builder.define(AUTO_DELIVER, false);
+        builder.define(AUTO_EQUIP_ARMOR, false);
+        builder.define(AVOID_CREEPERS, false);
+        builder.define(HIGH_JUMP, false);
+        builder.define(FOLLOW_DISTANCE_MODE, 1);
+        builder.define(WORK_PACE_MODE, 1);
+        builder.define(WORK_RADIUS_MODE, 1);
+        builder.define(GUARD_RANGE_MODE, 1);
+        builder.define(STAY_RADIUS_MODE, 1);
     }
 
     @Override
@@ -146,6 +196,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // so a girl with a role assigned both works and follows her owner when idle. It sits at
         // the same priority as tempt/stroll but is registered first, so it still wins that tie.
         this.goalSelector.addGoal(6, new GirlFollowOwnerGoal(this, 1.1D, 4.0F, 2.0F));
+        // Delivery outranks the other work goals on a priority tie (registered first): once the
+        // backpack is full, more gathering is pointless, so she takes the loot to her owner.
+        this.goalSelector.addGoal(4, new com.sandymandy.pleasurehorizons.entity.ai.goal.GirlDeliverLootGoal(this));
         this.goalSelector.addGoal(4, new GirlHarvestCropsGoal(this)); // toggleable via isHarvestEnabled
         this.goalSelector.addGoal(5, new GirlGatherItemsGoal(this)); // toggleable via isGatherEnabled
         this.goalSelector.addGoal(5, new GirlChopTreesGoal(this)); // toggleable via isChopTreesEnabled
@@ -182,10 +235,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
             @Override
             public boolean canUse() {
-                // Friendly fire (a swept sword, an AoE, an accidental hit) marks the owner as the
-                // last attacker; never retaliate against the owner.
+                // Friendly fire (a swept sword, an AoE, an accidental hit) marks the owner or a
+                // sister as the last attacker; never retaliate against either.
                 LivingEntity lastHurt = TameableGirlEntity.this.getLastHurtByMob();
-                if (lastHurt != null && TameableGirlEntity.this.isOwner(lastHurt)) {
+                if (lastHurt != null && (TameableGirlEntity.this.isOwner(lastHurt)
+                        || lastHurt instanceof TameableGirlEntity)) {
                     return false;
                 }
                 return super.canUse();
@@ -193,7 +247,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
             @Override
             protected boolean canAttack(@Nullable LivingEntity target, net.minecraft.world.entity.ai.targeting.TargetingConditions conditions) {
-                if (target != null && TameableGirlEntity.this.isOwner(target)) {
+                if (target != null && (TameableGirlEntity.this.isOwner(target)
+                        || target instanceof TameableGirlEntity)) {
                     return false;
                 }
                 return super.canAttack(target, conditions);
@@ -201,12 +256,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         });
         // Defend the owner: retaliate against whoever hurt them, and join their fights.
         this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
-        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
+        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class, TameableGirlEntity.class));
         // Owner guard is checked before base guard, so a girl with both toggles on (the GUARD
         // role enables both) defends her owner first and only falls back to guarding the base
         // when no hostile threatens the owner.
         this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
+        // Pack tactics sits above hunting: shared fights with sisters beat hunting a cow, and
+        // the goal never preempts an existing target, it only fills an empty slot.
+        this.targetSelector.addGoal(2, new com.sandymandy.pleasurehorizons.entity.ai.goal.GirlPackTacticsGoal(this));
         // Hunting is the lowest-priority target source: hostiles always take precedence.
         this.targetSelector.addGoal(2, new GirlHuntGoal(this));
     }
@@ -271,30 +329,163 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return false;
         }
 
-        BlockPos target = findSafeSpotNear(this.level(), owner);
+        // A manual summon (G key / /girls call) must always do something, so unlike the
+        // automatic follow-teleport it falls back to a spot above the owner.
+        BlockPos target = findSafeSpotNear(this, owner);
+        if (target == null) {
+            target = owner.blockPosition().above();
+        }
+        double x = target.getX() + 0.5D;
+        double y = target.getY();
+        double z = target.getZ() + 0.5D;
         this.stopRiding();
         this.getNavigation().stop();
         this.setTarget(null);
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.setNoGravity(false);
-        this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        this.resetFallDistance();
+        this.teleportTo(x, y, z);
+        if (owner instanceof ServerPlayer serverPlayer) {
+            resyncTo(serverPlayer);
+        }
         return true;
     }
 
-    /** Nearest air block with air above it around the player, to avoid suffocating on arrival. */
-    private static BlockPos findSafeSpotNear(Level level, Player player) {
+    /**
+     * Standable spot BESIDE the player - never her own column. The old version returned the
+     * owner's feet block first, so teleported girls materialised inside the player: their
+     * AABB ends up wrapped around the camera, which vanilla still renders, but shader and
+     * culling mods (Iris + EntityCulling/MoreCulling) cull such an entity outright - the
+     * reported "she teleports to me and fights, but is completely invisible, no shadow".
+     * Rings of 1, then 2 blocks; small vertical scan per column; collision-checked.
+     */
+    private static BlockPos findSafeSpotNear(TameableGirlEntity girl, Player player) {
         BlockPos center = player.blockPosition();
-        int[] ring = {0, 1, -1, 2, -2};
-        for (int dx : ring) {
-            for (int dz : ring) {
-                BlockPos candidate = center.offset(dx, 0, dz);
-                if (level.getBlockState(candidate).isAir()
-                        && level.getBlockState(candidate.above()).isAir()) {
-                    return candidate;
+        // Vanilla pets never land within 2 blocks of the owner (TamableAnimal#
+        // teleportToAroundBlockPos requires |dx|>=2 or |dz|>=2) and require a WALKABLE spot
+        // with solid, non-leaf ground. Rings of 2, then 3 blocks; vertical wiggle of one.
+        for (int radius = 2; radius <= 3; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
+                    for (int y : new int[]{0, 1, -1}) {
+                        BlockPos candidate = center.offset(dx, y, dz);
+                        if (isWalkableTeleportSpot(girl, candidate)
+                                && girl.level().noCollision(girl, girl.getBoundingBox().move(
+                                candidate.getX() + 0.5D - girl.getX(),
+                                candidate.getY() - girl.getY(),
+                                candidate.getZ() + 0.5D - girl.getZ()))) {
+                            return candidate;
+                        }
+                    }
                 }
             }
         }
-        return center;
+        // Strict pass failed (owner on a bridge, in a boat, swimming): fall back to any
+        // collision-free spot so she still ARRIVES - standing in water or on a narrow ledge
+        // beats being stranded behind, which reads in-game as "she never teleports".
+        for (int radius = 2; radius <= 4; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
+                    BlockPos candidate = center.offset(dx, 0, dz);
+                    if (girl.level().noCollision(girl, girl.getBoundingBox().move(
+                            candidate.getX() + 0.5D - girl.getX(),
+                            candidate.getY() - girl.getY(),
+                            candidate.getZ() + 0.5D - girl.getZ()))) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Vanilla TamableAnimal#canTeleportTo: walkable path type, no leaves underfoot. */
+    private static boolean isWalkableTeleportSpot(TameableGirlEntity girl, BlockPos pos) {
+        net.minecraft.world.level.pathfinder.PathType pathType =
+                net.minecraft.world.level.pathfinder.WalkNodeEvaluator.getPathTypeStatic(girl, pos);
+        if (pathType != net.minecraft.world.level.pathfinder.PathType.WALKABLE) {
+            return false;
+        }
+        net.minecraft.world.level.block.state.BlockState below = girl.level().getBlockState(pos.below());
+        return !(below.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock);
+    }
+
+    /**
+     * Teleports the girl right next to the player, used by follow-teleport (vanilla tamed-pet
+     * behaviour: never get permanently lost behind terrain, water or a cliff).
+     */
+    /**
+     * Deterministic client-side rebuild of this entity for one player: removes any stale
+     * client copy, then re-sends the exact pairing flow vanilla uses when an entity enters
+     * view distance (add + equipment + position, plus our custom pairing payloads).
+     */
+    private void resyncTo(ServerPlayer player) {
+        this.lastTrackingResyncTick = this.level().getGameTime();
+        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                "[tracking] resync girl {} ({}) -> {}", this.getId(), this.getGirlID(),
+                player.getGameProfile().getName());
+        int id = this.getId();
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(id));
+        // Full public constructor: id, uuid, position, rotations, type, data, velocity, head yaw.
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(
+                id, this.getUUID(), this.getX(), this.getY(), this.getZ(),
+                this.getXRot(), this.getYRot(), this.getType(), 0,
+                this.getDeltaMovement(), (double) this.getYHeadRot()));
+        java.util.List<net.minecraft.network.syncher.SynchedEntityData.DataValue<?>> data =
+                this.getEntityData().getNonDefaultValues();
+        if (data != null) {
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket(id, data));
+        }
+        player.connection.send(new ClientboundTeleportEntityPacket(this));
+        List<com.mojang.datafixers.util.Pair<EquipmentSlot, ItemStack>> equipment = new java.util.ArrayList<>();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR || slot.getType() == EquipmentSlot.Type.HAND) {
+                equipment.add(com.mojang.datafixers.util.Pair.of(slot, this.getItemBySlot(slot)));
+            }
+        }
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket(id, equipment));
+        // Custom pairing payloads (same content sendPairingData would deliver).
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                currentClothingAndArmorPacket(),
+                new com.sandymandy.pleasurehorizons.networking.S2C.GirlStatusS2CPacket(id, usedBackpackSlots()));
+    }
+
+    public boolean teleportNear(Player player) {
+        if (this.level().isClientSide() || this.level() != player.level() || this.isSceneActive()) {
+            return false;
+        }
+        BlockPos target = findSafeSpotNear(this, player);
+        if (target == null) {
+            // Vanilla TamableAnimal behaviour: with no walkable spot around the owner a
+            // teleport simply does not happen (she keeps pathing on foot) - a forced landing
+            // into a bad spot is exactly how she used to end up inside the player.
+            return false;
+        }
+        double x = target.getX() + 0.5D;
+        double y = target.getY();
+        double z = target.getZ() + 0.5D;
+        double distanceBeforeSq = this.distanceToSqr(player);
+        this.getNavigation().stop();
+        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        // Entity#teleportTo does NOT reset fall distance; a girl teleported mid-fall
+        // (routine with high jump on) would land already "fallen" and take the damage.
+        this.resetFallDistance();
+        this.teleportTo(x, y, z);
+        if (player instanceof ServerPlayer serverPlayer) {
+            if (distanceBeforeSq > 64.0D * 64.0D) {
+                // Long hop: rebuild the owner's client-side copy outright. A stale or wedged
+                // tracker (async-tracking mods like c2me) otherwise leaves her invisible and
+                // unclickable while the server keeps playing her - remove + full re-pair is
+                // the same packet flow as her leaving and re-entering view distance, so it is
+                // safe everywhere and heals whatever the tracker missed.
+                resyncTo(serverPlayer);
+            } else {
+                serverPlayer.connection.send(new ClientboundTeleportEntityPacket(this));
+            }
+        }
+        return true;
     }
 
     /** Matches a user-supplied name against her custom name or her rig id (case-insensitive). */
@@ -441,9 +632,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Role label for the HUD and the inventory "Next Role" button. */
     public GirlRole getRole() {
         return GirlRole.fromId(this.entityData.get(ROLE));
-    }
-
-    /**
+    }    /**
      * Assigns a role: applies its toggle preset and records the label.
      * Server-only - toggles are server-owned synched data.
      */
@@ -457,6 +646,201 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     public void cycleRole() {
         if (this.level().isClientSide()) return;
         this.setRole(this.getRole().next());
+    }
+
+    // -------------------------------------------------------- fine-tune settings
+
+    public boolean isFollowTeleportEnabled() {
+        return this.entityData.get(FOLLOW_TELEPORT);
+    }
+
+    public void setFollowTeleportEnabled(boolean enabled) {
+        this.entityData.set(FOLLOW_TELEPORT, enabled);
+    }
+
+    public boolean isCloseDoorsEnabled() {
+        return this.entityData.get(CLOSE_DOORS);
+    }
+
+    public void setCloseDoorsEnabled(boolean enabled) {
+        this.entityData.set(CLOSE_DOORS, enabled);
+    }
+
+    public boolean isAvoidWaterEnabled() {
+        return this.entityData.get(AVOID_WATER);
+    }
+
+    /** Also updates the live pathfinding malus, so the change applies without a relog. */
+    public void setAvoidWaterEnabled(boolean enabled) {
+        this.entityData.set(AVOID_WATER, enabled);
+        this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, enabled ? 8.0F : 0.0F);
+    }
+
+    public boolean isAutoDeliverEnabled() {
+        return this.entityData.get(AUTO_DELIVER);
+    }
+
+    public void setAutoDeliverEnabled(boolean enabled) {
+        this.entityData.set(AUTO_DELIVER, enabled);
+    }
+
+    public boolean isAutoEquipArmorEnabled() {
+        return this.entityData.get(AUTO_EQUIP_ARMOR);
+    }
+
+    public void setAutoEquipArmorEnabled(boolean enabled) {
+        this.entityData.set(AUTO_EQUIP_ARMOR, enabled);
+    }
+
+    public boolean isAvoidCreepersEnabled() {
+        return this.entityData.get(AVOID_CREEPERS);
+    }
+
+    public void setAvoidCreepersEnabled(boolean enabled) {
+        this.entityData.set(AVOID_CREEPERS, enabled);
+    }
+
+    public boolean isHighJumpEnabled() {
+        return this.entityData.get(HIGH_JUMP);
+    }
+
+    /**
+     * High-jump toggle: raises the jump-strength attribute so every jump (path hops, leaving
+     * water, leaping at a target) carries her about 4-5 blocks up. The softened landing below
+     * keeps her own leaps from hurting her; real cliffs stay dangerous.
+     */
+    public void setHighJumpEnabled(boolean enabled) {
+        this.entityData.set(HIGH_JUMP, enabled);
+        var jump = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+        if (jump != null) {
+            jump.setBaseValue(enabled ? 0.8D : 0.42D);
+        }
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (this.isHighJumpEnabled()) {
+            // A 0.8-power jump lands from ~5-6 blocks up; discount that first so her own leaps
+            // are free while genuine cliffs still hurt.
+            fallDistance = Math.max(0.0F, fallDistance - 8.0F);
+        }
+        return super.causeFallDamage(fallDistance, multiplier, source);
+    }
+
+    /**
+     * Target filter for the guard goals: when "avoid creepers" is on, creepers are skipped so
+     * she never triggers an explosion next to herself (or the base).
+     */
+    public boolean isAvoidCreepersEnabled(net.minecraft.world.entity.monster.Monster monster) {
+        return this.isAvoidCreepersEnabled() && monster instanceof net.minecraft.world.entity.monster.Creeper;
+    }
+
+    public int getFollowDistanceMode() {
+        return this.entityData.get(FOLLOW_DISTANCE_MODE);
+    }
+
+    public void setFollowDistanceMode(int mode) {
+        this.entityData.set(FOLLOW_DISTANCE_MODE, Math.floorMod(mode, 3));
+    }
+
+    public int getWorkPaceMode() {
+        return this.entityData.get(WORK_PACE_MODE);
+    }
+
+    public void setWorkPaceMode(int mode) {
+        this.entityData.set(WORK_PACE_MODE, Math.floorMod(mode, 3));
+    }
+
+    public int getWorkRadiusMode() {
+        return this.entityData.get(WORK_RADIUS_MODE);
+    }
+
+    public void setWorkRadiusMode(int mode) {
+        this.entityData.set(WORK_RADIUS_MODE, Math.floorMod(mode, 3));
+    }
+
+    public int getGuardRangeMode() {
+        return this.entityData.get(GUARD_RANGE_MODE);
+    }
+
+    public void setGuardRangeMode(int mode) {
+        this.entityData.set(GUARD_RANGE_MODE, Math.floorMod(mode, 3));
+    }
+
+    public int getStayRadiusMode() {
+        return this.entityData.get(STAY_RADIUS_MODE);
+    }
+
+    public void setStayRadiusMode(int mode) {
+        this.entityData.set(STAY_RADIUS_MODE, Math.floorMod(mode, 3));
+    }
+
+    /** Follow gap before she starts catching up: close / normal / far. */
+    public float followStartDistance() {
+        return switch (this.getFollowDistanceMode()) {
+            case 0 -> 3.0F;
+            case 2 -> 8.0F;
+            default -> 5.0F;
+        };
+    }
+
+    /** Follow distance at which catching up stops: close / normal / far. */
+    public float followStopDistance() {
+        return switch (this.getFollowDistanceMode()) {
+            case 0 -> 1.5F;
+            case 2 -> 4.0F;
+            default -> 2.5F;
+        };
+    }
+
+    /** Movement speed multiplier for the work goals: calm / normal / fast. */
+    public double workSpeedModifier() {
+        return switch (this.getWorkPaceMode()) {
+            case 0 -> 1.0D;
+            case 2 -> 1.6D;
+            default -> 1.3D;
+        };
+    }
+
+    /** Scale for the work goals' scan ranges (harvest/chop/gather/cook): compact / normal / wide. */
+    public double workRadiusScale() {
+        return switch (this.getWorkRadiusMode()) {
+            case 0 -> 0.65D;
+            case 2 -> 1.5D;
+            default -> 1.0D;
+        };
+    }
+
+    /** Guard-owner scan range: near / normal / wide. */
+    public double guardScanRange() {
+        return switch (this.getGuardRangeMode()) {
+            case 0 -> 8.0D;
+            case 2 -> 20.0D;
+            default -> 12.0D;
+        };
+    }
+
+    /** Stay-near-base outer radius: close / normal / far. */
+    public double stayNearBaseMaxDistance() {
+        return switch (this.getStayRadiusMode()) {
+            case 0 -> 6.0D;
+            case 2 -> 20.0D;
+            default -> 10.0D;
+        };
+    }
+
+    /** Stay-near-base inner radius (she stops approaching once inside): close / normal / far. */
+    public double stayNearBaseMinDistance() {
+        return switch (this.getStayRadiusMode()) {
+            case 0 -> 2.0D;
+            case 2 -> 6.0D;
+            default -> 3.0D;
+        };
+    }
+
+    /** True when every backpack slot holds something (triggers auto-delivery when enabled). */
+    public boolean isBackpackFull() {
+        return this.usedBackpackSlots() >= GirlInventory.BACKPACK_END - GirlInventory.BACKPACK_START + 1;
     }
 
     /** How many backpack slots currently hold an item; drives the HUD fill indicator. */
@@ -486,6 +870,34 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             if (stack.isEmpty()) continue;
             player.getInventory().add(stack);
             inv.setItem(i, stack);
+        }
+    }
+
+    /**
+     * Auto-equip: moves strictly better armour pieces from the backpack into the matching armour
+     * slot (one piece per check). Fills empty slots first and swaps only when the candidate's
+     * raw defence is strictly higher.
+     */
+    private void autoEquipArmorFromBackpack() {
+        GirlInventory inv = this.getInventory();
+        for (int i = GirlInventory.BACKPACK_START; i <= GirlInventory.BACKPACK_END; i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack.isEmpty() || !(stack.getItem() instanceof net.minecraft.world.item.ArmorItem armor)) {
+                continue;
+            }
+            EquipmentSlot slot = armor.getEquipmentSlot();
+            if (slot.getType() != EquipmentSlot.Type.HUMANOID_ARMOR) {
+                continue;
+            }
+            ItemStack current = this.getItemBySlot(slot);
+            boolean better = current.isEmpty()
+                    || (current.getItem() instanceof net.minecraft.world.item.ArmorItem currentArmor
+                        && armor.getDefense() > currentArmor.getDefense());
+            if (better) {
+                inv.setItem(i, current.copy());
+                this.setItemSlot(slot, stack);
+                return; // one swap per check keeps it readable in-game (piece by piece)
+            }
         }
     }
 
@@ -618,6 +1030,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // cannot land the killing blow.
         if (this.isDamageFromOwner(source)) {
             return super.hurt(source, amount);
+        }
+        // Squad mates never harm each other. A sister's stray sword swing, sweep edge or arrow
+        // deals no damage at all - which also means no lastHurtByMob entry, so HurtByTarget can
+        // never start a vendetta between two girls.
+        if (source.getEntity() instanceof TameableGirlEntity) {
+            return false;
         }
         if (this.isDowned() || this.isMovementLocked()) {
             return false;
@@ -835,6 +1253,38 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.level().isClientSide() && this.tickCount % 20 == 0) {
             updateBackpackStatusIfChanged();
         }
+        if (!this.level().isClientSide() && this.isTamed()
+                && this.isAutoEquipArmorEnabled() && this.tickCount % 100 == 0) {
+            this.autoEquipArmorFromBackpack();
+        }
+        // Follow-teleport failsafe, independent of which goal currently owns the MOVE flag:
+        // the follow goal alone cannot cover the case where a higher-priority work goal is
+        // running (or the goal was stopped by its own navigation.isDone() check), which is
+        // exactly when girls used to get stranded at "hard distances". Same guards as the
+        // goal: no teleport while sitting, downed, in a scene, carried, or off-world.
+        if (!this.level().isClientSide() && this.isTamed() && this.isFollowing()
+                && this.isFollowTeleportEnabled() && (this.tickCount & 31) == 0
+                && !this.isSitting() && !this.isDowned() && !this.isSceneActive()
+                && !this.isPassenger()
+                && this.getOwner() instanceof Player owner
+                && owner.level() == this.level() && !owner.isSpectator()
+                && !owner.isFallFlying()
+                && this.distanceToSqr(owner) > FAR_FOLLOW_TELEPORT_SQ) {
+            this.teleportNear(owner);
+        }
+        // Self-heal for a wedged client copy ("visible only after relogging"): after a
+        // teleport we repeat the deterministic client rebuild a few times. Each retry costs
+        // one frame of flicker at most; a healthy client just re-receives its own state.
+        if (!this.level().isClientSide() && this.isTamed() && this.tickCount % 20 == 0
+                && this.lastTrackingResyncTick != Long.MIN_VALUE
+                && this.getOwner() instanceof ServerPlayer owner
+                && owner.level() == this.level()
+                && this.distanceToSqr(owner) < 64.0D * 64.0D) {
+            long since = this.level().getGameTime() - this.lastTrackingResyncTick;
+            if (since == 60L || since == 140L || since == 260L) {
+                resyncTo(owner);
+            }
+        }
         // While being carried, ensure she stays nicely positioned and doesn't suffocate
         if (this.isPassenger() && this.getVehicle() instanceof Player player) {
             this.setNoGravity(true);
@@ -1022,6 +1472,18 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         tag.putBoolean("Cook", this.isCookEnabled());
         tag.putBoolean("Hunt", this.isHuntEnabled());
         tag.putString("Role", this.getRole().id());
+        tag.putBoolean("FollowTeleport", this.isFollowTeleportEnabled());
+        tag.putBoolean("CloseDoors", this.isCloseDoorsEnabled());
+        tag.putBoolean("AvoidWater", this.isAvoidWaterEnabled());
+        tag.putBoolean("AutoDeliver", this.isAutoDeliverEnabled());
+        tag.putBoolean("AutoEquipArmor", this.isAutoEquipArmorEnabled());
+        tag.putBoolean("AvoidCreepers", this.isAvoidCreepersEnabled());
+        tag.putBoolean("HighJump", this.isHighJumpEnabled());
+        tag.putInt("FollowDistanceMode", this.getFollowDistanceMode());
+        tag.putInt("WorkPaceMode", this.getWorkPaceMode());
+        tag.putInt("WorkRadiusMode", this.getWorkRadiusMode());
+        tag.putInt("GuardRangeMode", this.getGuardRangeMode());
+        tag.putInt("StayRadiusMode", this.getStayRadiusMode());
         if (this.getOwnerUUID() != null) {
             tag.putUUID("Owner", this.getOwnerUUID());
         }
@@ -1038,6 +1500,18 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // The role is only a label; the individual toggles above are the authoritative state, so
         // re-applying the preset here would clobber whatever the player saved.
         if (tag.contains("Role")) this.entityData.set(ROLE, GirlRole.fromId(tag.getString("Role")).id());
+        if (tag.contains("FollowTeleport")) this.setFollowTeleportEnabled(tag.getBoolean("FollowTeleport"));
+        if (tag.contains("CloseDoors")) this.setCloseDoorsEnabled(tag.getBoolean("CloseDoors"));
+        if (tag.contains("AvoidWater")) this.setAvoidWaterEnabled(tag.getBoolean("AvoidWater"));
+        if (tag.contains("AutoDeliver")) this.setAutoDeliverEnabled(tag.getBoolean("AutoDeliver"));
+        if (tag.contains("AutoEquipArmor")) this.setAutoEquipArmorEnabled(tag.getBoolean("AutoEquipArmor"));
+        if (tag.contains("AvoidCreepers")) this.setAvoidCreepersEnabled(tag.getBoolean("AvoidCreepers"));
+        if (tag.contains("HighJump")) this.setHighJumpEnabled(tag.getBoolean("HighJump"));
+        if (tag.contains("FollowDistanceMode")) this.setFollowDistanceMode(tag.getInt("FollowDistanceMode"));
+        if (tag.contains("WorkPaceMode")) this.setWorkPaceMode(tag.getInt("WorkPaceMode"));
+        if (tag.contains("WorkRadiusMode")) this.setWorkRadiusMode(tag.getInt("WorkRadiusMode"));
+        if (tag.contains("GuardRangeMode")) this.setGuardRangeMode(tag.getInt("GuardRangeMode"));
+        if (tag.contains("StayRadiusMode")) this.setStayRadiusMode(tag.getInt("StayRadiusMode"));
         if (tag.hasUUID("Owner")) {
             this.setOwnerUUID(tag.getUUID("Owner"));
         }
