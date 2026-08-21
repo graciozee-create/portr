@@ -16,9 +16,14 @@ import java.util.EnumSet;
  * then carries back to the backpack when gathering is also enabled.</p>
  */
 public class GirlChopTreesGoal extends Goal {
+    private static final int GIVE_UP_TICKS = 600;
+    private static final int GIVE_UP_COOLDOWN = 200;
+
     private final TameableGirlEntity girl;
     private BlockPos targetLog;
     private int cooldown = 0;
+    private int elapsed = 0;
+    private boolean gaveUp = false;
 
     public GirlChopTreesGoal(TameableGirlEntity girl) {
         this.girl = girl;
@@ -36,10 +41,11 @@ public class GirlChopTreesGoal extends Goal {
             return false;
         }
 
+        int range = net.minecraft.util.Mth.ceil(7.0F * (float) girl.workRadiusScale());
         BlockPos base = girl.blockPosition();
         for (int y = -2; y <= 6; y++) {
-            for (int x = -7; x <= 7; x++) {
-                for (int z = -7; z <= 7; z++) {
+            for (int x = -range; x <= range; x++) {
+                for (int z = -range; z <= range; z++) {
                     BlockPos pos = base.offset(x, y, z);
                     BlockState state = girl.level().getBlockState(pos);
                     if (state.is(BlockTags.LOGS) && hasLeavesAbove(pos)) {
@@ -77,9 +83,11 @@ public class GirlChopTreesGoal extends Goal {
 
     @Override
     public void start() {
+        this.elapsed = 0;
         girl.setDailyActivity("chop");
         if (targetLog != null) {
-            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.3D);
+            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D,
+                    girl.workSpeedModifier());
         }
     }
 
@@ -87,12 +95,20 @@ public class GirlChopTreesGoal extends Goal {
     public void tick() {
         if (targetLog == null) return;
 
+        if (++elapsed > GIVE_UP_TICKS) {
+            // Tree unreachable - drop it for a while instead of freezing forever.
+            gaveUp = true;
+            targetLog = null;
+            return;
+        }
+
         girl.getLookControl().setLookAt(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 30.0F, 30.0F);
         if (girl.distanceToSqr(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D) < 9.0D) {
             girl.level().destroyBlock(targetLog, true, girl);
             targetLog = null;
         } else if (girl.getNavigation().isDone()) {
-            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.3D);
+            girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D,
+                    girl.workSpeedModifier());
         }
     }
 
@@ -103,6 +119,8 @@ public class GirlChopTreesGoal extends Goal {
         if ("chop".equals(girl.getDailyActivity())) {
             girl.setDailyActivity("");
         }
-        cooldown = 10;
+        // stop() must not clobber the give-up cooldown set in tick().
+        cooldown = gaveUp ? GIVE_UP_COOLDOWN : 10;
+        gaveUp = false;
     }
 }

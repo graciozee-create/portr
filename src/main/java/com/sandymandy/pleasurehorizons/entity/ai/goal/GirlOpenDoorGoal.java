@@ -40,7 +40,11 @@ public class GirlOpenDoorGoal extends DoorInteractGoal {
 
     @Override
     public void stop() {
-        this.setOpen(false);
+        // The "close doors" setting lets her leave doors open behind her (useful for busy
+        // base entrances); when it is on she closes them like a villager.
+        if (girl.isCloseDoorsEnabled()) {
+            this.setOpen(false);
+        }
         super.stop();
     }
 }

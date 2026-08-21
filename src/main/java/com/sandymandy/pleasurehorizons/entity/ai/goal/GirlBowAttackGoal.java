@@ -111,14 +111,58 @@ public class GirlBowAttackGoal extends Goal {
         if (girl.isUsingItem()) {
             int useTime = girl.getTicksUsingItem();
             if (useTime >= 20) {
-                girl.performRangedAttack(target, BowItem.getPowerForTime(useTime));
-                girl.stopUsingItem();
-                shootCooldown = 20;
+                if (friendlyInLineOfFire(target)) {
+                    // A sister or the owner is between her and the target - hold fire and
+                    // reposition instead of putting an arrow into a squad mate's back.
+                    girl.stopUsingItem();
+                    shootCooldown = 15;
+                } else {
+                    girl.performRangedAttack(target, BowItem.getPowerForTime(useTime));
+                    girl.stopUsingItem();
+                    shootCooldown = 20;
+                }
             }
         } else if (shootCooldown <= 0) {
             girl.startUsingItem(ProjectileUtil.getWeaponHoldingHand(girl, item -> item instanceof BowItem));
         }
 
         if (shootCooldown > 0) shootCooldown--;
+    }
+
+    /**
+     * True when another tamed girl of any owner or her own owner stands in the corridor between
+     * her eyes and the target. Girl-vs-girl arrows already deal no damage, but holding fire
+     * keeps the squad from blocking each other's shots constantly.
+     */
+    private boolean friendlyInLineOfFire(LivingEntity target) {
+        net.minecraft.world.phys.Vec3 from = girl.getEyePosition();
+        net.minecraft.world.phys.Vec3 to = target.getEyePosition();
+        net.minecraft.world.phys.Vec3 dir = to.subtract(from);
+        double length = dir.length();
+        if (length < 1.0E-4D) {
+            return false;
+        }
+        dir = dir.normalize();
+
+        net.minecraft.world.phys.AABB corridor = girl.getBoundingBox().expandTowards(
+                target.getX() - girl.getX(),
+                target.getY() - girl.getY(),
+                target.getZ() - girl.getZ()).inflate(1.0D);
+
+        for (net.minecraft.world.entity.Entity entity : girl.level().getEntities(girl, corridor)) {
+            if (entity == target || !entity.isAlive()) continue;
+            boolean isSister = entity instanceof com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
+            boolean isOwner = girl.isOwner(entity instanceof LivingEntity living ? living : null);
+            if (!isSister && !isOwner) continue;
+
+            net.minecraft.world.phys.Vec3 rel = entity.getBoundingBox().getCenter().subtract(from);
+            double along = rel.dot(dir);
+            if (along <= 0.5D || along >= length - 0.5D) continue;
+            double sideways = rel.subtract(dir.scale(along)).length();
+            if (sideways < entity.getBbWidth() * 0.6D + 0.3D) {
+                return true;
+            }
+        }
+        return false;
     }
 }
