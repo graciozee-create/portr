@@ -321,38 +321,54 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return false;
         }
 
-        BlockPos target = findSafeSpotNear(this.level(), owner);
+        BlockPos target = findSafeSpotNear(this, owner);
+        double x = target.getX() + 0.5D;
+        double y = target.getY();
+        double z = target.getZ() + 0.5D;
         this.stopRiding();
         this.getNavigation().stop();
         this.setTarget(null);
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.setNoGravity(false);
-        this.resetFallDistance();
-        this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        if (!this.randomTeleport(x, y, z, false)) {
+            this.resetFallDistance();
+            this.teleportTo(x, y, z);
+        }
         return true;
     }
 
     /**
-     * Nearest standable spot around the player, to avoid suffocating on arrival. The old
-     * version only tested the owner's exact feet level, which on slopes/ledges could come up
-     * empty everywhere; now a small vertical scan runs per column (1 up, 2 down).
+     * Standable spot BESIDE the player - never her own column. The old version returned the
+     * owner's feet block first, so teleported girls materialised inside the player: their
+     * AABB ends up wrapped around the camera, which vanilla still renders, but shader and
+     * culling mods (Iris + EntityCulling/MoreCulling) cull such an entity outright - the
+     * reported "she teleports to me and fights, but is completely invisible, no shadow".
+     * Rings of 1, then 2 blocks; small vertical scan per column; collision-checked.
      */
-    private static BlockPos findSafeSpotNear(Level level, Player player) {
+    private static BlockPos findSafeSpotNear(TameableGirlEntity girl, Player player) {
+        Level level = girl.level();
         BlockPos center = player.blockPosition();
-        int[] ring = {0, 1, -1, 2, -2};
         int[] dy = {0, 1, -1, -2};
-        for (int dx : ring) {
-            for (int dz : ring) {
-                for (int y : dy) {
-                    BlockPos candidate = center.offset(dx, y, dz);
-                    if (level.getBlockState(candidate).isAir()
-                            && level.getBlockState(candidate.above()).isAir()) {
-                        return candidate;
+        for (int radius = 1; radius <= 2; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
+                    for (int y : dy) {
+                        BlockPos candidate = center.offset(dx, y, dz);
+                        if (level.getBlockState(candidate).isAir()
+                                && level.getBlockState(candidate.above()).isAir()
+                                && level.noCollision(girl, girl.getBoundingBox().move(
+                                candidate.getX() + 0.5D - girl.getX(),
+                                candidate.getY() - girl.getY(),
+                                candidate.getZ() + 0.5D - girl.getZ()))) {
+                            return candidate;
+                        }
                     }
                 }
             }
         }
-        return center;
+        // Everything around is blocked: land above the owner rather than inside them.
+        return center.above();
     }
 
     /**
@@ -363,14 +379,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (this.level().isClientSide() || this.level() != player.level() || this.isSceneActive()) {
             return false;
         }
-        BlockPos target = findSafeSpotNear(this.level(), player);
+        BlockPos target = findSafeSpotNear(this, player);
+        double x = target.getX() + 0.5D;
+        double y = target.getY();
+        double z = target.getZ() + 0.5D;
         this.getNavigation().stop();
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        // Entity#teleportTo does NOT reset fall distance (unlike Mob#randomTeleport). Without
-        // this, teleporting a girl mid-fall - routine now with high jump enabled - makes her
-        // land near the owner already "fallen" and take the accumulated damage.
-        this.resetFallDistance();
-        this.teleportTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D);
+        // randomTeleport re-validates the destination (collision, world border) and fires the
+        // NeoForge teleport event, unlike the bare Entity#teleportTo. If its checks still
+        // refuse, fall back to a direct teleport - and always reset fall distance, or a girl
+        // teleported mid-fall (routine with high jump on) lands already "fallen" and hurt.
+        if (!this.randomTeleport(x, y, z, false)) {
+            this.resetFallDistance();
+            this.teleportTo(x, y, z);
+        }
         return true;
     }
 
