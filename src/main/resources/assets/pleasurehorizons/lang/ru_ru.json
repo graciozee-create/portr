@@ -426,5 +426,7 @@
   "setting.pleasurehorizons.stayRadius.1": "Обычно",
   "setting.pleasurehorizons.stayRadius.2": "Далеко",
   "msg.pleasurehorizons.settingChanged": "%s: %s",
-  "msg.pleasurehorizons.backpackDelivered": "%s отдала вам содержимое рюкзака"
+  "msg.pleasurehorizons.backpackDelivered": "%s отдала вам содержимое рюкзака",
+  "gui.pleasurehorizons.button.highJump": "Высокий прыжок",
+  "gui.pleasurehorizons.desc.highJump": "Каждый прыжок подбрасывает её на 4-5 блоков; свои прыжки она всегда приземляет безопасно."
 }

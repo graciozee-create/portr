@@ -266,6 +266,10 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                     Component.translatable("gui.pleasurehorizons.desc.avoidCreepers"),
                     valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
                             effectiveToggle(key, girl.isAvoidCreepersEnabled())));
+            case "gui.pleasurehorizons.button.highJump" -> List.of(
+                    Component.translatable("gui.pleasurehorizons.desc.highJump"),
+                    valueLine("setting.pleasurehorizons.on", "setting.pleasurehorizons.off",
+                            effectiveToggle(key, girl.isHighJumpEnabled())));
             case "gui.pleasurehorizons.button.followDistance" -> List.of(
                     Component.translatable("gui.pleasurehorizons.desc.followDistance"),
                     Component.translatable("gui.pleasurehorizons.currentValue",

@@ -152,7 +152,11 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.avoidCreepers", 1, true,
-                    (girl, player) -> send(girl.getId(), "avoidCreepers"))
+                    (girl, player) -> send(girl.getId(), "avoidCreepers")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.highJump", 1, true,
+                    (girl, player) -> send(girl.getId(), "highJump"))
     );
 
     private static void send(int entityId, String actionId) {

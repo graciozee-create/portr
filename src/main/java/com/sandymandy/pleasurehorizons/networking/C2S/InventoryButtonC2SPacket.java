@@ -218,6 +218,11 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                     settingFeedback(ctx.player(), "gui.pleasurehorizons.button.avoidCreepers",
                             onOff(girl.isAvoidCreepersEnabled()));
                 }
+                case "highJump" -> {
+                    girl.setHighJumpEnabled(!girl.isHighJumpEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.highJump",
+                            onOff(girl.isHighJumpEnabled()));
+                }
                 case "followDistance" -> {
                     girl.setFollowDistanceMode(girl.getFollowDistanceMode() + 1);
                     settingFeedback(ctx.player(), "gui.pleasurehorizons.button.followDistance",

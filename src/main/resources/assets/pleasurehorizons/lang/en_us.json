@@ -426,5 +426,7 @@
   "setting.pleasurehorizons.stayRadius.1": "Normal",
   "setting.pleasurehorizons.stayRadius.2": "Far",
   "msg.pleasurehorizons.settingChanged": "%s: %s",
-  "msg.pleasurehorizons.backpackDelivered": "%s handed her backpack over to you"
+  "msg.pleasurehorizons.backpackDelivered": "%s handed her backpack over to you",
+  "gui.pleasurehorizons.button.highJump": "High Jump",
+  "gui.pleasurehorizons.desc.highJump": "Every jump carries her 4-5 blocks up; her own leaps always land safely."
 }

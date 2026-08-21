@@ -104,6 +104,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> AVOID_CREEPERS =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HIGH_JUMP =
+            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> FOLLOW_DISTANCE_MODE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> WORK_PACE_MODE =
@@ -155,6 +157,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         builder.define(AUTO_DELIVER, false);
         builder.define(AUTO_EQUIP_ARMOR, false);
         builder.define(AVOID_CREEPERS, false);
+        builder.define(HIGH_JUMP, false);
         builder.define(FOLLOW_DISTANCE_MODE, 1);
         builder.define(WORK_PACE_MODE, 1);
         builder.define(WORK_RADIUS_MODE, 1);
@@ -222,10 +225,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
             @Override
             public boolean canUse() {
-                // Friendly fire (a swept sword, an AoE, an accidental hit) marks the owner as the
-                // last attacker; never retaliate against the owner.
+                // Friendly fire (a swept sword, an AoE, an accidental hit) marks the owner or a
+                // sister as the last attacker; never retaliate against either.
                 LivingEntity lastHurt = TameableGirlEntity.this.getLastHurtByMob();
-                if (lastHurt != null && TameableGirlEntity.this.isOwner(lastHurt)) {
+                if (lastHurt != null && (TameableGirlEntity.this.isOwner(lastHurt)
+                        || lastHurt instanceof TameableGirlEntity)) {
                     return false;
                 }
                 return super.canUse();
@@ -233,7 +237,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
 
             @Override
             protected boolean canAttack(@Nullable LivingEntity target, net.minecraft.world.entity.ai.targeting.TargetingConditions conditions) {
-                if (target != null && TameableGirlEntity.this.isOwner(target)) {
+                if (target != null && (TameableGirlEntity.this.isOwner(target)
+                        || target instanceof TameableGirlEntity)) {
                     return false;
                 }
                 return super.canAttack(target, conditions);
@@ -241,12 +246,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         });
         // Defend the owner: retaliate against whoever hurt them, and join their fights.
         this.targetSelector.addGoal(1, new GirlTrackOwnerAttackerGoal(this));
-        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class));
+        this.targetSelector.addGoal(1, new GirlAttackWithOwnerGoal(this, Player.class, TameableGirlEntity.class));
         // Owner guard is checked before base guard, so a girl with both toggles on (the GUARD
         // role enables both) defends her owner first and only falls back to guarding the base
         // when no hostile threatens the owner.
         this.targetSelector.addGoal(2, new GirlGuardOwnerGoal(this));
         this.targetSelector.addGoal(2, new GirlGuardBaseGoal(this)); // guard base when enabled
+        // Pack tactics sits above hunting: shared fights with sisters beat hunting a cow, and
+        // the goal never preempts an existing target, it only fills an empty slot.
+        this.targetSelector.addGoal(2, new com.sandymandy.pleasurehorizons.entity.ai.goal.GirlPackTacticsGoal(this));
         // Hunting is the lowest-priority target source: hostiles always take precedence.
         this.targetSelector.addGoal(2, new GirlHuntGoal(this));
     }
@@ -564,6 +572,33 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.entityData.set(AVOID_CREEPERS, enabled);
     }
 
+    public boolean isHighJumpEnabled() {
+        return this.entityData.get(HIGH_JUMP);
+    }
+
+    /**
+     * High-jump toggle: raises the jump-strength attribute so every jump (path hops, leaving
+     * water, leaping at a target) carries her about 4-5 blocks up. The softened landing below
+     * keeps her own leaps from hurting her; real cliffs stay dangerous.
+     */
+    public void setHighJumpEnabled(boolean enabled) {
+        this.entityData.set(HIGH_JUMP, enabled);
+        var jump = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+        if (jump != null) {
+            jump.setBaseValue(enabled ? 0.8D : 0.42D);
+        }
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (this.isHighJumpEnabled()) {
+            // A 0.8-power jump lands from ~5-6 blocks up; discount that first so her own leaps
+            // are free while genuine cliffs still hurt.
+            fallDistance = Math.max(0.0F, fallDistance - 8.0F);
+        }
+        return super.causeFallDamage(fallDistance, multiplier, source);
+    }
+
     /**
      * Target filter for the guard goals: when "avoid creepers" is on, creepers are skipped so
      * she never triggers an explosion next to herself (or the base).
@@ -867,6 +902,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // cannot land the killing blow.
         if (this.isDamageFromOwner(source)) {
             return super.hurt(source, amount);
+        }
+        // Squad mates never harm each other. A sister's stray sword swing, sweep edge or arrow
+        // deals no damage at all - which also means no lastHurtByMob entry, so HurtByTarget can
+        // never start a vendetta between two girls.
+        if (source.getEntity() instanceof TameableGirlEntity) {
+            return false;
         }
         if (this.isDowned() || this.isMovementLocked()) {
             return false;
@@ -1281,6 +1322,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         tag.putBoolean("AutoDeliver", this.isAutoDeliverEnabled());
         tag.putBoolean("AutoEquipArmor", this.isAutoEquipArmorEnabled());
         tag.putBoolean("AvoidCreepers", this.isAvoidCreepersEnabled());
+        tag.putBoolean("HighJump", this.isHighJumpEnabled());
         tag.putInt("FollowDistanceMode", this.getFollowDistanceMode());
         tag.putInt("WorkPaceMode", this.getWorkPaceMode());
         tag.putInt("WorkRadiusMode", this.getWorkRadiusMode());
@@ -1308,6 +1350,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (tag.contains("AutoDeliver")) this.setAutoDeliverEnabled(tag.getBoolean("AutoDeliver"));
         if (tag.contains("AutoEquipArmor")) this.setAutoEquipArmorEnabled(tag.getBoolean("AutoEquipArmor"));
         if (tag.contains("AvoidCreepers")) this.setAvoidCreepersEnabled(tag.getBoolean("AvoidCreepers"));
+        if (tag.contains("HighJump")) this.setHighJumpEnabled(tag.getBoolean("HighJump"));
         if (tag.contains("FollowDistanceMode")) this.setFollowDistanceMode(tag.getInt("FollowDistanceMode"));
         if (tag.contains("WorkPaceMode")) this.setWorkPaceMode(tag.getInt("WorkPaceMode"));
         if (tag.contains("WorkRadiusMode")) this.setWorkRadiusMode(tag.getInt("WorkRadiusMode"));
