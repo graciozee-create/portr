@@ -417,9 +417,16 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     private void resyncTo(ServerPlayer player) {
         int id = this.getId();
         player.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(id));
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(this));
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket(
-                id, this.getEntityData().packAll()));
+        // Full public constructor: id, uuid, position, rotations, type, data, velocity, head yaw.
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(
+                id, this.getUUID(), this.getX(), this.getY(), this.getZ(),
+                this.getXRot(), this.getYRot(), this.getType(), 0,
+                this.getDeltaMovement(), (double) this.getYHeadRot()));
+        java.util.List<net.minecraft.network.syncher.SynchedEntityData.DataValue<?>> data =
+                this.getEntityData().getNonDefaultValues();
+        if (data != null) {
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket(id, data));
+        }
         player.connection.send(new ClientboundTeleportEntityPacket(this));
         List<com.mojang.datafixers.util.Pair<EquipmentSlot, ItemStack>> equipment = new java.util.ArrayList<>();
         for (EquipmentSlot slot : EquipmentSlot.values()) {
