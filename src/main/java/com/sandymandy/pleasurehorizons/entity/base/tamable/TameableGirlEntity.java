@@ -339,7 +339,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.resetFallDistance();
         this.teleportTo(x, y, z);
         if (owner instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new ClientboundTeleportEntityPacket(this));
+            resyncTo(serverPlayer);
         }
         return true;
     }
@@ -374,6 +374,23 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 }
             }
         }
+        // Strict pass failed (owner on a bridge, in a boat, swimming): fall back to any
+        // collision-free spot so she still ARRIVES - standing in water or on a narrow ledge
+        // beats being stranded behind, which reads in-game as "she never teleports".
+        for (int radius = 2; radius <= 4; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
+                    BlockPos candidate = center.offset(dx, 0, dz);
+                    if (girl.level().noCollision(girl, girl.getBoundingBox().move(
+                            candidate.getX() + 0.5D - girl.getX(),
+                            candidate.getY() - girl.getY(),
+                            candidate.getZ() + 0.5D - girl.getZ()))) {
+                        return candidate;
+                    }
+                }
+            }
+        }
         return null;
     }
 
@@ -392,6 +409,31 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * Teleports the girl right next to the player, used by follow-teleport (vanilla tamed-pet
      * behaviour: never get permanently lost behind terrain, water or a cliff).
      */
+    /**
+     * Deterministic client-side rebuild of this entity for one player: removes any stale
+     * client copy, then re-sends the exact pairing flow vanilla uses when an entity enters
+     * view distance (add + equipment + position, plus our custom pairing payloads).
+     */
+    private void resyncTo(ServerPlayer player) {
+        int id = this.getId();
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(id));
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(this));
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket(
+                id, this.getEntityData().packAll()));
+        player.connection.send(new ClientboundTeleportEntityPacket(this));
+        List<com.mojang.datafixers.util.Pair<EquipmentSlot, ItemStack>> equipment = new java.util.ArrayList<>();
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR || slot.getType() == EquipmentSlot.Type.HAND) {
+                equipment.add(com.mojang.datafixers.util.Pair.of(slot, this.getItemBySlot(slot)));
+            }
+        }
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket(id, equipment));
+        // Custom pairing payloads (same content sendPairingData would deliver).
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                currentClothingAndArmorPacket(),
+                new com.sandymandy.pleasurehorizons.networking.S2C.GirlStatusS2CPacket(id, usedBackpackSlots()));
+    }
+
     public boolean teleportNear(Player player) {
         if (this.level().isClientSide() || this.level() != player.level() || this.isSceneActive()) {
             return false;
@@ -406,18 +448,24 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         double x = target.getX() + 0.5D;
         double y = target.getY();
         double z = target.getZ() + 0.5D;
+        double distanceBeforeSq = this.distanceToSqr(player);
         this.getNavigation().stop();
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         // Entity#teleportTo does NOT reset fall distance; a girl teleported mid-fall
         // (routine with high jump on) would land already "fallen" and take the damage.
         this.resetFallDistance();
         this.teleportTo(x, y, z);
-        // Tracking insurance: plain moveTo is exactly what vanilla pets use and works in
-        // modded clients, but if some mod leaves the client-side copy at the old position
-        // anyway ("invisible and unclickable, but still fighting"), an explicit teleport
-        // packet snaps it back. No-op when the client never had the entity.
         if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.connection.send(new ClientboundTeleportEntityPacket(this));
+            if (distanceBeforeSq > 64.0D * 64.0D) {
+                // Long hop: rebuild the owner's client-side copy outright. A stale or wedged
+                // tracker (async-tracking mods like c2me) otherwise leaves her invisible and
+                // unclickable while the server keeps playing her - remove + full re-pair is
+                // the same packet flow as her leaving and re-entering view distance, so it is
+                // safe everywhere and heals whatever the tracker missed.
+                resyncTo(serverPlayer);
+            } else {
+                serverPlayer.connection.send(new ClientboundTeleportEntityPacket(this));
+            }
         }
         return true;
     }
