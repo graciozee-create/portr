@@ -97,7 +97,8 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity
 
         AbstractArrow arrow = ProjectileUtil.getMobArrow(this, ammo, pullProgress, bow);
         // Like vanilla skeleton arrows: not farmable in survival (she does not consume ammo).
-        arrow.setPickup(AbstractArrow.Pickup.CREATIVE_ONLY);
+        // 1.21.1 has no setPickup method - the pickup field is public.
+        arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
 
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - arrow.getY();
