@@ -18,17 +18,10 @@ import java.util.EnumSet;
  * saturation without the interactive right-click path the server cannot perform for a player.
  */
 public class GirlFeedOwnerGoal extends Goal {
-    private static final int FEED_INTERVAL_TICKS = 40; // one item every two seconds, not 20/sec
-    private static final int GIVE_UP_TICKS = 600;
-    private static final int GIVE_UP_COOLDOWN = 200;
-
     private final TameableGirlEntity girl;
     private Player owner;
     private int cooldown = 0;
     private int timeToRecalcPath = 0;
-    private int feedCooldown = 0;
-    private int elapsed = 0;
-    private boolean gaveUp = false;
 
     public GirlFeedOwnerGoal(TameableGirlEntity girl) {
         this.girl = girl;
@@ -67,18 +60,11 @@ public class GirlFeedOwnerGoal extends Goal {
         return owner.getFoodData().needsFood() && findFoodSlot() >= 0;
     }
 
-    /**
-     * Only foods WITHOUT any effects qualify. Effect-carrying foods are either harmful
-     * (rotten flesh, pufferfish, spider eye, poisonous potato) or far too precious to be
-     * force-fed away (golden apples, enchanted golden apple, chorus fruit, honey bottle).
-     */
     private int findFoodSlot() {
         GirlInventory inv = girl.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
-            if (stack.isEmpty()) continue;
-            FoodProperties properties = stack.get(DataComponents.FOOD);
-            if (properties != null && properties.effects().isEmpty()) {
+            if (!stack.isEmpty() && stack.get(DataComponents.FOOD) != null) {
                 return i;
             }
         }
@@ -88,34 +74,18 @@ public class GirlFeedOwnerGoal extends Goal {
     @Override
     public void start() {
         this.timeToRecalcPath = 0;
-        this.feedCooldown = 0;
-        this.elapsed = 0;
-        girl.getNavigation().moveTo(owner, girl.workSpeedModifier());
+        girl.getNavigation().moveTo(owner, 1.1D);
     }
 
     @Override
     public void tick() {
         girl.getLookControl().setLookAt(owner, 30.0F, girl.getMaxHeadXRot());
 
-        if (++elapsed > GIVE_UP_TICKS) {
-            // Owner unreachable (flying, across water) - stop chasing and retry later.
-            gaveUp = true;
-            owner = null;
-            return;
-        }
-
         if (girl.distanceToSqr(owner) > 9.0D) {
             if (--timeToRecalcPath <= 0) {
                 timeToRecalcPath = this.adjustedTickDelay(10);
-                girl.getNavigation().moveTo(owner, girl.workSpeedModifier());
+                girl.getNavigation().moveTo(owner, 1.1D);
             }
-            return;
-        }
-
-        // Pace the feeding: one item per interval. Without this she stuffed the whole
-        // backpack into the player within a second (one item per tick).
-        if (feedCooldown > 0) {
-            feedCooldown--;
             return;
         }
 
@@ -134,7 +104,6 @@ public class GirlFeedOwnerGoal extends Goal {
 
         owner.getFoodData().eat(properties);
         girl.playSound(SoundEvents.GENERIC_EAT, 0.8F, 1.0F);
-        feedCooldown = this.adjustedTickDelay(FEED_INTERVAL_TICKS);
     }
 
     @Override
@@ -142,8 +111,6 @@ public class GirlFeedOwnerGoal extends Goal {
         this.owner = null;
         this.timeToRecalcPath = 0;
         girl.getNavigation().stop();
-        // stop() must not clobber the give-up cooldown set in tick().
-        cooldown = gaveUp ? GIVE_UP_COOLDOWN : 20;
-        gaveUp = false;
+        cooldown = 20;
     }
 }

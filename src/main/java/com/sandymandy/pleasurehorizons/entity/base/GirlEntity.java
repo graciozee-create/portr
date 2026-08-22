@@ -568,7 +568,7 @@ public abstract class GirlEntity extends PathfinderMob {
         return armorList;
     }
 
-    protected ClothingArmorVisibilityS2CPacket currentClothingAndArmorPacket() {
+    private ClothingArmorVisibilityS2CPacket currentClothingAndArmorPacket() {
         return new ClothingArmorVisibilityS2CPacket(this.getId(), currentClothingAndArmorState());
     }
 

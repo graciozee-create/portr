@@ -49,11 +49,6 @@ public class GirlTrackOwnerAttackerGoal extends TargetGoal {
             return false;
         }
 
-        // A sister who accidentally clipped the owner in a heated fight is never a target.
-        if (this.attacker instanceof TameableGirlEntity) {
-            return false;
-        }
-
         return this.canAttack(this.attacker, TargetingConditions.DEFAULT);
     }
 

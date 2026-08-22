@@ -880,30 +880,6 @@ CI: run `32407001840`, `SUCCESS`, headSha `6c73f47` сверен.
 Runtime-only: проверить в игре, что в GUARD-роли/«Guard Me» она без пауз выкашивает зомби/
 скелетов вокруг игрока и не замирает, когда скелет отходит.
 
-
-### 5.37. Краш сервера по логу пользователя: «Cannot encode empty ItemStack» у стрел
-
-Присланный `latest.log` дал доказанный дефект: все ERROR «An Entity type entity.minecraft.arrow
-has thrown an exception trying to write state» и фатальный краш `crash-2026-08-21_23.20.26`
-(`Saving entity NBT` ← `AbstractArrow.addAdditionalSaveData:529` ← `Entity.restoreFrom` ←
-`changeDimension` ← `handlePortal`) — стрелы ЛУЧНИЦ. `SettlementGirlEntityAI` вызывал
-унаследованный `getProjectile(bow)`, который по умолчанию возвращает `ItemStack.EMPTY`
-(ванильный скелет переопределяет его в `new ItemStack(Items.ARROW)`). Пустой ammo-стек
-запекался в стрелу как pickup-item: автосейв чанка ронял стрелу («It will not persist»), а
-стрела, залетевшая в портал, крашила весь сервер при restoreFrom.
-
-**Фикс:** `getProjectile` переопределён — реальная стрела из рюкзака (если есть), иначе
-бесконечная `Items.ARROW` как у скелета; `arrow.setPickup(CREATIVE_ONLY)` (не фармится в
-выживании, ammo не расходуется).
-
-**Невидимость: присланный лог — со старого джарника** (в нём нет ни одной строки
-`[tracking] resync`, появившихся в `690423d`/`c496985`). Нужен новый лог с нового артефакта.
-Кандидаты сборки: SSRD (Separate Sable Render Distance — управляет трекинг-диапазоном
-сущностей), sable (глубоко вмешивается в entity tracking/ticking), c2me_notickvd. Замечен
-единичный `Received passengers for unknown entity` (наш syncCarryState о ещё не добавленной
-сущности — косметика).
-
-CI: run `32518831182` (коммит `54cd015`), `SUCCESS`, headSha сверен.
 ## 5a. Что ещё осталось
 
 - Нужен игровой тест артефакта с `44fa38e`: переноска в первом/третьем лице, все типы
