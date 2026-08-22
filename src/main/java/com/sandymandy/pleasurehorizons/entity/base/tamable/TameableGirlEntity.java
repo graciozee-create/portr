@@ -1090,8 +1090,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // Travelling companions do not cook or drown. Following the owner across caves,
         // oceans and the Nether used to grind them down on lava, magma, fire and drowning;
         // a tamed girl is immune to ambient hazards (fights still hurt her normally).
-        if (this.isTamed() && (source.is(DamageTypes.LAVA) || source.is(DamageTypes.FIRE)
-                || source.is(DamageTypes.FIRE_TICK) || source.is(DamageTypes.HOT_FLOOR)
+        if (this.isTamed() && (source.is(DamageTypes.LAVA) || source.is(DamageTypes.IN_FIRE)
+                || source.is(DamageTypes.ON_FIRE) || source.is(DamageTypes.HOT_FLOOR)
                 || source.is(DamageTypes.DROWN) || source.is(DamageTypes.CACTUS)
                 || source.is(DamageTypes.SWEET_BERRY_BUSH))) {
             return false;
