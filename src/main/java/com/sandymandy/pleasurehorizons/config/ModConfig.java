@@ -11,6 +11,4 @@ public class ModConfig {
     public static class Keybinds {
         public boolean holdThrust = true;
     }
-
-    public static void init() {}
 }

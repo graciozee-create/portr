@@ -19,7 +19,7 @@
   },
   "requirements": [
     [
-      "tamed_girl"
+      "tame"
     ]
   ],
   "sends_telemetry_event": true
