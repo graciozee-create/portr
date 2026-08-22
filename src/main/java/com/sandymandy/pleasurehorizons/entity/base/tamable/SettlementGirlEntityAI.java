@@ -62,6 +62,28 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity
     }
 
     /**
+     * Ammo for the bow. Vanilla skeletons return a plain arrow here; the inherited default
+     * returns {@link ItemStack#EMPTY}, and an empty ammo stack gets baked into the arrow as
+     * its pickup item. The server then dies with "Cannot encode empty ItemStack" the first
+     * time such an arrow is serialized - on chunk autosave the arrow is dropped ("It will
+     * not persist"), and on a portal crossing the changeDimension restore crashes the
+     * whole server (user logs, crash-2026-08-21_23.20.26 and crash-2026-08-22_12.02.37).
+     *
+     * <p>Uses a real arrow from her backpack when she carries one, otherwise an endless
+     * plain arrow like a skeleton's.</p>
+     */
+    @Override
+    public ItemStack getProjectile(ItemStack weapon) {
+        for (int i = 0; i < this.getInventory().getContainerSize(); i++) {
+            ItemStack stack = this.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.ArrowItem) {
+                return stack.copyWithCount(1);
+            }
+        }
+        return new ItemStack(net.minecraft.world.item.Items.ARROW);
+    }
+
+    /**
      * Fires an arrow at the target. Mirrors vanilla {@code AbstractSkeleton#performRangedAttack}:
      * the arrow is built from the held ammo so enchantments and tipped arrows carry over.
      */
@@ -74,6 +96,8 @@ public abstract class SettlementGirlEntityAI extends TameableGirlEntity
         ItemStack ammo = this.getProjectile(bow);
 
         AbstractArrow arrow = ProjectileUtil.getMobArrow(this, ammo, pullProgress, bow);
+        // Like vanilla skeleton arrows: not farmable in survival (she does not consume ammo).
+        arrow.setPickup(AbstractArrow.Pickup.CREATIVE_ONLY);
 
         double dx = target.getX() - this.getX();
         double dy = target.getY(0.3333333333333333D) - arrow.getY();
