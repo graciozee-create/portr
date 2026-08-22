@@ -89,6 +89,10 @@ public class CarvedGirlPumpkinBlock extends CarvedPumpkinBlock {
         clearPatternBlocks(level, match);
         girl.moveTo(spawnPos.getX() + 0.5, spawnPos.getY() + 0.05, spawnPos.getZ() + 0.5,
                 0.0F, 0.0F);
+        // Building the pattern is a deliberate player construction (same intent as the
+        // vanilla iron golem, which never despawns). Without persistence the untamed
+        // girl is discarded by vanilla checkDespawn() once the builder walks away.
+        girl.setPersistenceRequired();
         level.addFreshEntity(girl);
 
         for (ServerPlayer player : level.getEntitiesOfClass(
