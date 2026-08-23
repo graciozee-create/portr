@@ -654,7 +654,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // the request is counted in chat but the pending call can sit forever with no girl
             // entity ever reaching callToOwner().
             level.getChunk(call.chunk().x, call.chunk().z,
-                    net.minecraft.world.level.chunk.ChunkStatus.FULL, true);
+                    net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
             net.minecraft.world.entity.Entity entity = level.getEntity(call.girlId());
             if (entity instanceof TameableGirlEntity girl && girl.isTamed()) {
                 ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
