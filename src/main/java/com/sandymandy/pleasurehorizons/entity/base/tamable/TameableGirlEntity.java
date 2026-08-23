@@ -590,6 +590,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      */
     public static int callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
         int called = 0;
+        int pending = 0;
         ServerLevel level = owner.serverLevel();
 
         // Search every loaded dimension, not only the owner's current level. A loaded girl in
@@ -600,15 +601,25 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 if (entity instanceof TameableGirlEntity girl
                         && girl.isTamed()
                         && girl.isOwner(owner)
-                        && girl.matchesName(name)
-                        && girl.callToOwner(owner)) {
-                    called++;
+                        && girl.matchesName(name)) {
+                    if (girl.callToOwner(owner)) {
+                        called++;
+                    } else {
+                        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
+                                "[tracking] callToOwner FAILED for loaded girl {} ({}) - isSceneActive={}",
+                                girl.getGirlID(), girl.getId(), girl.isSceneActive());
+                    }
                 }
             }
         }
 
         // Unloaded girls: force-load their chunk and teleport once they load.
-        for (TamedGirlRegistry.Entry entry : TamedGirlRegistry.ownedBy(owner.getUUID(), name)) {
+        java.util.List<TamedGirlRegistry.Entry> registryEntries = TamedGirlRegistry.ownedBy(owner.getUUID(), name);
+        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                "[tracking] call girls: found {} entries in TamedGirlRegistry for player {}",
+                registryEntries.size(), owner.getGameProfile().getName());
+        
+        for (TamedGirlRegistry.Entry entry : registryEntries) {
             ServerLevel girlLevel = level.getServer().getLevel(entry.dimension());
             if (girlLevel != null) {
                 boolean loaded = false;
@@ -618,9 +629,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                         break;
                     }
                 }
-                if (loaded) continue; // already handled above as a loaded entity
+                if (loaded) {
+                    com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.debug(
+                            "[tracking] girl {} ({}) already loaded, skipping pending",
+                            entry.rigId(), entry.girlId());
+                    continue; // already handled above as a loaded entity
+                }
             }
             if (girlLevel == null) {
+                com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
+                        "[tracking] girl {} in unknown dimension {}, skipping",
+                        entry.girlId(), entry.dimension());
                 continue;
             }
 
@@ -630,8 +649,21 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             girlLevel.setChunkForced(chunk.x, chunk.z, true);
             PENDING_CALLS.add(new PendingCall(entry.girlId(), owner.getUUID(),
                     girlLevel.dimension(), chunk, girlLevel.getGameTime() + 100));
-            called++;
+            pending++;
+            com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                    "[tracking] queued pending call for girl {} ({}) at chunk {} in {}",
+                    entry.rigId(), entry.girlId(), chunk, entry.dimension().location());
         }
+        
+        // Log diagnostic: how many were teleported immediately vs queued for force-load.
+        // The pending count is NOT added to the returned total - those are requests, not
+        // completed teleports. With async chunk systems (c2me/sable) they may never resolve.
+        if (called > 0 || pending > 0) {
+            com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                    "[tracking] call girls result: {} teleported immediately, {} queued for force-load (may not resolve with async chunk mods)",
+                    called, pending);
+        }
+        
         return called;
     }
 
@@ -675,10 +707,19 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
                 if (owner != null && girl.isOwner(owner)) {
                     girl.callToOwner(owner);
+                    com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                            "[tracking] pending call resolved: girl {} teleported to {}",
+                            girl.getGirlID(), owner.getGameProfile().getName());
                 }
                 level.setChunkForced(call.chunk().x, call.chunk().z, false);
                 it.remove();
             } else if (level.getGameTime() > call.deadlineTick()) {
+                // Chunk force-load timed out - either the girl is dead (registry stale), or
+                // the async chunk system (c2me/sable) never delivered the chunk. Either way,
+                // drop the request and release the force-load flag.
+                com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
+                        "[tracking] pending call TIMEOUT for girl {} at chunk {} - entity not found (dead or async chunk mod?)",
+                        call.girlId(), call.chunk());
                 level.setChunkForced(call.chunk().x, call.chunk().z, false);
                 it.remove();
             }
