@@ -380,7 +380,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                                 candidate.getY(), candidate.getZ() + 0.5D);
                         if (isWalkableTeleportSpot(level, candidate)
                                 && level.noCollision(null, landing)
-                                && level.getEntities(null, landing,
+                                && level.getEntities((net.minecraft.world.entity.Entity) null, landing,
                                         entity -> entity instanceof LivingEntity && entity.isAlive()).isEmpty()) {
                             return candidate;
                         }
@@ -397,7 +397,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     net.minecraft.world.phys.AABB landing = sample.move(candidate.getX() + 0.5D,
                             candidate.getY(), candidate.getZ() + 0.5D);
                     if (level.noCollision(null, landing)
-                            && level.getEntities(null, landing,
+                            && level.getEntities((net.minecraft.world.entity.Entity) null, landing,
                                     entity -> entity instanceof LivingEntity && entity.isAlive()).isEmpty()) {
                         return candidate;
                     }

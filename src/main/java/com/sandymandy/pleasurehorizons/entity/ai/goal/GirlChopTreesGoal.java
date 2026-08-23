@@ -163,7 +163,7 @@ public class GirlChopTreesGoal extends Goal {
         }
 
         result.sort(Comparator
-                .comparingInt(BlockPos::getY)
+                .comparingInt((BlockPos pos) -> pos.getY())
                 .thenComparingDouble(pos -> pos.distSqr(base)));
         return result;
     }
