@@ -610,8 +610,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // Unloaded girls: force-load their chunk and teleport once they load.
         for (TamedGirlRegistry.Entry entry : TamedGirlRegistry.ownedBy(owner.getUUID(), name)) {
             ServerLevel girlLevel = level.getServer().getLevel(entry.dimension());
-            if (girlLevel != null && girlLevel.getEntity(entry.girlId()) != null) {
-                continue; // already handled above as a loaded entity
+            if (girlLevel != null) {
+                boolean loaded = false;
+                for (net.minecraft.world.entity.Entity candidate : girlLevel.getAllEntities()) {
+                    if (candidate.getUUID().equals(entry.girlId())) {
+                        loaded = true;
+                        break;
+                    }
+                }
+                if (loaded) continue; // already handled above as a loaded entity
             }
             if (girlLevel == null) {
                 continue;
@@ -655,7 +662,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // entity ever reaching callToOwner().
             level.getChunk(call.chunk().x, call.chunk().z,
                     net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
-            net.minecraft.world.entity.Entity entity = level.getEntity(call.girlId());
+            // Saved entity ids are not stable after a chunk unload/reload. Resolve by UUID,
+            // otherwise the request is counted but can never find the reloaded girl.
+            net.minecraft.world.entity.Entity entity = null;
+            for (net.minecraft.world.entity.Entity candidate : level.getAllEntities()) {
+                if (candidate.getUUID().equals(call.girlId())) {
+                    entity = candidate;
+                    break;
+                }
+            }
             if (entity instanceof TameableGirlEntity girl && girl.isTamed()) {
                 ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
                 if (owner != null && girl.isOwner(owner)) {
