@@ -592,23 +592,27 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         int called = 0;
         ServerLevel level = owner.serverLevel();
 
-        // Loaded girls: teleport now.
-        for (net.minecraft.world.entity.Entity entity : level.getAllEntities()) {
-            if (entity instanceof TameableGirlEntity girl
-                    && girl.isTamed()
-                    && girl.isOwner(owner)
-                    && girl.matchesName(name)
-                    && girl.callToOwner(owner)) {
-                called++;
+        // Search every loaded dimension, not only the owner's current level. A loaded girl in
+        // the Nether/End must be summoned immediately; otherwise the registry path may count a
+        // request but leave her waiting for a chunk force-load.
+        for (ServerLevel loadedLevel : owner.server.getAllLevels()) {
+            for (net.minecraft.world.entity.Entity entity : loadedLevel.getAllEntities()) {
+                if (entity instanceof TameableGirlEntity girl
+                        && girl.isTamed()
+                        && girl.isOwner(owner)
+                        && girl.matchesName(name)
+                        && girl.callToOwner(owner)) {
+                    called++;
+                }
             }
         }
 
         // Unloaded girls: force-load their chunk and teleport once they load.
         for (TamedGirlRegistry.Entry entry : TamedGirlRegistry.ownedBy(owner.getUUID(), name)) {
-            if (level.getEntity(entry.girlId()) != null) {
+            ServerLevel girlLevel = level.getServer().getLevel(entry.dimension());
+            if (girlLevel != null && girlLevel.getEntity(entry.girlId()) != null) {
                 continue; // already handled above as a loaded entity
             }
-            ServerLevel girlLevel = level.getServer().getLevel(entry.dimension());
             if (girlLevel == null) {
                 continue;
             }
