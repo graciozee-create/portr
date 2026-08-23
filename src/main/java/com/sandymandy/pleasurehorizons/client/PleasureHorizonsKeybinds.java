@@ -46,7 +46,7 @@ public class PleasureHorizonsKeybinds {
     public static final KeyMapping CALL_GIRLS_KEY = new KeyMapping(
             "key.pleasurehorizons.call_girls",
             InputConstants.Type.KEYSYM,
-            org.lwjgl.glfw.GLFW.GLFW_KEY_G,
+            org.lwjgl.glfw.GLFW.GLFW_KEY_P,
             CATEGORY);
 
     /**

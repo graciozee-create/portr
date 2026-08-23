@@ -30,6 +30,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class PleasureHorizonsClientTickHandler {
     private static boolean thrustToggleState = false;
     private static boolean lastSentThrustState = false;
+    private static boolean rawCallKeyWasDown = false;
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
@@ -43,8 +44,14 @@ public class PleasureHorizonsClientTickHandler {
             PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
         }
 
-        // Call every owned girl to the player.
-        if (PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()) {
+        // G is heavily occupied by the modpack (NTGL, Jetpack and GammaTweaks). Poll it
+        // directly so the advertised G shortcut cannot be swallowed by another KeyMapping.
+        boolean rawGDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(
+                mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_KEY_G);
+        boolean callPressed = PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()
+                || (rawGDown && !rawCallKeyWasDown);
+        rawCallKeyWasDown = rawGDown;
+        if (callPressed) {
             PacketDistributor.sendToServer(new CallGirlsC2SPacket());
         }
 
