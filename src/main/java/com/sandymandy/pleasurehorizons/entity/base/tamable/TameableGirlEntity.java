@@ -133,6 +133,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Whether combat speed boost is currently applied (prevents stacking). */
     private boolean combatSpeedBoosted = false;
 
+    /** Anti-stuck: last position for stuck detection. */
+    private net.minecraft.world.phys.Vec3 lastStuckCheckPos = net.minecraft.world.phys.Vec3.ZERO;
+    private int stuckTicks = 0;
+
     /** Last chunk written to the summon registry; catches border crossings between 40-tick saves. */
     private int lastRegistryChunkX = Integer.MIN_VALUE;
     private int lastRegistryChunkZ = Integer.MIN_VALUE;
@@ -1463,6 +1467,33 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
                 }
                 this.combatSpeedBoosted = false;
+            }
+            
+            // Anti-stuck detection: if she hasn't moved more than 0.5 blocks in 100 ticks (5 seconds)
+            // and isn't in combat/scene/sitting, teleport her to owner or base.
+            if (!inCombat && !this.isSceneActive() && !this.isSitting() && !this.isDowned()
+                    && !this.isPassenger() && this.isFollowing()) {
+                net.minecraft.world.phys.Vec3 currentPos = this.position();
+                double moved = currentPos.distanceTo(this.lastStuckCheckPos);
+                if (moved < 0.5D) {
+                    this.stuckTicks++;
+                    if (this.stuckTicks >= 100) {
+                        // She's stuck - teleport to owner
+                        LivingEntity owner = this.getOwner();
+                        if (owner != null && owner.isAlive()) {
+                            this.teleportNear((Player) owner);
+                            this.stuckTicks = 0;
+                            this.lastStuckCheckPos = currentPos;
+                        }
+                    }
+                } else {
+                    this.stuckTicks = 0;
+                    this.lastStuckCheckPos = currentPos;
+                }
+            } else {
+                // Reset stuck counter when busy with something else
+                this.stuckTicks = 0;
+                this.lastStuckCheckPos = this.position();
             }
         }
         
