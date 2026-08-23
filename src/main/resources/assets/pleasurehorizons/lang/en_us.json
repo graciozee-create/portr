@@ -429,6 +429,9 @@
   "msg.pleasurehorizons.backpackDelivered": "%s handed her backpack over to you",
   "gui.pleasurehorizons.button.highJump": "High Jump",
   "gui.pleasurehorizons.desc.highJump": "Every jump carries her 4-5 blocks up; her own leaps always land safely.",
-  "gui.pleasurehorizons.button.followDistanceValue": "Distance: %s blocks",
-  "msg.pleasurehorizons.girlCallFailed": "A summoned girl could not be loaded. Her stale registry entry was removed."
+  "gui.pleasurehorizons.button.followDistanceValue": "Distance: %s",
+  "msg.pleasurehorizons.girlCallFailed": "A summoned girl could not be loaded. Her stale registry entry was removed.",
+  "msg.pleasurehorizons.girlsCallResult": "Teleported now: %s; loading from distant chunks: %s",
+  "commands.pleasurehorizons.girls.call_result": "Teleported now: %s; loading from distant chunks: %s",
+  "msg.pleasurehorizons.girlCallArrived": "%s arrived"
 }

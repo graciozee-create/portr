@@ -30,12 +30,15 @@ public record CallGirlsC2SPacket() implements CustomPacketPayload {
         ctx.enqueueWork(() -> {
             if (!(ctx.player() instanceof ServerPlayer player)) return;
 
-            int called = TameableGirlEntity.callOwnedGirlsTo(player, null);
-            player.displayClientMessage(Component.translatable(
-                    called > 0
-                            ? "msg.pleasurehorizons.girlsCalled"
-                            : "commands.pleasurehorizons.girls.no_girls",
-                    called), true);
+            TameableGirlEntity.CallResult result = TameableGirlEntity.callOwnedGirlsTo(player, null);
+            if (result.total() == 0) {
+                player.displayClientMessage(Component.translatable(
+                        "commands.pleasurehorizons.girls.no_girls"), true);
+            } else {
+                player.displayClientMessage(Component.translatable(
+                        "msg.pleasurehorizons.girlsCallResult",
+                        result.teleported(), result.queued()), true);
+            }
         });
     }
 }

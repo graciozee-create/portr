@@ -140,14 +140,15 @@ public class GirlsCommand {
             return 0;
         }
 
-        int called = TameableGirlEntity.callOwnedGirlsTo(player, name);
-        if (called == 0) {
+        TameableGirlEntity.CallResult result = TameableGirlEntity.callOwnedGirlsTo(player, name);
+        if (result.total() == 0) {
             source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.no_girls"));
             return 0;
         }
 
         source.sendSuccess(() -> Component.translatable(
-                "commands.pleasurehorizons.girls.called", called), true);
-        return called;
+                "commands.pleasurehorizons.girls.call_result",
+                result.teleported(), result.queued()), true);
+        return result.total();
     }
 }

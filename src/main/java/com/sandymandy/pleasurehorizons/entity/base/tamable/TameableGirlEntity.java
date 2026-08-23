@@ -574,8 +574,15 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * server-side {@link TamedGirlRegistry}, their chunk is force-loaded, and they are teleported
      * once the chunk actually loads (see {@link #tickPendingCalls}).</p>
      */
-    public static int callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
+    public record CallResult(int teleported, int queued) {
+        public int total() {
+            return teleported + queued;
+        }
+    }
+
+    public static CallResult callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
         int called = 0;
+        int pending = 0;
         java.util.Set<UUID> loadedIds = new java.util.HashSet<>();
         java.util.List<TameableGirlEntity> loadedGirls = new java.util.ArrayList<>();
 
@@ -605,7 +612,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 continue;
             }
             if (hasPendingCall(entry.girlId(), owner.getUUID())) {
-                called++; // already accepted and still loading; do not add another force ticket
+                pending++; // already accepted and still loading; do not add another force ticket
                 continue;
             }
             ServerLevel girlLevel = owner.server.getLevel(entry.dimension());
@@ -634,9 +641,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             PENDING_CALLS.add(new PendingCall(entry.girlId(), owner.getUUID(),
                     girlLevel.dimension(), center, java.util.List.copyOf(newlyForced),
                     girlLevel.getGameTime() + 100));
-            called++;
+            pending++;
         }
-        
+
         // Log diagnostic: how many were teleported immediately vs queued for force-load.
         // The pending count is NOT added to the returned total - those are requests, not
         // completed teleports. With async chunk systems (c2me/sable) they may never resolve.
@@ -646,7 +653,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     called, pending);
         }
         
-        return called;
+        return new CallResult(called, pending);
     }
 
     private static boolean hasPendingCall(UUID girlId, UUID ownerId) {
@@ -701,6 +708,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             }
             if (entity instanceof TameableGirlEntity girl && girl.isTamed()
                     && girl.isOwner(owner) && girl.callToOwner(owner)) {
+                com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                        "[tracking] pending call resolved: girl {} reached {}",
+                        girl.getUUID(), owner.getGameProfile().getName());
+                owner.displayClientMessage(Component.translatable(
+                        "msg.pleasurehorizons.girlCallArrived", girl.getGirlDisplayName()), true);
                 releaseForcedChunks(level, call);
                 it.remove();
             } else if (level.getGameTime() > call.deadlineTick()) {

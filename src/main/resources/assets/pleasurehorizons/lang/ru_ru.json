@@ -430,5 +430,8 @@
   "gui.pleasurehorizons.button.highJump": "Высокий прыжок",
   "gui.pleasurehorizons.desc.highJump": "Каждый прыжок подбрасывает её на 4-5 блоков; свои прыжки она всегда приземляет безопасно.",
   "gui.pleasurehorizons.button.followDistanceValue": "Дистанция: %s",
-  "msg.pleasurehorizons.girlCallFailed": "Не удалось загрузить призванную девушку. Устаревшая запись удалена."
+  "msg.pleasurehorizons.girlCallFailed": "Не удалось загрузить призванную девушку. Устаревшая запись удалена.",
+  "msg.pleasurehorizons.girlsCallResult": "Телепортировано сейчас: %s; загружается из дальних чанков: %s",
+  "commands.pleasurehorizons.girls.call_result": "Телепортировано сейчас: %s; загружается из дальних чанков: %s",
+  "msg.pleasurehorizons.girlCallArrived": "%s прибыла"
 }
