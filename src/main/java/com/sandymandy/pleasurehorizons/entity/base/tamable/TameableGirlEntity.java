@@ -494,8 +494,24 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.setTarget(null);
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.setNoGravity(false);
-        return this.teleportTo(targetLevel, target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D,
+        boolean done = this.teleportTo(targetLevel, target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D,
                 java.util.Set.of(), player.getYRot(), 0.0F);
+        logTeleport((done ? "cross-dimension teleport to " : "cross-dimension REFUSED for ")
+                + player.getName().getString() + " (" + targetLevel.dimension().location() + ")");
+        return done;
+    }
+
+    /** Last game-time tick a teleport diagnostic was logged for this girl (spam guard). */
+    private long lastTeleportLogTick = Long.MIN_VALUE;
+
+    /** Rate-limited INFO log (max ~1 per 5 s) so latest.log shows whether teleports fire. */
+    private void logTeleport(String what) {
+        long now = this.level().getGameTime();
+        if (now - this.lastTeleportLogTick >= 100L) {
+            this.lastTeleportLogTick = now;
+            com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
+                    "[tracking] girl {} ({}): {}", this.getId(), this.getGirlID(), what);
+        }
     }
 
     public boolean teleportNear(Player player) {
@@ -510,6 +526,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // Vanilla TamableAnimal behaviour: with no walkable spot around the owner a
             // teleport simply does not happen (she keeps pathing on foot) - a forced landing
             // into a bad spot is exactly how she used to end up inside the player.
+            logTeleport("NO SPOT around " + player.getName().getString()
+                    + " at " + player.blockPosition().toShortString() + " - teleport skipped");
             return false;
         }
         double x = target.getX() + 0.5D;
@@ -522,6 +540,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // (routine with high jump on) would land already "fallen" and take the damage.
         this.resetFallDistance();
         this.teleportTo(x, y, z);
+        logTeleport("teleported to " + player.getName().getString()
+                + " at " + player.blockPosition().toShortString());
         if (player instanceof ServerPlayer serverPlayer) {
             if (distanceBeforeSq > 64.0D * 64.0D) {
                 // Long hop: rebuild the owner's client-side copy outright. A stale or wedged
