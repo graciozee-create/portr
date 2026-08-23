@@ -89,11 +89,30 @@ public class GirlChopTreesGoal extends Goal {
 
         girl.getLookControl().setLookAt(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 30.0F, 30.0F);
         if (girl.distanceToSqr(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D) < 9.0D) {
-            girl.level().destroyBlock(targetLog, true, girl);
-            targetLog = null;
+            // Break the block server-side (rather than merely swinging at it), then continue
+            // through the connected trunk.  destroyBlock also produces the normal drops.
+            if (girl.level().destroyBlock(targetLog, true, girl)) {
+                girl.swing(net.minecraft.world.entity.HumanoidArm.RIGHT);
+            }
+            targetLog = findConnectedLog(targetLog);
         } else if (girl.getNavigation().isDone()) {
             girl.getNavigation().moveTo(targetLog.getX() + 0.5D, targetLog.getY(), targetLog.getZ() + 0.5D, 1.3D);
         }
+    }
+
+    private BlockPos findConnectedLog(BlockPos broken) {
+        // Pick another nearby log, preferring the trunk above the block just broken. This makes
+        // the goal finish a tree instead of stopping after one visible swing.
+        for (int dy = 0; dy <= 8; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos candidate = broken.offset(dx, dy, dz);
+                    if (girl.level().getBlockState(candidate).is(BlockTags.LOGS)
+                            && hasLeavesAbove(candidate)) return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     @Override

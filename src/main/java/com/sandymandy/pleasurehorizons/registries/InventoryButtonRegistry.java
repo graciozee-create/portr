@@ -32,7 +32,11 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.customize", 1, true,
-                    (girl, player) -> send(girl.getId(), "customize"))
+                    (girl, player) -> send(girl.getId(), "customize")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.followDistance", 0,
+                    (girl, player) -> send(girl.getId(), "cycleFollowDistance"))
     );
 
     public static final List<InventoryButtonAction> BUTTONS_MAIN_RIGHT = List.of(

@@ -65,6 +65,7 @@
   "gui.pleasurehorizons.button.dropLoot": "Отдать предметы",
   "gui.pleasurehorizons.button.feedOwner": "Кормить меня",
   "gui.pleasurehorizons.button.follow": "За мной",
+  "gui.pleasurehorizons.button.followDistance": "Дистанция следования",
   "gui.pleasurehorizons.button.gather": "Собирать лут",
   "gui.pleasurehorizons.button.goToBase": "На базу",
   "gui.pleasurehorizons.button.guardBase": "Охрана базы",
