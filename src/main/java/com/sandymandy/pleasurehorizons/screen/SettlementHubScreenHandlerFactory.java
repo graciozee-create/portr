@@ -1,6 +1,8 @@
 package com.sandymandy.pleasurehorizons.screen;
 
 import com.sandymandy.pleasurehorizons.settlement.Settlement;
+import com.sandymandy.pleasurehorizons.settlement.SettlementSnapshot;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -18,6 +20,14 @@ public class SettlementHubScreenHandlerFactory implements MenuProvider {
     @Override
     public Component getDisplayName() {
         return Component.translatable("screen.pleasurehorizons.settlement_hub");
+    }
+
+    /**
+     * NeoForge equivalent of Fabric's {@code getScreenOpeningData} - the client menu constructor
+     * reads exactly this back out of the buffer.
+     */
+    public void writeScreenOpeningData(RegistryFriendlyByteBuf buf) {
+        SettlementSnapshot.STREAM_CODEC.encode(buf, SettlementSnapshot.of(data));
     }
 
     @Nullable

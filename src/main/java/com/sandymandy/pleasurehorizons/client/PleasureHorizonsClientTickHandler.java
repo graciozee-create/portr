@@ -1,0 +1,99 @@
+package com.sandymandy.pleasurehorizons.client;
+
+import com.sandymandy.pleasurehorizons.PleasureHorizons;
+import com.sandymandy.pleasurehorizons.config.ModConfig;
+import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.client.gui.screen.hud.GirlStatusOverlay;
+import com.sandymandy.pleasurehorizons.networking.C2S.CallGirlsC2SPacket;
+import com.sandymandy.pleasurehorizons.networking.C2S.CumKeybindC2SPacket;
+import com.sandymandy.pleasurehorizons.networking.C2S.ShiftRolesC2SPacket;
+import com.sandymandy.pleasurehorizons.networking.C2S.ThrustKeybindC2SPacket;
+import net.minecraft.network.chat.Component;
+import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+/**
+ * Polls the scene keybinds each client tick.
+ *
+ * <p>Fabric used {@code ClientTickEvents.END_CLIENT_TICK}; the NeoForge counterpart is
+ * {@link ClientTickEvent.Post} on the game bus. {@code KeyMapping#wasPressed()} maps to
+ * {@code consumeClick()} and {@code isPressed()} to {@code isDown()}.</p>
+ *
+ * <p>The thrust packet is only sent when the state actually flips, matching upstream, so held
+ * keys do not flood the server with one packet per tick.</p>
+ */
+@EventBusSubscriber(modid = PleasureHorizons.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+public class PleasureHorizonsClientTickHandler {
+    private static boolean thrustToggleState = false;
+    private static boolean lastSentThrustState = false;
+    private static boolean rawCallKeyWasDown = false;
+
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        boolean inScene = mc.player.getVehicle() instanceof GirlSceneEntity;
+
+        // The shift switch is global and works outside scenes.
+        if (PleasureHorizonsKeybinds.SHIFT_ROLES_KEY.consumeClick()) {
+            PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
+        }
+
+        // G is heavily occupied by the modpack (NTGL, Jetpack and GammaTweaks). Poll it
+        // directly so the advertised G shortcut cannot be swallowed by another KeyMapping.
+        boolean rawGDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(
+                mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_KEY_G);
+        boolean callPressed = PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()
+                || (rawGDown && !rawCallKeyWasDown);
+        rawCallKeyWasDown = rawGDown;
+        if (callPressed) {
+            PacketDistributor.sendToServer(new CallGirlsC2SPacket());
+        }
+
+        // Status HUD is purely client-side and off by default.
+        if (PleasureHorizonsKeybinds.TOGGLE_STATUS_HUD_KEY.consumeClick()) {
+            GirlStatusOverlay.toggle();
+            mc.player.displayClientMessage(Component.translatable(
+                    GirlStatusOverlay.isShown()
+                            ? "msg.pleasurehorizons.statusHudOn"
+                            : "msg.pleasurehorizons.statusHudOff"), true);
+        }
+
+        // Drain the click queue even when not in a scene, otherwise presses buffer up
+        // and all fire at once the moment a scene starts.
+        boolean thrustClicked = PleasureHorizonsKeybinds.THRUST_KEY.consumeClick();
+        boolean cumClicked = PleasureHorizonsKeybinds.CUM_KEY.consumeClick();
+
+        if (!inScene) {
+            if (lastSentThrustState) {
+                lastSentThrustState = false;
+                thrustToggleState = false;
+            }
+            return;
+        }
+
+        boolean newThrustState;
+        if (ModConfig.INSTANCE.keybinds.holdThrust) {
+            newThrustState = PleasureHorizonsKeybinds.THRUST_KEY.isDown();
+        } else {
+            if (thrustClicked) {
+                thrustToggleState = !thrustToggleState;
+            }
+            newThrustState = thrustToggleState;
+        }
+
+        if (newThrustState != lastSentThrustState) {
+            lastSentThrustState = newThrustState;
+            PacketDistributor.sendToServer(new ThrustKeybindC2SPacket(newThrustState));
+        }
+
+        if (cumClicked) {
+            PacketDistributor.sendToServer(new CumKeybindC2SPacket(true));
+        }
+    }
+}

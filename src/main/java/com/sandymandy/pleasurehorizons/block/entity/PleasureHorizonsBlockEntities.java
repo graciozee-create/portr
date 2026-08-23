@@ -30,8 +30,4 @@ public class PleasureHorizonsBlockEntities {
     public static void register(IEventBus bus) {
         BLOCK_ENTITIES.register(bus);
     }
-
-    public static void registerBlockEntities() {
-        PleasureHorizons.LOGGER.info("Registering block entities for " + PleasureHorizons.MOD_NAME);
-    }
 }

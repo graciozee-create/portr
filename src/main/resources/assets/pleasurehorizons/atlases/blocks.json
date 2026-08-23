@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "single",
+      "resource": "pleasurehorizons:item/empty_slot_bow",
+      "sprite": "pleasurehorizons:item/empty_slot_bow"
+    }
+  ]
+}

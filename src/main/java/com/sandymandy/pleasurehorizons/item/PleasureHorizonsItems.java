@@ -63,8 +63,4 @@ public class PleasureHorizonsItems {
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
     }
-
-    public static void registerItems() {
-        PleasureHorizons.LOGGER.info("Registering items for " + PleasureHorizons.MOD_NAME);
-    }
 }

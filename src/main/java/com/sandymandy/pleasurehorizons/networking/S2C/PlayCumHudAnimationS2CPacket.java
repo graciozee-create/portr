@@ -18,6 +18,15 @@ public record PlayCumHudAnimationS2CPacket() implements CustomPacketPayload {
     public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {});
+        ctx.enqueueWork(() -> {
+            // Reflective hop so this common class never loads client-only code on a server.
+            try {
+                Class.forName("com.sandymandy.pleasurehorizons.client.networking.ClientPacketHandlers")
+                        .getMethod("handleCumHudAnimation")
+                        .invoke(null);
+            } catch (Exception e) {
+                PleasureHorizons.LOGGER.debug("Cum HUD packet received outside a client");
+            }
+        });
     }
 }

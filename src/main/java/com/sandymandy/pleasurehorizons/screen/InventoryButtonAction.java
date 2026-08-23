@@ -6,4 +6,15 @@ import net.minecraft.network.chat.Component;
 
 import java.util.function.BiConsumer;
 
-public record InventoryButtonAction(Component label, int requiredRelationshipLevel, BiConsumer<GirlEntity, Player> action) {}
+public record InventoryButtonAction(String labelKey, Component label, int requiredRelationshipLevel,
+                                    boolean opensSubscreen, BiConsumer<GirlEntity, Player> action) {
+    public InventoryButtonAction(String labelKey, int requiredRelationshipLevel,
+                                 BiConsumer<GirlEntity, Player> action) {
+        this(labelKey, requiredRelationshipLevel, false, action);
+    }
+
+    public InventoryButtonAction(String labelKey, int requiredRelationshipLevel, boolean opensSubscreen,
+                                 BiConsumer<GirlEntity, Player> action) {
+        this(labelKey, Component.translatable(labelKey), requiredRelationshipLevel, opensSubscreen, action);
+    }
+}

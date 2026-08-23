@@ -49,6 +49,66 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release.set(21)
+    options.compilerArgs << '-Xmaxerrs' << '500'
+}
+
+// Re-runs javac through the Compiler API purely to echo diagnostics as GitHub
+// workflow commands, so failures show up as check-run annotations. Raw Actions
+// logs are served from blob storage, which is not reachable from every
+// environment; annotations are available through the plain REST API.
+tasks.register('reportCompileDiagnostics') {
+    def sources = sourceSets.main.java.srcDirs
+    def classpathProvider = provider { sourceSets.main.compileClasspath.files }
+    def projectDir = project.projectDir
+
+    doLast {
+        def compiler = javax.tools.ToolProvider.getSystemJavaCompiler()
+        if (compiler == null) {
+            return
+        }
+
+        def diagnostics = new javax.tools.DiagnosticCollector<javax.tools.JavaFileObject>()
+        def fileManager = compiler.getStandardFileManager(diagnostics, null, null)
+
+        def javaFiles = []
+        sources.each { dir ->
+            if (dir.exists()) {
+                dir.eachFileRecurse { f -> if (f.name.endsWith('.java')) javaFiles << f }
+            }
+        }
+        if (javaFiles.isEmpty()) {
+            return
+        }
+
+        def out = new File(project.layout.buildDirectory.get().asFile, 'diagnostics-classes')
+        out.mkdirs()
+
+        def args = ['-d', out.absolutePath, '-encoding', 'UTF-8', '-nowarn', '-proc:none',
+                    '-classpath', classpathProvider.get().join(File.pathSeparator)]
+
+        def units = fileManager.getJavaFileObjectsFromFiles(javaFiles)
+        compiler.getTask(new StringWriter(), fileManager, diagnostics, args, null, units).call()
+        fileManager.close()
+
+        def shown = 0
+        diagnostics.diagnostics.each { d ->
+            if (d.kind != javax.tools.Diagnostic.Kind.ERROR || shown >= 60) return
+            shown++
+            def src = d.source?.name ?: 'unknown'
+            def rel = src.startsWith(projectDir.absolutePath)
+                    ? src.substring(projectDir.absolutePath.length() + 1)
+                    : src
+            def msg = d.getMessage(null).replaceAll('\r', ' ').replaceAll('\n', ' ')
+            println "::error file=${rel},line=${d.lineNumber}::${msg}"
+        }
+        if (shown > 0) {
+            println "::error::${shown} compile error(s) - see annotations above"
+        }
+    }
+}
+
+tasks.named('compileJava').configure {
+    finalizedBy 'reportCompileDiagnostics'
 }
 
 java {
