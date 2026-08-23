@@ -92,7 +92,7 @@ public class GirlChopTreesGoal extends Goal {
             // Break the block server-side (rather than merely swinging at it), then continue
             // through the connected trunk.  destroyBlock also produces the normal drops.
             if (girl.level().destroyBlock(targetLog, true, girl)) {
-                girl.swing(net.minecraft.world.entity.HumanoidArm.RIGHT);
+                girl.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             }
             targetLog = findConnectedLog(targetLog);
         } else if (girl.getNavigation().isDone()) {
