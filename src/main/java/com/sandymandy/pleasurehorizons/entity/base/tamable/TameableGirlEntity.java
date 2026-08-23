@@ -130,6 +130,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
     private boolean carrierSneaking = false;
 
+    /** Whether combat speed boost is currently applied (prevents stacking). */
+    private boolean combatSpeedBoosted = false;
+
     /** Last chunk written to the summon registry; catches border crossings between 40-tick saves. */
     private int lastRegistryChunkX = Integer.MIN_VALUE;
     private int lastRegistryChunkZ = Integer.MIN_VALUE;
@@ -1162,6 +1165,24 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return InteractionResult.FAIL;
     }
 
+    /**
+     * When she lands a hit on a hostile mob, force that mob to target her instead of the
+     * player (tank/taunt behaviour). This makes her a proper bodyguard: she draws aggro
+     * away from the owner instead of just dealing damage while the mob keeps attacking him.
+     */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        boolean result = super.doHurtTarget(target);
+        if (result && target instanceof net.minecraft.world.entity.Mob mob
+                && mob.getTarget() != this
+                && mob.getTarget() != null
+                && this.isOwner(mob.getTarget())) {
+            // The mob was attacking her owner - force it to switch to her instead.
+            mob.setTarget(this);
+        }
+        return result;
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         // Administrative removal and falling out of the world must remain able to remove a girl;
@@ -1412,6 +1433,39 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.level().isClientSide() && this.tickCount % 20 == 0) {
             updateBackpackStatusIfChanged();
         }
+        // Combat mobility: when engaged in combat (has a target), temporarily remove water
+        // pathfinding penalty and boost speed so she can chase mobs through water and keep up
+        // with fast enemies. Without this she stops at water's edge while the mob escapes.
+        if (!this.level().isClientSide() && this.isTamed()) {
+            LivingEntity target = this.getTarget();
+            boolean inCombat = target != null && target.isAlive();
+            
+            if (inCombat) {
+                // Remove water penalty - she needs to chase through water
+                this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
+                // Boost movement speed by 40% during combat
+                var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                if (speedAttr != null && !this.combatSpeedBoosted) {
+                    double baseSpeed = speedAttr.getBaseValue();
+                    speedAttr.setBaseValue(baseSpeed * 1.4D);
+                    this.combatSpeedBoosted = true;
+                }
+            } else if (this.combatSpeedBoosted) {
+                // Restore normal speed and water penalty when combat ends
+                var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                if (speedAttr != null) {
+                    double currentSpeed = speedAttr.getBaseValue();
+                    speedAttr.setBaseValue(currentSpeed / 1.4D);
+                }
+                if (this.isAvoidWaterEnabled()) {
+                    this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 8.0F);
+                } else {
+                    this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
+                }
+                this.combatSpeedBoosted = false;
+            }
+        }
+        
         if (!this.level().isClientSide() && this.isTamed()
                 && this.isAutoEquipArmorEnabled() && this.tickCount % 100 == 0) {
             this.autoEquipArmorFromBackpack();
