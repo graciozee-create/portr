@@ -26,7 +26,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <p>The thrust packet is only sent when the state actually flips, matching upstream, so held
  * keys do not flood the server with one packet per tick.</p>
  */
-@EventBusSubscriber(modid = PleasureHorizons.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = PleasureHorizons.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class PleasureHorizonsClientTickHandler {
     private static boolean thrustToggleState = false;
     private static boolean lastSentThrustState = false;
