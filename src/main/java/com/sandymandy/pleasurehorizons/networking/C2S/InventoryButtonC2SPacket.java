@@ -80,12 +80,6 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 case "goToBase" -> girl.teleportToBase();
                 case "sit" -> girl.setSitting(!girl.isSitting());
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
-                case "cycleFollowDistance" -> {
-                    int next = girl.getFollowDistance() >= 16 ? 2 : girl.getFollowDistance() + 2;
-                    girl.setFollowDistance(next);
-                    ctx.player().displayClientMessage(net.minecraft.network.chat.Component.literal(
-                            "Follow distance: " + next + " blocks"), true);
-                }
                 case "talk" -> {
                     // Upstream sends the scene list here; the GirlSceneScreen is what the Talk
                     // button is supposed to open. Girls without scenes fall back to small talk.

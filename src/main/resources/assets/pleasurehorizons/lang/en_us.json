@@ -65,7 +65,7 @@
   "gui.pleasurehorizons.button.dropLoot": "Give Items",
   "gui.pleasurehorizons.button.feedOwner": "Feed Me",
   "gui.pleasurehorizons.button.follow": "Follow Me",
-  "gui.pleasurehorizons.button.followDistance": "Follow distance",
+  "gui.pleasurehorizons.button.followDistance": "Follow Distance",
   "gui.pleasurehorizons.button.gather": "Gather Items",
   "gui.pleasurehorizons.button.goToBase": "Go To Base",
   "gui.pleasurehorizons.button.guardBase": "Guard Base",
@@ -390,7 +390,6 @@
   "setting.pleasurehorizons.on": "On",
   "setting.pleasurehorizons.off": "Off",
   "gui.pleasurehorizons.button.followTeleport": "Follow Teleport",
-  "gui.pleasurehorizons.button.followDistance": "Follow Distance",
   "gui.pleasurehorizons.button.workPace": "Work Pace",
   "gui.pleasurehorizons.button.workRadius": "Work Radius",
   "gui.pleasurehorizons.button.guardRange": "Guard Range",
@@ -429,5 +428,7 @@
   "msg.pleasurehorizons.settingChanged": "%s: %s",
   "msg.pleasurehorizons.backpackDelivered": "%s handed her backpack over to you",
   "gui.pleasurehorizons.button.highJump": "High Jump",
-  "gui.pleasurehorizons.desc.highJump": "Every jump carries her 4-5 blocks up; her own leaps always land safely."
+  "gui.pleasurehorizons.desc.highJump": "Every jump carries her 4-5 blocks up; her own leaps always land safely.",
+  "gui.pleasurehorizons.button.followDistanceValue": "Distance: %s blocks",
+  "msg.pleasurehorizons.girlCallFailed": "A summoned girl could not be loaded. Her stale registry entry was removed."
 }

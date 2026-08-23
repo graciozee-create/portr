@@ -325,7 +325,9 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
     private Component dynamicLabel(InventoryButtonAction action) {
         String key = action.labelKey();
         if ("gui.pleasurehorizons.button.followDistance".equals(key)) {
-            return Component.literal("Follow: " + girl.getFollowDistance() + "m");
+            int mode = effectiveMode(key, girl.getFollowDistanceMode());
+            int distance = mode == 0 ? 4 : mode == 2 ? 12 : 8;
+            return Component.translatable("gui.pleasurehorizons.button.followDistanceValue", distance);
         }
         if ("gui.pleasurehorizons.button.guardBase".equals(key) && girl.isGuardBaseEnabled()) {
             return Component.translatable("gui.pleasurehorizons.button.stopGuardBase");

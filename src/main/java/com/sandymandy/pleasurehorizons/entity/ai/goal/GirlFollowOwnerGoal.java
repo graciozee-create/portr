@@ -51,7 +51,7 @@ public class GirlFollowOwnerGoal extends Goal {
         if (owner == null || owner.isSpectator()) {
             return false;
         }
-        float startDistance = this.girl.getFollowDistance();
+        float startDistance = this.girl.followStartDistance();
         if (this.girl.distanceToSqr(owner) < (double) (startDistance * startDistance)) {
             return false;
         }
@@ -68,7 +68,7 @@ public class GirlFollowOwnerGoal extends Goal {
                 || this.girl.isDowned() || this.girl.isPassenger()) {
             return false;
         }
-        float stopDistance = Math.max(1, this.girl.getFollowDistance() - 2);
+        float stopDistance = this.girl.followStopDistance();
         return this.girl.distanceToSqr(this.owner) > (double) (stopDistance * stopDistance);
     }
 

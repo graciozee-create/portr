@@ -107,8 +107,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> HIGH_JUMP =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> FOLLOW_DISTANCE_MODE =
-            SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> WORK_PACE_MODE =
             SynchedEntityData.defineId(TameableGirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> WORK_RADIUS_MODE =
@@ -132,12 +130,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
     private boolean carrierSneaking = false;
 
-    /**
-     * Game time of the last tracking resync sent for this girl. Recent teleports schedule
-     * follow-up resyncs so a wedged client copy (visible again only after relogging) is
-     * rebuilt within seconds instead of requiring a relog.
-     */
-    private long lastTrackingResyncTick = Long.MIN_VALUE;
+    /** Last chunk written to the summon registry; catches border crossings between 40-tick saves. */
+    private int lastRegistryChunkX = Integer.MIN_VALUE;
+    private int lastRegistryChunkZ = Integer.MIN_VALUE;
 
     protected TameableGirlEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -168,7 +163,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         builder.define(AUTO_EQUIP_ARMOR, false);
         builder.define(AVOID_CREEPERS, false);
         builder.define(HIGH_JUMP, false);
-        builder.define(FOLLOW_DISTANCE_MODE, 1);
         builder.define(WORK_PACE_MODE, 1);
         builder.define(WORK_RADIUS_MODE, 1);
         builder.define(GUARD_RANGE_MODE, 1);
@@ -350,6 +344,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.setNoGravity(false);
         this.resetFallDistance();
         this.teleportTo(x, y, z);
+        TamedGirlRegistry.update(this);
         if (owner instanceof ServerPlayer serverPlayer) {
             resyncTo(serverPlayer);
         }
@@ -371,7 +366,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Same search, but for a target level (cross-dimension teleports). */
     private static BlockPos findSafeSpotIn(Level level, Player player) {
         BlockPos center = player.blockPosition();
-        net.minecraft.world.phys.AABB sample = new net.minecraft.world.phys.AABB(0.0D, 0.0D, 0.0D, 0.6D, 1.9D, 0.6D);
+        net.minecraft.world.phys.AABB sample = new net.minecraft.world.phys.AABB(
+                -0.3D, 0.0D, -0.3D, 0.3D, 1.9D, 0.3D);
         // Vanilla pets never land within 2 blocks of the owner (TamableAnimal#
         // teleportToAroundBlockPos requires |dx|>=2 or |dz|>=2). Rings of 2, then 3.
         for (int radius = 2; radius <= 3; radius++) {
@@ -380,9 +376,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
                     for (int y : new int[]{0, 1, -1}) {
                         BlockPos candidate = center.offset(dx, y, dz);
+                        net.minecraft.world.phys.AABB landing = sample.move(candidate.getX() + 0.5D,
+                                candidate.getY(), candidate.getZ() + 0.5D);
                         if (isWalkableTeleportSpot(level, candidate)
-                                && level.noCollision(null, sample.move(candidate.getX() + 0.5D,
-                                candidate.getY(), candidate.getZ() + 0.5D))) {
+                                && level.noCollision(null, landing)
+                                && level.getEntities(null, landing,
+                                        entity -> entity instanceof LivingEntity && entity.isAlive()).isEmpty()) {
                             return candidate;
                         }
                     }
@@ -395,8 +394,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 for (int dz = -radius; dz <= radius; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
                     BlockPos candidate = center.offset(dx, 0, dz);
-                    if (level.noCollision(null, sample.move(candidate.getX() + 0.5D,
-                            candidate.getY(), candidate.getZ() + 0.5D))) {
+                    net.minecraft.world.phys.AABB landing = sample.move(candidate.getX() + 0.5D,
+                            candidate.getY(), candidate.getZ() + 0.5D);
+                    if (level.noCollision(null, landing)
+                            && level.getEntities(null, landing,
+                                    entity -> entity instanceof LivingEntity && entity.isAlive()).isEmpty()) {
                         return candidate;
                     }
                 }
@@ -428,34 +430,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * view distance (add + equipment + position, plus our custom pairing payloads).
      */
     private void resyncTo(ServerPlayer player) {
-        this.lastTrackingResyncTick = this.level().getGameTime();
         com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
-                "[tracking] resync girl {} ({}) -> {}", this.getId(), this.getGirlID(),
+                "[tracking] full pairing girl {} ({}) -> {}", this.getId(), this.getGirlID(),
                 player.getGameProfile().getName());
-        int id = this.getId();
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket(id));
-        // Full public constructor: id, uuid, position, rotations, type, data, velocity, head yaw.
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundAddEntityPacket(
-                id, this.getUUID(), this.getX(), this.getY(), this.getZ(),
-                this.getXRot(), this.getYRot(), this.getType(), 0,
-                this.getDeltaMovement(), (double) this.getYHeadRot()));
-        java.util.List<net.minecraft.network.syncher.SynchedEntityData.DataValue<?>> data =
-                this.getEntityData().getNonDefaultValues();
-        if (data != null) {
-            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket(id, data));
-        }
-        player.connection.send(new ClientboundTeleportEntityPacket(this));
-        List<com.mojang.datafixers.util.Pair<EquipmentSlot, ItemStack>> equipment = new java.util.ArrayList<>();
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR || slot.getType() == EquipmentSlot.Type.HAND) {
-                equipment.add(com.mojang.datafixers.util.Pair.of(slot, this.getItemBySlot(slot)));
-            }
-        }
-        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket(id, equipment));
-        // Custom pairing payloads (same content sendPairingData would deliver).
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                currentClothingAndArmorPacket(),
-                new com.sandymandy.pleasurehorizons.networking.S2C.GirlStatusS2CPacket(id, usedBackpackSlots()));
+        // Use vanilla/NeoForge's real remove/re-pair flow instead of hand-building an incomplete
+        // add packet. This includes attributes, equipment, all synched data and every custom
+        // payload contributed by sendPairingData. Calling both methods also keeps NeoForge's
+        // stop/start tracking events balanced for render/tracking overhaul mods.
+        net.minecraft.server.level.ServerEntity pairing = new net.minecraft.server.level.ServerEntity(
+                (ServerLevel) this.level(), this, 1, true, packet -> { });
+        pairing.removePairing(player);
+        pairing.addPairing(player);
     }
 
     /**
@@ -542,6 +527,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.teleportTo(x, y, z);
         logTeleport("teleported to " + player.getName().getString()
                 + " at " + player.blockPosition().toShortString());
+        TamedGirlRegistry.update(this);
         if (player instanceof ServerPlayer serverPlayer) {
             if (distanceBeforeSq > 64.0D * 64.0D) {
                 // Long hop: rebuild the owner's client-side copy outright. A stale or wedged
@@ -590,52 +576,39 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      */
     public static int callOwnedGirlsTo(ServerPlayer owner, @Nullable String name) {
         int called = 0;
-        int pending = 0;
-        ServerLevel level = owner.serverLevel();
+        java.util.Set<UUID> loadedIds = new java.util.HashSet<>();
+        java.util.List<TameableGirlEntity> loadedGirls = new java.util.ArrayList<>();
 
-        // Search every loaded dimension, not only the owner's current level. A loaded girl in
-        // the Nether/End must be summoned immediately; otherwise the registry path may count a
-        // request but leave her waiting for a chunk force-load.
+        // Snapshot first: a cross-dimension call removes the old entity and adds a replacement,
+        // so mutating a level while iterating getAllEntities directly can skip/double-count girls.
         for (ServerLevel loadedLevel : owner.server.getAllLevels()) {
             for (net.minecraft.world.entity.Entity entity : loadedLevel.getAllEntities()) {
                 if (entity instanceof TameableGirlEntity girl
-                        && girl.isTamed()
-                        && girl.isOwner(owner)
-                        && girl.matchesName(name)) {
-                    if (girl.callToOwner(owner)) {
-                        called++;
-                    } else {
-                        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
-                                "[tracking] callToOwner FAILED for loaded girl {} ({}) - isSceneActive={}",
-                                girl.getGirlID(), girl.getId(), girl.isSceneActive());
-                    }
+                        && girl.isTamed() && girl.isOwner(owner) && girl.matchesName(name)) {
+                    loadedGirls.add(girl);
+                    loadedIds.add(girl.getUUID());
                 }
             }
         }
-
-        // Unloaded girls: force-load their chunk and teleport once they load.
-        java.util.List<TamedGirlRegistry.Entry> registryEntries = TamedGirlRegistry.ownedBy(owner.getUUID(), name);
-        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
-                "[tracking] call girls: found {} entries in TamedGirlRegistry for player {}",
-                registryEntries.size(), owner.getGameProfile().getName());
-        
-        for (TamedGirlRegistry.Entry entry : registryEntries) {
-            ServerLevel girlLevel = level.getServer().getLevel(entry.dimension());
-            if (girlLevel != null) {
-                boolean loaded = false;
-                for (net.minecraft.world.entity.Entity candidate : girlLevel.getAllEntities()) {
-                    if (candidate.getUUID().equals(entry.girlId())) {
-                        loaded = true;
-                        break;
-                    }
-                }
-                if (loaded) {
-                    com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.debug(
-                            "[tracking] girl {} ({}) already loaded, skipping pending",
-                            entry.rigId(), entry.girlId());
-                    continue; // already handled above as a loaded entity
-                }
+        for (TameableGirlEntity girl : loadedGirls) {
+            if (girl.callToOwner(owner)) {
+                called++;
             }
+        }
+
+        // Unloaded girls: the cached position used to be refreshed only every 40 ticks. A girl
+        // could cross a chunk edge and unload first, leaving the adjacent (wrong) chunk recorded.
+        // Force/load a 3x3 area around the record to recover those existing saves; new crossings
+        // are now persisted immediately in tick().
+        for (TamedGirlRegistry.Entry entry : TamedGirlRegistry.ownedBy(owner.getUUID(), name)) {
+            if (loadedIds.contains(entry.girlId())) {
+                continue;
+            }
+            if (hasPendingCall(entry.girlId(), owner.getUUID())) {
+                called++; // already accepted and still loading; do not add another force ticket
+                continue;
+            }
+            ServerLevel girlLevel = owner.server.getLevel(entry.dimension());
             if (girlLevel == null) {
                 com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
                         "[tracking] girl {} in unknown dimension {}, skipping",
@@ -643,16 +616,25 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 continue;
             }
 
-            net.minecraft.world.level.ChunkPos chunk = new net.minecraft.world.level.ChunkPos(
+            net.minecraft.world.level.ChunkPos center = new net.minecraft.world.level.ChunkPos(
                     net.minecraft.util.Mth.floor(entry.x()) >> 4,
                     net.minecraft.util.Mth.floor(entry.z()) >> 4);
-            girlLevel.setChunkForced(chunk.x, chunk.z, true);
+            java.util.List<net.minecraft.world.level.ChunkPos> newlyForced = new java.util.ArrayList<>();
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    net.minecraft.world.level.ChunkPos chunk = new net.minecraft.world.level.ChunkPos(
+                            center.x + dx, center.z + dz);
+                    // Remember only tickets introduced by this call. Never remove an admin's or
+                    // another mod's pre-existing forced chunk when the summon finishes.
+                    if (girlLevel.setChunkForced(chunk.x, chunk.z, true)) {
+                        newlyForced.add(chunk);
+                    }
+                }
+            }
             PENDING_CALLS.add(new PendingCall(entry.girlId(), owner.getUUID(),
-                    girlLevel.dimension(), chunk, girlLevel.getGameTime() + 100));
-            pending++;
-            com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
-                    "[tracking] queued pending call for girl {} ({}) at chunk {} in {}",
-                    entry.rigId(), entry.girlId(), chunk, entry.dimension().location());
+                    girlLevel.dimension(), center, java.util.List.copyOf(newlyForced),
+                    girlLevel.getGameTime() + 100));
+            called++;
         }
         
         // Log diagnostic: how many were teleported immediately vs queued for force-load.
@@ -667,10 +649,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         return called;
     }
 
-    /** A summon request waiting for a force-loaded chunk to actually load. */
+    private static boolean hasPendingCall(UUID girlId, UUID ownerId) {
+        return PENDING_CALLS.stream().anyMatch(call -> call.girlId().equals(girlId)
+                && call.ownerId().equals(ownerId));
+    }
+
+    /** A summon request waiting for force-loaded chunks to finish loading their entities. */
     private record PendingCall(UUID girlId, UUID ownerId,
                                net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension,
-                               net.minecraft.world.level.ChunkPos chunk, long deadlineTick) {
+                               net.minecraft.world.level.ChunkPos center,
+                               java.util.List<net.minecraft.world.level.ChunkPos> newlyForced,
+                               long deadlineTick) {
     }
 
     private static final java.util.List<PendingCall> PENDING_CALLS = new java.util.ArrayList<>();
@@ -687,15 +676,22 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             if (!level.dimension().equals(call.dimension())) {
                 continue;
             }
+            ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
+            if (owner == null) {
+                releaseForcedChunks(level, call);
+                it.remove();
+                continue;
+            }
 
-            // Force-loading a chunk is asynchronous with the optimized chunk systems used by
-            // this modpack. Touch the chunk explicitly before looking up the entity; otherwise
-            // the request is counted in chat but the pending call can sit forever with no girl
-            // entity ever reaching callToOwner().
-            level.getChunk(call.chunk().x, call.chunk().z,
-                    net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
-            // Saved entity ids are not stable after a chunk unload/reload. Resolve by UUID,
-            // otherwise the request is counted but can never find the reloaded girl.
+            // Force-loading can be asynchronous in optimized chunk systems. Touch all nine FULL
+            // chunks explicitly before resolving by stable UUID.
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    level.getChunk(call.center().x + dx, call.center().z + dz,
+                            net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
+                }
+            }
+
             net.minecraft.world.entity.Entity entity = null;
             for (net.minecraft.world.entity.Entity candidate : level.getAllEntities()) {
                 if (candidate.getUUID().equals(call.girlId())) {
@@ -703,30 +699,32 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     break;
                 }
             }
-            if (entity instanceof TameableGirlEntity girl && girl.isTamed()) {
-                ServerPlayer owner = level.getServer().getPlayerList().getPlayer(call.ownerId());
-                if (owner != null && girl.isOwner(owner)) {
-                    girl.callToOwner(owner);
-                    com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.info(
-                            "[tracking] pending call resolved: girl {} teleported to {}",
-                            girl.getGirlID(), owner.getGameProfile().getName());
-                }
-                level.setChunkForced(call.chunk().x, call.chunk().z, false);
+            if (entity instanceof TameableGirlEntity girl && girl.isTamed()
+                    && girl.isOwner(owner) && girl.callToOwner(owner)) {
+                releaseForcedChunks(level, call);
                 it.remove();
             } else if (level.getGameTime() > call.deadlineTick()) {
-                // Chunk force-load timed out - either the girl is dead (registry stale), or
-                // the async chunk system (c2me/sable) never delivered the chunk. Either way,
-                // drop the request and release the force-load flag.
-                com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
-                        "[tracking] pending call TIMEOUT for girl {} at chunk {} - entity not found (dead or async chunk mod?)",
-                        call.girlId(), call.chunk());
-                level.setChunkForced(call.chunk().x, call.chunk().z, false);
+                // All neighbouring chunks were FULL for five seconds and the UUID was absent:
+                // this is a stale registry row (usually an old dead/discarded entity), not a
+                // successful teleport. Remove it so G no longer reports phantom girls forever.
+                if (entity == null) {
+                    TamedGirlRegistry.remove(call.girlId());
+                }
+                releaseForcedChunks(level, call);
+                owner.displayClientMessage(Component.translatable(
+                        "msg.pleasurehorizons.girlCallFailed"), true);
                 it.remove();
             }
         }
     }
 
-    /** Drops every pending summon (e.g. when the integrated server restarts). */
+    private static void releaseForcedChunks(ServerLevel level, PendingCall call) {
+        for (net.minecraft.world.level.ChunkPos chunk : call.newlyForced()) {
+            level.setChunkForced(chunk.x, chunk.z, false);
+        }
+    }
+
+    /** Drops runtime requests (e.g. when the integrated server restarts). */
     public static void clearPendingCalls() {
         PENDING_CALLS.clear();
     }
@@ -872,11 +870,17 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     public int getFollowDistanceMode() {
-        return this.entityData.get(FOLLOW_DISTANCE_MODE);
+        int distance = this.getFollowDistance();
+        return distance <= 4 ? 0 : distance <= 8 ? 1 : 2;
     }
 
     public void setFollowDistanceMode(int mode) {
-        this.entityData.set(FOLLOW_DISTANCE_MODE, Math.floorMod(mode, 3));
+        int normalized = Math.floorMod(mode, 3);
+        this.setFollowDistance(switch (normalized) {
+            case 0 -> 4;
+            case 2 -> 12;
+            default -> 8;
+        });
     }
 
     public int getWorkPaceMode() {
@@ -911,22 +915,14 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.entityData.set(STAY_RADIUS_MODE, Math.floorMod(mode, 3));
     }
 
-    /** Follow gap before she starts catching up: close / normal / far. */
+    /** Follow gap before she starts catching up: 4 / 8 / 12 blocks. */
     public float followStartDistance() {
-        return switch (this.getFollowDistanceMode()) {
-            case 0 -> 3.0F;
-            case 2 -> 8.0F;
-            default -> 5.0F;
-        };
+        return this.getFollowDistance();
     }
 
-    /** Follow distance at which catching up stops: close / normal / far. */
+    /** Stop two blocks inside the selected radius, so path recalculation does not oscillate. */
     public float followStopDistance() {
-        return switch (this.getFollowDistanceMode()) {
-            case 0 -> 1.5F;
-            case 2 -> 4.0F;
-            default -> 2.5F;
-        };
+        return Math.max(2.0F, this.getFollowDistance() - 2.0F);
     }
 
     /** Movement speed multiplier for the work goals: calm / normal / fast. */
@@ -1390,10 +1386,16 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!this.level().isClientSide() && this.isTamed() && this.tickCount % 40 == 0) {
-            // Refresh her last known location so the summon registry can reach her after her
-            // chunk unloads.
-            TamedGirlRegistry.update(this);
+        if (!this.level().isClientSide() && this.isTamed()) {
+            net.minecraft.world.level.ChunkPos chunk = this.chunkPosition();
+            if (chunk.x != this.lastRegistryChunkX || chunk.z != this.lastRegistryChunkZ
+                    || this.tickCount % 40 == 0) {
+                // Save every chunk crossing immediately. A girl can cross a border and unload
+                // before the old 40-tick refresh, leaving G to force-load the wrong chunk.
+                this.lastRegistryChunkX = chunk.x;
+                this.lastRegistryChunkZ = chunk.z;
+                TamedGirlRegistry.update(this);
+            }
         }
         if (!this.level().isClientSide() && this.tickCount % 20 == 0) {
             updateBackpackStatusIfChanged();
@@ -1427,19 +1429,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             // Cross-dimension: the owner hopped through a portal - she follows right away
             // (distance between levels is meaningless, so no range check there).
             this.teleportNear(owner);
-        }
-        // Self-heal for a wedged client copy ("visible only after relogging"): after a
-        // teleport we repeat the deterministic client rebuild a few times. Each retry costs
-        // one frame of flicker at most; a healthy client just re-receives its own state.
-        if (!this.level().isClientSide() && this.isTamed() && this.tickCount % 20 == 0
-                && this.lastTrackingResyncTick != Long.MIN_VALUE
-                && this.getOwner() instanceof ServerPlayer owner
-                && owner.level() == this.level()
-                && this.distanceToSqr(owner) < 64.0D * 64.0D) {
-            long since = this.level().getGameTime() - this.lastTrackingResyncTick;
-            if (since == 60L || since == 140L || since == 260L) {
-                resyncTo(owner);
-            }
         }
         // While being carried, ensure she stays nicely positioned and doesn't suffocate
         if (this.isPassenger() && this.getVehicle() instanceof Player player) {
@@ -1635,7 +1624,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         tag.putBoolean("AutoEquipArmor", this.isAutoEquipArmorEnabled());
         tag.putBoolean("AvoidCreepers", this.isAvoidCreepersEnabled());
         tag.putBoolean("HighJump", this.isHighJumpEnabled());
-        tag.putInt("FollowDistanceMode", this.getFollowDistanceMode());
         tag.putInt("WorkPaceMode", this.getWorkPaceMode());
         tag.putInt("WorkRadiusMode", this.getWorkRadiusMode());
         tag.putInt("GuardRangeMode", this.getGuardRangeMode());
@@ -1663,7 +1651,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (tag.contains("AutoEquipArmor")) this.setAutoEquipArmorEnabled(tag.getBoolean("AutoEquipArmor"));
         if (tag.contains("AvoidCreepers")) this.setAvoidCreepersEnabled(tag.getBoolean("AvoidCreepers"));
         if (tag.contains("HighJump")) this.setHighJumpEnabled(tag.getBoolean("HighJump"));
-        if (tag.contains("FollowDistanceMode")) this.setFollowDistanceMode(tag.getInt("FollowDistanceMode"));
         if (tag.contains("WorkPaceMode")) this.setWorkPaceMode(tag.getInt("WorkPaceMode"));
         if (tag.contains("WorkRadiusMode")) this.setWorkRadiusMode(tag.getInt("WorkRadiusMode"));
         if (tag.contains("GuardRangeMode")) this.setGuardRangeMode(tag.getInt("GuardRangeMode"));
