@@ -324,6 +324,9 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
     /** Toggle buttons read the live state and show "Stop ..." when enabled. */
     private Component dynamicLabel(InventoryButtonAction action) {
         String key = action.labelKey();
+        if ("gui.pleasurehorizons.button.followDistance".equals(key)) {
+            return Component.literal("Follow: " + girl.getFollowDistance() + "m");
+        }
         if ("gui.pleasurehorizons.button.guardBase".equals(key) && girl.isGuardBaseEnabled()) {
             return Component.translatable("gui.pleasurehorizons.button.stopGuardBase");
         }

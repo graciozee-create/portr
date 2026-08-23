@@ -63,6 +63,8 @@ public abstract class GirlEntity extends PathfinderMob {
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FOLLOWING =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> FOLLOW_DISTANCE =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IN_SCENE =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> OVERRIDE_LOOP =
@@ -215,6 +217,7 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(WAITING_FOR_PLAYER, false);
         builder.define(STRIPPED, false);
         builder.define(FOLLOWING, false);
+        builder.define(FOLLOW_DISTANCE, 4);
         builder.define(IN_SCENE, false);
         builder.define(OVERRIDE_LOOP, false);
         builder.define(OVERRIDE_HOLD, false);
@@ -250,6 +253,11 @@ public abstract class GirlEntity extends PathfinderMob {
 
     public boolean isFollowing() {
         return this.entityData.get(FOLLOWING);
+    }
+
+    public int getFollowDistance() { return this.entityData.get(FOLLOW_DISTANCE); }
+    public void setFollowDistance(int distance) {
+        this.entityData.set(FOLLOW_DISTANCE, Math.max(2, Math.min(16, distance)));
     }
 
     // --- AI toggles ---
@@ -1108,6 +1116,7 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putBoolean("Stripped", isStripped());
         compound.putBoolean("Downed", isDowned());
         compound.putBoolean("Following", isFollowing());
+        compound.putInt("FollowDistance", getFollowDistance());
         compound.putBoolean("Pregnant", isPregnant());
         compound.putBoolean("CanGetImpregnated", canGetImpregnated());
         compound.putBoolean("Sitting", isSitting());
@@ -1139,6 +1148,7 @@ public abstract class GirlEntity extends PathfinderMob {
         setStripped(compound.getBoolean("Stripped"));
         setDowned(compound.getBoolean("Downed"));
         setFollowing(compound.getBoolean("Following"));
+        if (compound.contains("FollowDistance")) setFollowDistance(compound.getInt("FollowDistance"));
         setPregnantState(compound.getBoolean("Pregnant"));
         canGetImpregnatedState(compound.getBoolean("CanGetImpregnated"));
         setSitting(compound.getBoolean("Sitting"));
