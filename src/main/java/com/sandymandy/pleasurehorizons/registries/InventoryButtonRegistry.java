@@ -32,7 +32,11 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.customize", 1, true,
-                    (girl, player) -> send(girl.getId(), "customize"))
+                    (girl, player) -> send(girl.getId(), "customize")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.followDistance", 0,
+                    (girl, player) -> send(girl.getId(), "cycleFollowDistance"))
     );
 
     public static final List<InventoryButtonAction> BUTTONS_MAIN_RIGHT = List.of(
@@ -99,6 +103,64 @@ public class InventoryButtonRegistry {
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.dropLoot", 1,
                     (girl, player) -> send(girl.getId(), "dropLoot"))
+    );
+
+    /**
+     * Fine-tuning settings, in their own tab. Every entry passes {@code opensSubscreen = true}:
+     * not because a subscreen opens, but because the screen must STAY OPEN - closing after
+     * every click would make adjusting eleven small settings miserable. The button labels are
+     * rendered stateful by {@code GirlInventoryScreen#dynamicLabel}.
+     */
+    public static final List<InventoryButtonAction> BUTTONS_SETTINGS_LEFT = List.of(
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.followTeleport", 2, true,
+                    (girl, player) -> send(girl.getId(), "followTeleport")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.followDistance", 1, true,
+                    (girl, player) -> send(girl.getId(), "followDistance")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.workPace", 1, true,
+                    (girl, player) -> send(girl.getId(), "workPace")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.workRadius", 1, true,
+                    (girl, player) -> send(girl.getId(), "workRadius")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.guardRange", 1, true,
+                    (girl, player) -> send(girl.getId(), "guardRange")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.closeDoors", 1, true,
+                    (girl, player) -> send(girl.getId(), "closeDoors")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.avoidWater", 1, true,
+                    (girl, player) -> send(girl.getId(), "avoidWater"))
+    );
+
+    public static final List<InventoryButtonAction> BUTTONS_SETTINGS_RIGHT = List.of(
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.stayRadius", 1, true,
+                    (girl, player) -> send(girl.getId(), "stayRadius")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.autoDeliver", 1, true,
+                    (girl, player) -> send(girl.getId(), "autoDeliver")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.autoEquipArmor", 1, true,
+                    (girl, player) -> send(girl.getId(), "autoEquipArmor")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.avoidCreepers", 1, true,
+                    (girl, player) -> send(girl.getId(), "avoidCreepers")),
+
+            new InventoryButtonAction(
+                    "gui.pleasurehorizons.button.highJump", 1, true,
+                    (girl, player) -> send(girl.getId(), "highJump"))
     );
 
     private static void send(int entityId, String actionId) {

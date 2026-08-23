@@ -9,6 +9,7 @@ import com.sandymandy.pleasurehorizons.networking.S2C.SceneOptionsS2CPacket;
 import com.sandymandy.pleasurehorizons.networking.S2C.OpenKoboldCustomizeScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandler;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -79,6 +80,12 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 case "goToBase" -> girl.teleportToBase();
                 case "sit" -> girl.setSitting(!girl.isSitting());
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
+                case "cycleFollowDistance" -> {
+                    int next = girl.getFollowDistance() >= 16 ? 2 : girl.getFollowDistance() + 2;
+                    girl.setFollowDistance(next);
+                    ctx.player().displayClientMessage(net.minecraft.network.chat.Component.literal(
+                            "Follow distance: " + next + " blocks"), true);
+                }
                 case "talk" -> {
                     // Upstream sends the scene list here; the GirlSceneScreen is what the Talk
                     // button is supposed to open. Girls without scenes fall back to small talk.
@@ -186,8 +193,86 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                                     net.minecraft.network.chat.Component.translatable(
                                             "role.pleasurehorizons." + next.id())), true);
                 }
+                // ---- Settings tab: per-girl fine-tuning. Cycles wrap via the setters (mod 3).
+                case "followTeleport" -> {
+                    girl.setFollowTeleportEnabled(!girl.isFollowTeleportEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.followTeleport",
+                            onOff(girl.isFollowTeleportEnabled()));
+                }
+                case "closeDoors" -> {
+                    girl.setCloseDoorsEnabled(!girl.isCloseDoorsEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.closeDoors",
+                            onOff(girl.isCloseDoorsEnabled()));
+                }
+                case "avoidWater" -> {
+                    girl.setAvoidWaterEnabled(!girl.isAvoidWaterEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.avoidWater",
+                            onOff(girl.isAvoidWaterEnabled()));
+                }
+                case "autoDeliver" -> {
+                    girl.setAutoDeliverEnabled(!girl.isAutoDeliverEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.autoDeliver",
+                            onOff(girl.isAutoDeliverEnabled()));
+                }
+                case "autoEquipArmor" -> {
+                    girl.setAutoEquipArmorEnabled(!girl.isAutoEquipArmorEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.autoEquipArmor",
+                            onOff(girl.isAutoEquipArmorEnabled()));
+                }
+                case "avoidCreepers" -> {
+                    girl.setAvoidCreepersEnabled(!girl.isAvoidCreepersEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.avoidCreepers",
+                            onOff(girl.isAvoidCreepersEnabled()));
+                }
+                case "highJump" -> {
+                    girl.setHighJumpEnabled(!girl.isHighJumpEnabled());
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.highJump",
+                            onOff(girl.isHighJumpEnabled()));
+                }
+                case "followDistance" -> {
+                    girl.setFollowDistanceMode(girl.getFollowDistanceMode() + 1);
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.followDistance",
+                            Component.translatable("setting.pleasurehorizons.followDistance."
+                                    + girl.getFollowDistanceMode()));
+                }
+                case "workPace" -> {
+                    girl.setWorkPaceMode(girl.getWorkPaceMode() + 1);
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.workPace",
+                            Component.translatable("setting.pleasurehorizons.workPace."
+                                    + girl.getWorkPaceMode()));
+                }
+                case "workRadius" -> {
+                    girl.setWorkRadiusMode(girl.getWorkRadiusMode() + 1);
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.workRadius",
+                            Component.translatable("setting.pleasurehorizons.workRadius."
+                                    + girl.getWorkRadiusMode()));
+                }
+                case "guardRange" -> {
+                    girl.setGuardRangeMode(girl.getGuardRangeMode() + 1);
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.guardRange",
+                            Component.translatable("setting.pleasurehorizons.guardRange."
+                                    + girl.getGuardRangeMode()));
+                }
+                case "stayRadius" -> {
+                    girl.setStayRadiusMode(girl.getStayRadiusMode() + 1);
+                    settingFeedback(ctx.player(), "gui.pleasurehorizons.button.stayRadius",
+                            Component.translatable("setting.pleasurehorizons.stayRadius."
+                                    + girl.getStayRadiusMode()));
+                }
                 default -> { /* Unknown actions are untrusted input; ignore without log spam. */ }
             }
         });
+    }
+
+    private static net.minecraft.network.chat.Component onOff(boolean enabled) {
+        return net.minecraft.network.chat.Component.translatable(
+                enabled ? "setting.pleasurehorizons.on" : "setting.pleasurehorizons.off");
+    }
+
+    private static void settingFeedback(net.minecraft.world.entity.player.Player player,
+                                        String settingKey, net.minecraft.network.chat.Component value) {
+        player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                "msg.pleasurehorizons.settingChanged",
+                net.minecraft.network.chat.Component.translatable(settingKey), value), true);
     }
 }

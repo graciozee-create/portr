@@ -20,7 +20,6 @@ import java.util.EnumSet;
  * once the current one is dead, so she sweeps through a whole pack around the owner.</p>
  */
 public class GirlGuardOwnerGoal extends TargetGoal {
-    private static final double SCAN_RANGE = 12.0D;
     private static final double SCAN_HEIGHT = 6.0D;
     private static final double GIVE_UP_RANGE_SQ = 32.0D * 32.0D;
     private static final int SCAN_INTERVAL = 10;
@@ -77,9 +76,12 @@ public class GirlGuardOwnerGoal extends TargetGoal {
     }
 
     private Monster findNearestMonster(LivingEntity owner) {
-        AABB box = new AABB(owner.blockPosition()).inflate(SCAN_RANGE, SCAN_HEIGHT, SCAN_RANGE);
-        return girl.level().getNearestEntity(Monster.class,
-                TargetingConditions.forCombat().range(SCAN_RANGE), girl,
-                owner.getX(), owner.getY(), owner.getZ(), box);
+        double scanRange = girl.guardScanRange(); // per-girl "guard range" setting
+        AABB box = new AABB(owner.blockPosition()).inflate(scanRange, SCAN_HEIGHT, scanRange);
+        java.util.List<Monster> candidates = girl.level().getEntitiesOfClass(Monster.class, box,
+                monster -> monster.isAlive() && !girl.isAvoidCreepersEnabled(monster));
+        return girl.level().getNearestEntity(candidates,
+                TargetingConditions.forCombat().range(scanRange), girl,
+                owner.getX(), owner.getY(), owner.getZ());
     }
 }
