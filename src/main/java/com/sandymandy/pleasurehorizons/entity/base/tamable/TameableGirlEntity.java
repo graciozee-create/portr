@@ -1495,6 +1495,31 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.stuckTicks = 0;
                 this.lastStuckCheckPos = this.position();
             }
+            
+            // Preemptive aggro / proximity taunt: if a hostile mob within 8 blocks is attacking
+            // her owner (or any nearby girl is closer than the owner), force it to switch to her.
+            // Works regardless of guard toggle - any tamed girl near her owner will try to tank.
+            // This makes girls actual tanks that draw aggro proactively, not just reactively
+            // after they land a hit.
+            if (this.tickCount % 10 == 0) {
+                LivingEntity owner = this.getOwner();
+                if (owner != null && owner.isAlive()
+                        && this.distanceToSqr(owner) < 16.0D * 16.0D) {
+                    net.minecraft.world.phys.AABB box = this.getBoundingBox().inflate(8.0D, 4.0D, 8.0D);
+                    for (net.minecraft.world.entity.Mob mob : this.level().getEntitiesOfClass(
+                            net.minecraft.world.entity.Mob.class, box)) {
+                        if (mob.isAlive() && !(mob instanceof TameableGirlEntity)) {
+                            LivingEntity mobTarget = mob.getTarget();
+                            // Switch aggro if: mob is attacking owner, OR mob has no target and
+                            // girl is closer than owner (preemptive strike)
+                            if (mobTarget == owner
+                                    || (mobTarget == null && this.distanceToSqr(mob) < owner.distanceToSqr(mob))) {
+                                mob.setTarget(this);
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         if (!this.level().isClientSide() && this.isTamed()
