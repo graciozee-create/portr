@@ -886,7 +886,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * Target filter for the guard goals: when "avoid creepers" is on, creepers are skipped so
      * she never triggers an explosion next to herself (or the base).
      */
-    public boolean isAvoidCreepersEnabled(net.minecraft.world.entity.monster.Monster monster) {
+    public boolean isAvoidCreepersEnabled(net.minecraft.world.entity.Mob monster) {
         return this.isAvoidCreepersEnabled() && monster instanceof net.minecraft.world.entity.monster.Creeper;
     }
 
@@ -1497,14 +1497,26 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             
             // Anti-stuck detection: if she hasn't moved more than 0.5 blocks in 100 ticks (5 seconds)
             // and isn't in combat/scene/sitting, teleport her to owner or base.
-            if (!inCombat && !this.isSceneActive() && !this.isSitting() && !this.isDowned()
-                    && !this.isPassenger() && this.isFollowing()) {
+            // At 30 ticks (1.5s): try jumping to escape minor obstacles.
+            // At 60 ticks (3s): force repath.
+            // At 100 ticks (5s): teleport to owner.
+            if (!this.isSceneActive() && !this.isSitting() && !this.isDowned()
+                    && !this.isPassenger()) {
                 net.minecraft.world.phys.Vec3 currentPos = this.position();
                 double moved = currentPos.distanceTo(this.lastStuckCheckPos);
-                if (moved < 0.5D) {
+                if (moved < 0.5D && !inCombat) {
                     this.stuckTicks++;
-                    if (this.stuckTicks >= 100) {
-                        // She's stuck - teleport to owner
+                    if (this.stuckTicks == 30) {
+                        // Try jumping over obstacles before giving up
+                        this.jumpFromGround();
+                    }
+                    if (this.stuckTicks == 60) {
+                        // Force a new path - old one may be stale
+                        this.getNavigation().stop();
+                        this.jumpFromGround();
+                    }
+                    if (this.stuckTicks >= 100 && this.isFollowing()) {
+                        // She's really stuck - teleport to owner
                         LivingEntity owner = this.getOwner();
                         if (owner != null && owner.isAlive()) {
                             this.teleportNear((Player) owner);

@@ -2,9 +2,10 @@ package com.sandymandy.pleasurehorizons.entity.ai.goal;
 
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.phys.AABB;
 
 import java.util.EnumSet;
@@ -29,9 +30,11 @@ public class GirlGuardBaseGoal extends TargetGoal {
             center = girl.blockPosition();
         }
         AABB box = new AABB(center).inflate(16.0D, 6.0D, 16.0D);
-        java.util.List<Monster> candidates = girl.level().getEntitiesOfClass(Monster.class, box,
-                monster -> monster.isAlive() && !girl.isAvoidCreepersEnabled(monster));
-        Monster found = girl.level().getNearestEntity(candidates,
+        // Search Mob + Enemy (not just Monster) so Phantoms and other flying mobs are included.
+        java.util.List<Mob> candidates = girl.level().getEntitiesOfClass(Mob.class, box,
+                mob -> mob.isAlive() && mob instanceof Enemy
+                        && !girl.isAvoidCreepersEnabled(mob));
+        Mob found = girl.level().getNearestEntity(candidates,
                 TargetingConditions.forCombat().range(16.0D), girl,
                 girl.getX(), girl.getY(), girl.getZ());
         if (found != null && found.isAlive()) {
