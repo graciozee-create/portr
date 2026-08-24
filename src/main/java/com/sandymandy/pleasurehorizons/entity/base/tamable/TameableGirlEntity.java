@@ -136,6 +136,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Anti-stuck: last position for stuck detection. */
     private net.minecraft.world.phys.Vec3 lastStuckCheckPos = net.minecraft.world.phys.Vec3.ZERO;
     private int stuckTicks = 0;
+    /** Water-stuck: ticks spent in water without reaching air or solid ground. */
+    private int waterStuckTicks = 0;
 
     /** Last chunk written to the summon registry; catches border crossings between 40-tick saves. */
     private int lastRegistryChunkX = Integer.MIN_VALUE;
@@ -1467,6 +1469,30 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
                 }
                 this.combatSpeedBoosted = false;
+            }
+            
+            // Water-stuck detection: if she's been in water for 3+ seconds without reaching air
+            // or solid ground, and isn't in combat, force her to swim up or teleport out.
+            // Vanilla pathfinding can't figure out how to exit water when there's a block above,
+            // so she just floats in place forever.
+            if (this.isInWater() && !inCombat && !this.isSceneActive() && !this.isDowned()
+                    && !this.isPassenger() && this.isFollowing()) {
+                this.waterStuckTicks++;
+                // After 60 ticks (3 seconds): try to jump/swim up forcefully
+                if (this.waterStuckTicks == 60) {
+                    this.jumpFromGround();
+                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.3D, 0));
+                }
+                // After 120 ticks (6 seconds): teleport to owner if still stuck
+                if (this.waterStuckTicks >= 120) {
+                    LivingEntity owner = this.getOwner();
+                    if (owner != null && owner.isAlive() && !owner.isInWater()) {
+                        this.teleportNear((Player) owner);
+                        this.waterStuckTicks = 0;
+                    }
+                }
+            } else {
+                this.waterStuckTicks = 0;
             }
             
             // Anti-stuck detection: if she hasn't moved more than 0.5 blocks in 100 ticks (5 seconds)
