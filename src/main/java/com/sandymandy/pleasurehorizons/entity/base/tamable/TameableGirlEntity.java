@@ -1522,24 +1522,28 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.lastStuckCheckPos = this.position();
             }
             
-            // Preemptive aggro / proximity taunt: if a hostile mob within 8 blocks is attacking
-            // her owner (or any nearby girl is closer than the owner), force it to switch to her.
-            // Works regardless of guard toggle - any tamed girl near her owner will try to tank.
-            // This makes girls actual tanks that draw aggro proactively, not just reactively
-            // after they land a hit.
+            // Preemptive aggro / proximity taunt: scan around the OWNER (not the girl) for
+            // hostile mobs. Any mob attacking the owner gets force-targeted to the nearest girl.
+            // Mobs without a target that are closer to the owner than to any girl also get
+            // redirected. This makes girls proper bodyguards that protect the player first,
+            // not just whatever happens to walk past them.
             if (this.tickCount % 10 == 0) {
                 LivingEntity owner = this.getOwner();
                 if (owner != null && owner.isAlive()
                         && this.distanceToSqr(owner) < 16.0D * 16.0D) {
-                    net.minecraft.world.phys.AABB box = this.getBoundingBox().inflate(8.0D, 4.0D, 8.0D);
+                    net.minecraft.world.phys.AABB box = owner.getBoundingBox().inflate(8.0D, 4.0D, 8.0D);
                     for (net.minecraft.world.entity.Mob mob : this.level().getEntitiesOfClass(
                             net.minecraft.world.entity.Mob.class, box)) {
                         if (mob.isAlive() && !(mob instanceof TameableGirlEntity)) {
                             LivingEntity mobTarget = mob.getTarget();
-                            // Switch aggro if: mob is attacking owner, OR mob has no target and
-                            // girl is closer than owner (preemptive strike)
-                            if (mobTarget == owner
-                                    || (mobTarget == null && this.distanceToSqr(mob) < owner.distanceToSqr(mob))) {
+                            // Priority 1: mob is attacking owner - switch to girl immediately
+                            if (mobTarget == owner) {
+                                mob.setTarget(this);
+                            }
+                            // Priority 2: mob has no target yet and is closer to owner than to
+                            // girl - preemptive strike so it targets girl instead of owner
+                            else if (mobTarget == null
+                                    && mob.distanceToSqr(owner) < mob.distanceToSqr(this)) {
                                 mob.setTarget(this);
                             }
                         }

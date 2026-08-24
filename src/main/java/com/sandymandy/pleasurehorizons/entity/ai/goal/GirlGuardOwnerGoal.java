@@ -80,8 +80,29 @@ public class GirlGuardOwnerGoal extends TargetGoal {
         AABB box = new AABB(owner.blockPosition()).inflate(scanRange, SCAN_HEIGHT, scanRange);
         java.util.List<Monster> candidates = girl.level().getEntitiesOfClass(Monster.class, box,
                 monster -> monster.isAlive() && !girl.isAvoidCreepersEnabled(monster));
-        return girl.level().getNearestEntity(candidates,
-                TargetingConditions.forCombat().range(scanRange), girl,
-                owner.getX(), owner.getY(), owner.getZ());
+        if (candidates.isEmpty()) return null;
+        
+        // Priority: mobs attacking owner first, then closest to owner.
+        // This ensures she protects the owner from immediate threats instead of chasing
+        // a random zombie 10 blocks away while a skeleton shoots him in the face.
+        Monster attackingOwner = null;
+        double closestAttackingDistSq = Double.MAX_VALUE;
+        Monster closestToOwner = null;
+        double closestDistSq = Double.MAX_VALUE;
+        
+        for (Monster mob : candidates) {
+            double distSq = mob.distanceToSqr(owner);
+            if (mob.getTarget() == owner && distSq < closestAttackingDistSq) {
+                attackingOwner = mob;
+                closestAttackingDistSq = distSq;
+            }
+            if (distSq < closestDistSq) {
+                closestToOwner = mob;
+                closestDistSq = distSq;
+            }
+        }
+        
+        // Prefer the mob that's actively attacking the owner; fall back to closest
+        return attackingOwner != null ? attackingOwner : closestToOwner;
     }
 }
