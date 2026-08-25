@@ -15,6 +15,17 @@ import java.util.List;
 public class ManglelieEntity extends SettlementGirlEntityAI {
     public ManglelieEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
+        // Hide extra bones that render unwanted visual elements (energy balls, offhand items).
+        // The "coin" floating in front of Manglelie is likely energyBallL/R or offhand bone.
+        if (!level.isClientSide()) {
+            this.setBoneVisibility("energyBallL", false);
+            this.setBoneVisibility("energyBallR", false);
+            this.setBoneVisibility("offhand", false);
+            this.setBoneVisibility("weapon", false);
+            this.setBoneVisibility("customHandL", false);
+            this.setBoneVisibility("customHandR", false);
+            this.setBoneVisibility("blocks", false);
+        }
     }
 
     public static AttributeSupplier.Builder createAttributes() {
