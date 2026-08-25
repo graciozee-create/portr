@@ -1471,12 +1471,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.combatSpeedBoosted = false;
             }
             
-            // Water-stuck detection: if she's been in water for 3+ seconds without reaching air
-            // or solid ground, and isn't in combat, force her to swim up or teleport out.
-            // Vanilla pathfinding can't figure out how to exit water when there's a block above,
-            // so she just floats in place forever.
+            // Water-stuck detection: if she's been in water for 3+ seconds while actively
+            // trying to move somewhere, force her to swim up or teleport out.
+            // Only triggers when navigation is active (she's trying to go somewhere).
             if (this.isInWater() && !inCombat && !this.isSceneActive() && !this.isDowned()
-                    && !this.isPassenger() && this.isFollowing()) {
+                    && !this.isPassenger() && !this.getNavigation().isDone()) {
                 this.waterStuckTicks++;
                 // After 60 ticks (3 seconds): try to jump/swim up forcefully
                 if (this.waterStuckTicks == 60) {
@@ -1495,27 +1494,27 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.waterStuckTicks = 0;
             }
             
-            // Anti-stuck detection: if she hasn't moved more than 0.5 blocks in 100 ticks (5 seconds)
-            // and isn't in combat/scene/sitting, teleport her to owner or base.
-            // At 30 ticks (1.5s): try jumping to escape minor obstacles.
-            // At 60 ticks (3s): force repath.
-            // At 100 ticks (5s): teleport to owner.
+            // Anti-stuck detection: only triggers when girl is actively trying to move somewhere
+            // (navigation has a path) but hasn't moved in a while. Does NOT trigger when she's
+            // just standing idle, sitting, guarding, or otherwise not pathing anywhere.
             if (!this.isSceneActive() && !this.isSitting() && !this.isDowned()
-                    && !this.isPassenger()) {
+                    && !this.isPassenger()
+                    && !this.getNavigation().isDone()
+                    && !inCombat) {
                 net.minecraft.world.phys.Vec3 currentPos = this.position();
                 double moved = currentPos.distanceTo(this.lastStuckCheckPos);
-                if (moved < 0.5D && !inCombat) {
+                if (moved < 0.5D) {
                     this.stuckTicks++;
-                    if (this.stuckTicks == 30) {
+                    if (this.stuckTicks == 40) {
                         // Try jumping over obstacles before giving up
                         this.jumpFromGround();
                     }
-                    if (this.stuckTicks == 60) {
+                    if (this.stuckTicks == 80) {
                         // Force a new path - old one may be stale
                         this.getNavigation().stop();
                         this.jumpFromGround();
                     }
-                    if (this.stuckTicks >= 100 && this.isFollowing()) {
+                    if (this.stuckTicks >= 120 && this.isFollowing()) {
                         // She's really stuck - teleport to owner
                         LivingEntity owner = this.getOwner();
                         if (owner != null && owner.isAlive()) {
@@ -1529,7 +1528,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     this.lastStuckCheckPos = currentPos;
                 }
             } else {
-                // Reset stuck counter when busy with something else
+                // Reset stuck counter when idle, sitting, in combat, or not pathing
                 this.stuckTicks = 0;
                 this.lastStuckCheckPos = this.position();
             }
