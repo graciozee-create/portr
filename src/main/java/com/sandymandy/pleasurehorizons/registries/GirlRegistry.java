@@ -48,6 +48,11 @@ public class GirlRegistry {
                     .sized(0.5f, 1.35f)
                     .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "coppie").toString()));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<AllieEntity>> ALLIE = ENTITY_TYPES.register("allie",
+            () -> EntityType.Builder.<AllieEntity>of(AllieEntity::new, MobCategory.CREATURE)
+                    .sized(0.5f, 1.85f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "allie").toString()));
+
     public static final DeferredHolder<EntityType<?>, EntityType<CustomGirlEntity>> CUSTOM_GIRL = ENTITY_TYPES.register("custom_girl",
             () -> EntityType.Builder.<CustomGirlEntity>of(CustomGirlEntity::new, MobCategory.CREATURE)
                     .sized(0.5f, 1.95f)
@@ -66,5 +71,6 @@ public class GirlRegistry {
         event.put(KOBOLD.get(), KoboldEntity.createAttributes().build());
         event.put(COPPIE.get(), CoppieEntity.createAttributes().build());
         event.put(CUSTOM_GIRL.get(), CustomGirlEntity.createAttributes().build());
+        event.put(ALLIE.get(), AllieEntity.createAttributes().build());
     }
 }

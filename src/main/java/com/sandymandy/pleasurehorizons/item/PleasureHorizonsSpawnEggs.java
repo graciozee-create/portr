@@ -41,6 +41,8 @@ public class PleasureHorizonsSpawnEggs {
             registerEgg("kobold_spawn_egg", GirlRegistry.KOBOLD::get, 0xC97B3D, 0x6E4326);
     public static final DeferredHolder<Item, Item> COPPIE_SPAWN_EGG =
             registerEgg("coppie_spawn_egg", GirlRegistry.COPPIE::get, 0xE0794B, 0x4FBFA8);
+    public static final DeferredHolder<Item, Item> ALLIE_SPAWN_EGG =
+            registerEgg("allie_spawn_egg", GirlRegistry.ALLIE::get, 0xF2C4A0, 0xD4629A);
 
     @SuppressWarnings("unchecked")
     private static DeferredHolder<Item, Item> registerEgg(String name,

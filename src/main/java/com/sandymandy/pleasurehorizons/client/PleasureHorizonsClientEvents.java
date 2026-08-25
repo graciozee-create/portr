@@ -37,6 +37,7 @@ public class PleasureHorizonsClientEvents {
         event.registerEntityRenderer(GirlRegistry.KOBOLD.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.COPPIE.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.CUSTOM_GIRL.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.ALLIE.get(), GirlRenderer::new);
     }
 
     @SubscribeEvent
