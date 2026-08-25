@@ -37,6 +37,10 @@ public class GirlsCommand {
             (context, builder) -> SharedSuggestionProvider.suggest(
                     CustomGirlLoader.LOADED_PROFILES.keySet(), builder);
 
+    private static final SuggestionProvider<CommandSourceStack> TYPE_SUGGESTIONS =
+            (context, builder) -> SharedSuggestionProvider.suggest(
+                    List.of("lucy", "mika", "momo", "slime", "kobold", "coppie"), builder);
+
     private GirlsCommand() {
     }
 
@@ -54,6 +58,16 @@ public class GirlsCommand {
                                 .then(Commands.argument("pos", Vec3Argument.vec3())
                                         .executes(ctx -> spawnGirl(ctx.getSource(),
                                                 StringArgumentType.getString(ctx, "id"),
+                                                Vec3Argument.getVec3(ctx, "pos"))))))
+                .then(Commands.literal("summon")
+                        .then(Commands.argument("type", StringArgumentType.word())
+                                .suggests(TYPE_SUGGESTIONS)
+                                .executes(ctx -> summonGirl(ctx.getSource(),
+                                        StringArgumentType.getString(ctx, "type"),
+                                        ctx.getSource().getPosition()))
+                                .then(Commands.argument("pos", Vec3Argument.vec3())
+                                        .executes(ctx -> summonGirl(ctx.getSource(),
+                                                StringArgumentType.getString(ctx, "type"),
                                                 Vec3Argument.getVec3(ctx, "pos"))))))
                 .then(Commands.literal("role")
                         .then(Commands.argument("role", StringArgumentType.word())
@@ -73,6 +87,40 @@ public class GirlsCommand {
         int count = CustomGirlLoader.LOADED_PROFILES.size();
         source.sendSuccess(() -> Component.translatable("commands.pleasurehorizons.girls.reloaded", count), true);
         return count;
+    }
+
+    private static int summonGirl(CommandSourceStack source, String type, Vec3 pos) {
+        ServerLevel level = source.getLevel();
+        net.minecraft.world.entity.EntityType<?> entityType = switch (type.toLowerCase()) {
+            case "lucy" -> GirlRegistry.LUCY.get();
+            case "mika" -> GirlRegistry.MIKA.get();
+            case "momo" -> GirlRegistry.MOMO.get();
+            case "slime" -> GirlRegistry.SLIME.get();
+            case "kobold" -> GirlRegistry.KOBOLD.get();
+            case "coppie" -> GirlRegistry.COPPIE.get();
+            default -> null;
+        };
+        if (entityType == null) {
+            source.sendFailure(Component.translatable(
+                    "commands.pleasurehorizons.girls.unknown_type", type));
+            return 0;
+        }
+        net.minecraft.world.entity.Entity entity = entityType.create(level);
+        if (!(entity instanceof TameableGirlEntity girl)) {
+            source.sendFailure(Component.translatable("commands.pleasurehorizons.girls.spawn_failed"));
+            return 0;
+        }
+        girl.moveTo(pos.x, pos.y, pos.z, 0.0F, 0.0F);
+        if (girl instanceof net.minecraft.world.entity.Mob mob) {
+            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(girl.blockPosition()),
+                    MobSpawnType.COMMAND, null);
+        }
+        // Command spawn must persist - prevent vanilla checkDespawn from removing her
+        girl.setPersistenceRequired();
+        level.addFreshEntity(girl);
+        source.sendSuccess(() -> Component.translatable(
+                "commands.pleasurehorizons.girls.summoned", type), true);
+        return 1;
     }
 
     private static int spawnGirl(CommandSourceStack source, String id, Vec3 pos) {

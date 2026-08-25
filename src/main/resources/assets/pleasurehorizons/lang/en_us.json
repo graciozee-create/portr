@@ -47,6 +47,8 @@
   "commands.pleasurehorizons.girls.spawn_failed": "Could not create the girl entity",
   "commands.pleasurehorizons.girls.spawned": "Spawned %s",
   "commands.pleasurehorizons.girls.unknown_profile": "Unknown girl profile: %s",
+  "commands.pleasurehorizons.girls.unknown_type": "Unknown girl type: %s (use: lucy, mika, momo, slime, kobold, coppie)",
+  "commands.pleasurehorizons.girls.summoned": "Summoned %s",
   "entity.pleasurehorizons.coppie": "Coppie",
   "entity.pleasurehorizons.custom_girl": "Custom Girl",
   "entity.pleasurehorizons.kobold": "Kobold",

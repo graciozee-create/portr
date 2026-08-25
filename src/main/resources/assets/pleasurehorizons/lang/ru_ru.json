@@ -47,6 +47,8 @@
   "commands.pleasurehorizons.girls.spawn_failed": "Не удалось создать сущность девушки",
   "commands.pleasurehorizons.girls.spawned": "Заспавнена %s",
   "commands.pleasurehorizons.girls.unknown_profile": "Неизвестный профиль девушки: %s",
+  "commands.pleasurehorizons.girls.unknown_type": "Неизвестный тип девушки: %s (используй: lucy, mika, momo, slime, kobold, coppie)",
+  "commands.pleasurehorizons.girls.summoned": "Призвана %s",
   "entity.pleasurehorizons.coppie": "Коппи",
   "entity.pleasurehorizons.custom_girl": "Своя девушка",
   "entity.pleasurehorizons.kobold": "Кобольд",
