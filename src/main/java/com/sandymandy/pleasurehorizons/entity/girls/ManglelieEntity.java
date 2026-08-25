@@ -42,15 +42,20 @@ public class ManglelieEntity extends SettlementGirlEntityAI {
     }
 
     @Override
+    public boolean hasStripAnim() {
+        return false; // Manglelie's animation set has no strip animation
+    }
+
+    @Override
     public List<Scene> getScenes() {
         return List.of(
-                Scene.onBed("Bed", 6,
+                Scene.onBed("Bed", 0,
                         List.of("bed_slow"),
                         List.of("bed_slow"),
                         List.of("bed_slow"),
                         "bed_slow", 3f, true, true, true,
                         0f, "bed_slow", "bed_slow"),
-                Scene.stationary("Double Holding", 8, "double_holding", 8, true, true)
+                Scene.stationary("Double Holding", 2, "double_holding", 2, true, true)
         );
     }
 }

@@ -53,7 +53,7 @@ public class GalathEntity extends SettlementGirlEntityAI {
     @Override
     public List<Scene> getScenes() {
         return List.of(
-                Scene.onBed("Bed", 8,
+                Scene.onBed("Bed", 0,
                         List.of("bed_back"),
                         List.of("bed_fast", "bed_fast1", "bed_fast2"),
                         List.of("bed_fast"),

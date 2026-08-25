@@ -44,7 +44,7 @@ public class BiaEntity extends SettlementGirlEntityAI {
     @Override
     public List<Scene> getScenes() {
         return List.of(
-                Scene.stationary("Anal", 6, "anal", 6, true, true)
+                Scene.stationary("Anal", 0, "anal", 2, true, true)
         );
     }
 }

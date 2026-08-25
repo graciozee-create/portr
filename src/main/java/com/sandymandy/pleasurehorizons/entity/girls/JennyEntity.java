@@ -48,13 +48,13 @@ public class JennyEntity extends SettlementGirlEntityAI {
     @Override
     public List<Scene> getScenes() {
         return List.of(
-                Scene.onPlayer("Blowjob", 6,
+                Scene.onPlayer("Blowjob", 0,
                         List.of("blowjobintro"),
                         List.of("blowjobsuck"),
                         List.of("blowjobthrust"),
                         "blowjobcum", 3f, false, false, false),
 
-                Scene.onBed("Doggy", 8,
+                Scene.onBed("Doggy", 2,
                         List.of("doggyintro"),
                         List.of("doggyslow"),
                         List.of("doggythrust"),

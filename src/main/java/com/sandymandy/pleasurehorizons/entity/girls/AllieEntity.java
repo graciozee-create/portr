@@ -66,21 +66,26 @@ public class AllieEntity extends SettlementGirlEntityAI {
     }
 
     @Override
+    public boolean hasStripAnim() {
+        return false; // Allie's animation set has no strip animation
+    }
+
+    @Override
     public List<Scene> getScenes() {
         return List.of(
-                Scene.onPlayer("Deep Throat", 6,
+                Scene.onPlayer("Deep Throat", 0,
                         List.of("deepthroat_prepare", "deepthroat_start"),
                         List.of("deepthroat_slow"),
                         List.of("deepthroat_fast"),
                         "deepthroat_cum", 3f, false, false, false),
 
-                Scene.onPlayer("Reverse Cowgirl", 8,
+                Scene.onPlayer("Reverse Cowgirl", 2,
                         List.of("reverse_cowgirl_start"),
                         List.of("reverse_cowgirl_slow1", "reverse_cowgirl_slow2", "reverse_cowgirl_slow3"),
                         List.of("reverse_cowgirl_fasts", "reverse_cowgirl_fastc1"),
                         "reverse_cowgirl_cum", 4f, true, false, false),
 
-                Scene.stationary("Rich", 10, "rich", 10, true, true)
+                Scene.stationary("Rich", 4, "rich", 4, true, true)
         );
     }
 }
