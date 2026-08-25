@@ -67,9 +67,20 @@ public class AllieEntity extends SettlementGirlEntityAI {
 
     @Override
     public List<Scene> getScenes() {
-        // Scenes will be added later once animations are verified in-game.
-        // The model has 142 bones including steve (partner rig), so partner
-        // scenes should work once animation IDs are mapped.
-        return List.of();
+        return List.of(
+                Scene.onPlayer("Deep Throat", 6,
+                        List.of("deepthroat_prepare", "deepthroat_start"),
+                        List.of("deepthroat_slow"),
+                        List.of("deepthroat_fast"),
+                        "deepthroat_cum", 3f, false, false, false),
+
+                Scene.onPlayer("Reverse Cowgirl", 8,
+                        List.of("reverse_cowgirl_start"),
+                        List.of("reverse_cowgirl_slow1", "reverse_cowgirl_slow2", "reverse_cowgirl_slow3"),
+                        List.of("reverse_cowgirl_fasts", "reverse_cowgirl_fastc1"),
+                        "reverse_cowgirl_cum", 4f, true, false, false),
+
+                Scene.stationary("Rich", 10, "rich", 10, true, true)
+        );
     }
 }
