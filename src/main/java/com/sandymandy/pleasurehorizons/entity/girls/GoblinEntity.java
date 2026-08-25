@@ -42,11 +42,6 @@ public class GoblinEntity extends SettlementGirlEntityAI {
     }
 
     @Override
-    public boolean hasStripAnim() {
-        return false; // Goblin's animation set has no strip animation
-    }
-
-    @Override
     public List<Scene> getScenes() {
         return List.of(
                 Scene.stationary("Breeding", 0, "breeding", 2, true, true)

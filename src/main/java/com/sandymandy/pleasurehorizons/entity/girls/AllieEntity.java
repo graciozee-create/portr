@@ -66,11 +66,6 @@ public class AllieEntity extends SettlementGirlEntityAI {
     }
 
     @Override
-    public boolean hasStripAnim() {
-        return false; // Allie's animation set has no strip animation
-    }
-
-    @Override
     public List<Scene> getScenes() {
         return List.of(
                 Scene.onPlayer("Deep Throat", 0,
