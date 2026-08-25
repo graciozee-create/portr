@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["EEE", "EDE", "EEE"],
+  "key": {
+    "E": { "tag": "c:eggs" },
+    "D": { "item": "minecraft:diamond" }
+  },
+  "result": { "id": "pleasurehorizons:tribe_egg", "count": 1 }
+}

@@ -53,11 +53,7 @@
   "commands.pleasurehorizons.girls.spawn_failed": "Не удалось создать сущность девушки",
   "commands.pleasurehorizons.girls.spawned": "Заспавнена %s",
   "commands.pleasurehorizons.girls.unknown_profile": "Неизвестный профиль девушки: %s",
-<<<<<<< HEAD
-  "commands.pleasurehorizons.girls.unknown_type": "Неизвестный тип девушки: %s (используй: lucy, mika, momo, slime, kobold, coppie, allie)",
-=======
   "commands.pleasurehorizons.girls.unknown_type": "Неизвестный тип девушки: %s (используй: lucy, mika, momo, slime, kobold, coppie, allie, bia, goblin, galath, manglelie, jenny)",
->>>>>>> cdd912c (Add 5 new companions from Jenny Mod: Bia, Goblin, Galath, Manglelie, Jenny)
   "commands.pleasurehorizons.girls.summoned": "Призвана %s",
   "entity.pleasurehorizons.allie": "Элли",
   "entity.pleasurehorizons.coppie": "Коппи",
@@ -447,9 +443,6 @@
   "msg.pleasurehorizons.girlCallFailed": "Не удалось загрузить призванную девушку. Устаревшая запись удалена.",
   "msg.pleasurehorizons.girlsCallResult": "Телепортировано сейчас: %s; загружается из дальних чанков: %s",
   "commands.pleasurehorizons.girls.call_result": "Телепортировано сейчас: %s; загружается из дальних чанков: %s",
-<<<<<<< HEAD
-  "msg.pleasurehorizons.girlCallArrived": "%s прибыла"
-=======
   "msg.pleasurehorizons.girlCallArrived": "%s прибыла",
   "entity.pleasurehorizons.bia": "Биа",
   "item.pleasurehorizons.bia_spawn_egg": "Яйцо призыва Биа",
@@ -490,6 +483,23 @@
   "chat.pleasurehorizons.jenny.gift_like.3": "Ой, не стоило~",
   "chat.pleasurehorizons.jenny.gift_love.1": "Ты лучшее, что со мной случилось~",
   "chat.pleasurehorizons.jenny.gift_love.2": "Я так тебя люблю... иди сюда~",
-  "chat.pleasurehorizons.jenny.gift_love.3": "Хватит меня баловать, а то не отпущу~!"
->>>>>>> cdd912c (Add 5 new companions from Jenny Mod: Bia, Goblin, Galath, Manglelie, Jenny)
+  "chat.pleasurehorizons.jenny.gift_love.3": "Хватит меня баловать, а то не отпущу~!",
+  "item.pleasurehorizons.allies_lamp": "Лампа Элли",
+  "item.pleasurehorizons.galath_coin": "Монета Галата",
+  "item.pleasurehorizons.dragon_staff": "Посох Дракона",
+  "item.pleasurehorizons.tribe_egg": "Яйцо племени",
+  "tooltip.pleasurehorizons.allies_lamp.wishes": "Осталось желаний: %d",
+  "tooltip.pleasurehorizons.dragon_staff": "Управляет кобольдами. Shift+клик — сменить режим.",
+  "mode.pleasurehorizons.follow": "Следовать",
+  "mode.pleasurehorizons.stay": "Стоять",
+  "mode.pleasurehorizons.guard": "Охранять",
+  "mode.pleasurehorizons.wander": "Бродить",
+  "message.pleasurehorizons.lamp_empty": "В лампе не осталось желаний.",
+  "message.pleasurehorizons.lamp_summoned": "Элли призвана! Осталось желаний: %d.",
+  "message.pleasurehorizons.galath_summoned": "Галат призван!",
+  "message.pleasurehorizons.galath_dismissed": "Галат отпущен.",
+  "message.pleasurehorizons.staff_mode": "Режим посоха: %s",
+  "message.pleasurehorizons.staff_applied": "Применён %s к %d кобольдам.",
+  "message.pleasurehorizons.staff_no_kobolds": "Поблизости нет кобольдов.",
+  "message.pleasurehorizons.tribe_created": "Создано племя из %d кобольдов!"
 }

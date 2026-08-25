@@ -53,11 +53,7 @@
   "commands.pleasurehorizons.girls.spawn_failed": "Could not create the girl entity",
   "commands.pleasurehorizons.girls.spawned": "Spawned %s",
   "commands.pleasurehorizons.girls.unknown_profile": "Unknown girl profile: %s",
-<<<<<<< HEAD
-  "commands.pleasurehorizons.girls.unknown_type": "Unknown girl type: %s (use: lucy, mika, momo, slime, kobold, coppie, allie)",
-=======
   "commands.pleasurehorizons.girls.unknown_type": "Unknown girl type: %s (use: lucy, mika, momo, slime, kobold, coppie, allie, bia, goblin, galath, manglelie, jenny)",
->>>>>>> cdd912c (Add 5 new companions from Jenny Mod: Bia, Goblin, Galath, Manglelie, Jenny)
   "commands.pleasurehorizons.girls.summoned": "Summoned %s",
   "entity.pleasurehorizons.allie": "Allie",
   "entity.pleasurehorizons.coppie": "Coppie",
@@ -447,9 +443,6 @@
   "msg.pleasurehorizons.girlCallFailed": "A summoned girl could not be loaded. Her stale registry entry was removed.",
   "msg.pleasurehorizons.girlsCallResult": "Teleported now: %s; loading from distant chunks: %s",
   "commands.pleasurehorizons.girls.call_result": "Teleported now: %s; loading from distant chunks: %s",
-<<<<<<< HEAD
-  "msg.pleasurehorizons.girlCallArrived": "%s arrived"
-=======
   "msg.pleasurehorizons.girlCallArrived": "%s arrived",
   "entity.pleasurehorizons.bia": "Bia",
   "item.pleasurehorizons.bia_spawn_egg": "Bia Spawn Egg",
@@ -490,6 +483,23 @@
   "chat.pleasurehorizons.jenny.gift_like.3": "Aww, you shouldn't have~",
   "chat.pleasurehorizons.jenny.gift_love.1": "You're the best thing that ever happened to me~",
   "chat.pleasurehorizons.jenny.gift_love.2": "I love you so much... come here~",
-  "chat.pleasurehorizons.jenny.gift_love.3": "Stop spoiling me or I'll never let you go~!"
->>>>>>> cdd912c (Add 5 new companions from Jenny Mod: Bia, Goblin, Galath, Manglelie, Jenny)
+  "chat.pleasurehorizons.jenny.gift_love.3": "Stop spoiling me or I'll never let you go~!",
+  "item.pleasurehorizons.allies_lamp": "Allie's Lamp",
+  "item.pleasurehorizons.galath_coin": "Galath's Coin",
+  "item.pleasurehorizons.dragon_staff": "Dragon Staff",
+  "item.pleasurehorizons.tribe_egg": "Tribe Egg",
+  "tooltip.pleasurehorizons.allies_lamp.wishes": "Wishes remaining: %d",
+  "tooltip.pleasurehorizons.dragon_staff": "Commands all owned Kobolds. Shift+click to cycle mode.",
+  "mode.pleasurehorizons.follow": "Follow",
+  "mode.pleasurehorizons.stay": "Stay",
+  "mode.pleasurehorizons.guard": "Guard",
+  "mode.pleasurehorizons.wander": "Wander",
+  "message.pleasurehorizons.lamp_empty": "The lamp has no wishes left.",
+  "message.pleasurehorizons.lamp_summoned": "Allie summoned! %d wishes remaining.",
+  "message.pleasurehorizons.galath_summoned": "Galath has been summoned!",
+  "message.pleasurehorizons.galath_dismissed": "Galath has been dismissed.",
+  "message.pleasurehorizons.staff_mode": "Staff mode: %s",
+  "message.pleasurehorizons.staff_applied": "Applied %s to %d Kobolds.",
+  "message.pleasurehorizons.staff_no_kobolds": "No Kobolds found nearby.",
+  "message.pleasurehorizons.tribe_created": "A tribe of %d Kobolds has been created!"
 }

@@ -27,6 +27,11 @@ public class PleasureHorizonsItemGroups {
                         output.accept(PleasureHorizonsItems.SETTLEMENT_HUB_ITEM.get());
                         output.accept(PleasureHorizonsItems.HOUSE_TAG_ITEM.get());
                         output.accept(PleasureHorizonsItems.CARVED_GIRL_PUMPKIN_ITEM.get());
+                        // Jenny Mod special items
+                        output.accept(PleasureHorizonsItems.ALLIE_LAMP.get());
+                        output.accept(PleasureHorizonsItems.GALATH_COIN.get());
+                        output.accept(PleasureHorizonsItems.DRAGON_STAFF.get());
+                        output.accept(PleasureHorizonsItems.TRIBE_EGG.get());
                     })
                     .build());
 
