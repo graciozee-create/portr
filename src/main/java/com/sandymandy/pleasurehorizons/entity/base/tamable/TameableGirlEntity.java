@@ -1668,8 +1668,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             return InteractionResult.SUCCESS;
         }
 
+        // Show a clear hint about what item is needed to tame this girl
         player.displayClientMessage(Component.translatable(
-                "msg.pleasurehorizons.girl_ignores",
+                "msg.pleasurehorizons.girl_tame_hint",
+                this.getGirlDisplayName(),
                 this.isAttractedTo().getDescription().getString()), true);
         return InteractionResult.FAIL;
     }

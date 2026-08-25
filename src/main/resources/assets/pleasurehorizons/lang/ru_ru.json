@@ -501,5 +501,6 @@
   "message.pleasurehorizons.staff_mode": "Режим посоха: %s",
   "message.pleasurehorizons.staff_applied": "Применён %s к %d кобольдам.",
   "message.pleasurehorizons.staff_no_kobolds": "Поблизости нет кобольдов.",
-  "message.pleasurehorizons.tribe_created": "Создано племя из %d кобольдов!"
+  "message.pleasurehorizons.tribe_created": "Создано племя из %d кобольдов!",
+  "msg.pleasurehorizons.girl_tame_hint": "%s дикая! Дайте ей %s чтобы приручить."
 }

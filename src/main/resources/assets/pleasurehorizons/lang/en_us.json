@@ -501,5 +501,6 @@
   "message.pleasurehorizons.staff_mode": "Staff mode: %s",
   "message.pleasurehorizons.staff_applied": "Applied %s to %d Kobolds.",
   "message.pleasurehorizons.staff_no_kobolds": "No Kobolds found nearby.",
-  "message.pleasurehorizons.tribe_created": "A tribe of %d Kobolds has been created!"
+  "message.pleasurehorizons.tribe_created": "A tribe of %d Kobolds has been created!",
+  "msg.pleasurehorizons.girl_tame_hint": "%s is wild! Give her %s to tame."
 }
