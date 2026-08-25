@@ -39,7 +39,8 @@ public class GirlsCommand {
 
     private static final SuggestionProvider<CommandSourceStack> TYPE_SUGGESTIONS =
             (context, builder) -> SharedSuggestionProvider.suggest(
-                    List.of("lucy", "mika", "momo", "slime", "kobold", "coppie", "allie"), builder);
+                    List.of("lucy", "mika", "momo", "slime", "kobold", "coppie", "allie",
+                            "bia", "goblin", "galath", "manglelie", "jenny"), builder);
 
     private GirlsCommand() {
     }
@@ -99,6 +100,11 @@ public class GirlsCommand {
             case "kobold" -> GirlRegistry.KOBOLD.get();
             case "coppie" -> GirlRegistry.COPPIE.get();
             case "allie" -> GirlRegistry.ALLIE.get();
+            case "bia" -> GirlRegistry.BIA.get();
+            case "goblin" -> GirlRegistry.GOBLIN.get();
+            case "galath" -> GirlRegistry.GALATH.get();
+            case "manglelie" -> GirlRegistry.MANGLELIE.get();
+            case "jenny" -> GirlRegistry.JENNY.get();
             default -> null;
         };
         if (entityType == null) {

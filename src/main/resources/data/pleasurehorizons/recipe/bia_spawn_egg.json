@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:blue_orchid" },
+    { "tag": "c:eggs" }
+  ],
+  "result": { "count": 1, "id": "pleasurehorizons:bia_spawn_egg" }
+}

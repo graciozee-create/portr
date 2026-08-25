@@ -38,6 +38,11 @@ public class PleasureHorizonsClientEvents {
         event.registerEntityRenderer(GirlRegistry.COPPIE.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.CUSTOM_GIRL.get(), GirlRenderer::new);
         event.registerEntityRenderer(GirlRegistry.ALLIE.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.BIA.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.GOBLIN.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.GALATH.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.MANGLELIE.get(), GirlRenderer::new);
+        event.registerEntityRenderer(GirlRegistry.JENNY.get(), GirlRenderer::new);
     }
 
     @SubscribeEvent
