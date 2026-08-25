@@ -20,6 +20,23 @@ import java.util.List;
 public class GalathEntity extends SettlementGirlEntityAI {
     public GalathEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
+        // Hide accessory bones that render unwanted visual elements.
+        // The "coin" bone renders a floating coin in front of Galath by default.
+        if (!level.isClientSide()) {
+            this.setBoneVisibility("coin", false);
+            this.setBoneVisibility("energyBallL", false);
+            this.setBoneVisibility("energyBallR", false);
+            this.setBoneVisibility("offhand", false);
+            this.setBoneVisibility("weapon", false);
+            this.setBoneVisibility("weaponStart", false);
+            this.setBoneVisibility("weaponEnd", false);
+            this.setBoneVisibility("customHandL", false);
+            this.setBoneVisibility("customHandR", false);
+            this.setBoneVisibility("customHead", false);
+            this.setBoneVisibility("customShoeL", false);
+            this.setBoneVisibility("customShoeR", false);
+            this.setBoneVisibility("blocks", false);
+        }
     }
 
     public static AttributeSupplier.Builder createAttributes() {
