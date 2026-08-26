@@ -21,7 +21,6 @@ public class GuideBookScreen extends Screen {
     private int pageW = 0;
     private int pageH = 0;
 
-    private static final int COLOR_BG = 0x88000000;
     private static final int COLOR_BORDER = 0xFF664466;
     private static final int COLOR_PAGE = 0xE0331133;
     private static final int COLOR_HEADER = 0xFFFF88CC;
@@ -38,8 +37,6 @@ public class GuideBookScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, COLOR_BG);
-
         this.pageW = Math.min(300, this.width - 40);
         this.pageH = Math.min(210, this.height - 60);
         this.pageX = (this.width - pageW) / 2;
@@ -87,6 +84,11 @@ public class GuideBookScreen extends Screen {
         g.fill(x1, y, x2, y + 20, hovered ? COLOR_HOVER : COLOR_PAGE);
         g.fill(x1, y, x2, y + 1, COLOR_BORDER);
         g.drawCenteredString(this.font, label, (x1 + x2) / 2, y + 6, COLOR_TEXT);
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // No-op: the guide book is an in-game panel over the world, not a blurred menu.
     }
 
     @Override

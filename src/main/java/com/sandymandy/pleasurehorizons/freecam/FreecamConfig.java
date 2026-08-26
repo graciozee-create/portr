@@ -138,4 +138,59 @@ public final class FreecamConfig {
         INSTANCE.notifyFreecam = NOTIFY_FREECAM.get();
         INSTANCE.notifyTripod = NOTIFY_TRIPOD.get();
     }
+
+    // ---- setters used by the in-game settings screen ----
+    // Each writes through the spec (so the toml is updated immediately) and then re-mirrors
+    // the live values, so the camera tick picks the change up on the next frame.
+    private static void setAndSync(Runnable setter) {
+        setter.run();
+        SPEC.save();
+        sync();
+    }
+
+    public static void setHorizontalSpeed(double value) {
+        double clamped = Math.max(0.0, Math.min(10.0, value));
+        setAndSync(() -> HORIZONTAL_SPEED.set(clamped));
+    }
+
+    public static void setVerticalSpeed(double value) {
+        double clamped = Math.max(0.0, Math.min(10.0, value));
+        setAndSync(() -> VERTICAL_SPEED.set(clamped));
+    }
+
+    public static void setPerspective(Perspective value) {
+        setAndSync(() -> PERSPECTIVE.set(value));
+    }
+
+    public static void setHidePlayer(boolean value) {
+        setAndSync(() -> HIDE_PLAYER.set(value));
+    }
+
+    public static void setShowHand(boolean value) {
+        setAndSync(() -> SHOW_HAND.set(value));
+    }
+
+    public static void setShowSubmersion(boolean value) {
+        setAndSync(() -> SHOW_SUBMERSION.set(value));
+    }
+
+    public static void setDisableOnDamage(boolean value) {
+        setAndSync(() -> DISABLE_ON_DAMAGE.set(value));
+    }
+
+    public static void setAllowInteract(boolean value) {
+        setAndSync(() -> ALLOW_INTERACT.set(value));
+    }
+
+    public static void setInteractionMode(InteractionMode value) {
+        setAndSync(() -> INTERACTION_MODE.set(value));
+    }
+
+    public static void setNotifyFreecam(boolean value) {
+        setAndSync(() -> NOTIFY_FREECAM.set(value));
+    }
+
+    public static void setNotifyTripod(boolean value) {
+        setAndSync(() -> NOTIFY_TRIPOD.set(value));
+    }
 }

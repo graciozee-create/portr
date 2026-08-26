@@ -85,6 +85,11 @@ public class GirlSceneScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // No-op: the scene picker is a transparent panel over the world, not a blurred menu.
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 

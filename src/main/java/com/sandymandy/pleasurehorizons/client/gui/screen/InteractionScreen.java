@@ -89,7 +89,10 @@ public class InteractionScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.interaction.talk"),
-                b -> this.refreshGreeting()).bounds(buttonX, y, buttonW, BTN_H).build());
+                b -> {
+                    this.send("talk");
+                    this.refreshGreeting();
+                }).bounds(buttonX, y, buttonW, BTN_H).build());
         y += SPACING;
 
         this.addRenderableWidget(Button.builder(
@@ -115,16 +118,16 @@ public class InteractionScreen extends Screen {
     }
 
     private void openInventory() {
-        // The server opens the container menu; the server-side handler on the interaction
-        // action is intentionally not used here because the inventory isn't a network action.
-        // Closing this screen leaves the girl's GUI-open state reset for the next interaction.
+        // Ask the server to open the girl's container menu, then close this panel so the
+        // vanilla container screen can replace it. The server re-validates ownership and
+        // distance, and sets the girl's GUI-open state when the menu actually opens.
+        this.send("inventory");
         this.onClose();
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, 0x88000000);
-        super.render(g, mouseX, mouseY, partialTick);
 
         int cx = this.width / 2;
         int cy = this.height / 2;
@@ -164,6 +167,15 @@ public class InteractionScreen extends Screen {
             g.drawString(this.font, line, panelX + 14, textY, COLOR_TEXT, true);
             textY += 11;
         }
+
+        // Widgets (buttons) are drawn on top of the panel. The no-op renderBackground below
+        // keeps the in-game view behind the panel instead of a blurred menu background.
+        super.render(g, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // No-op: this is a transparent in-game panel, not a blurred menu.
     }
 
     private List<String> wrapGreeting() {

@@ -94,6 +94,11 @@ public class NpcEditorScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // No-op: this is an in-game panel over the world, not a blurred menu.
+    }
+
+    @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g, mouseX, mouseY, partialTick);
         int cx = this.width / 2;

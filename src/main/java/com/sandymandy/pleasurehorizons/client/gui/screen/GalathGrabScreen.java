@@ -54,6 +54,11 @@ public class GalathGrabScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // No-op: the screen draws its own dim overlay; the vanilla blurred menu must not stack.
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         float intensity = 0.4F + 0.3F * (1.0F - (float) escapeProgress / MAX_ESCAPE);
         int alpha = Math.min(255, (int) (intensity * 255));

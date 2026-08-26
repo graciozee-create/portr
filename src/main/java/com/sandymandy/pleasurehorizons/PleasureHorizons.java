@@ -48,6 +48,9 @@ public class PleasureHorizons {
     public static final String MOD_ID = "pleasurehorizons";
     public static final String MOD_NAME = "Pleasure Horizons";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
+    /** Shared pretty-printer for the small JSON config files this mod writes. */
+    public static final com.google.gson.Gson GSON =
+            new com.google.gson.GsonBuilder().setPrettyPrinting().create();
     public static Map<UUID, BlockPos> usedBeds = new HashMap<>();
     public static Map<UUID, UUID> activeScenes = new HashMap<>();
 
@@ -90,6 +93,8 @@ public class PleasureHorizons {
             // Freecam settings live in a CLIENT config; registering it during mod loading is
             // required because NeoForge reads the spec before client setup events run.
             com.sandymandy.pleasurehorizons.freecam.FreecamConfig.register(container);
+            // The small UI/keybind options are a plain JSON file rather than a NeoForge spec.
+            com.sandymandy.pleasurehorizons.config.ModConfig.load();
         }
     }
 

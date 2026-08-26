@@ -722,5 +722,6 @@
   "gui.pleasurehorizons.interaction.scenes": "♥ Scenes",
   "gui.pleasurehorizons.interaction.talk": "💬 Talk",
   "gui.pleasurehorizons.interaction.inventory": "🎛 Inventory",
-  "gui.pleasurehorizons.interaction.close": "Close"
+  "gui.pleasurehorizons.interaction.close": "Close",
+  "gui.pleasurehorizons.settings.open": "Open Mod Settings"
 }

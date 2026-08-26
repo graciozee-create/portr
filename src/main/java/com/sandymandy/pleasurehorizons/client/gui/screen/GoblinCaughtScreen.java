@@ -73,6 +73,11 @@ public class GoblinCaughtScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // No-op: the screen draws its own dim overlay; the vanilla blurred menu must not stack.
+    }
+
+    @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
         super.render(guiGraphics, mouseX, mouseY, partialTick);

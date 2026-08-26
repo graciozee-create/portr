@@ -16,10 +16,12 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  *
  * <p>Unlike the inventory buttons, this screen is not backed by a container menu, so the server
  * validates ownership, distance and entity state instead of the menu binding. Allowed actions are
- * small and safe: {@code follow} and {@code sit}.</p>
+ * the quick toggles ({@code follow}, {@code sit}), {@code talk} (server-side greeting line) and
+ * {@code inventory} (opens the girl's container menu).</p>
  */
 public record InteractionActionC2SPacket(int entityId, String action) implements CustomPacketPayload {
-    private static final java.util.Set<String> VALID_ACTIONS = java.util.Set.of("follow", "sit");
+    private static final java.util.Set<String> VALID_ACTIONS =
+            java.util.Set.of("follow", "sit", "talk", "inventory");
 
     public static final Type<InteractionActionC2SPacket> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "interactionactionc2spacket"));
@@ -51,6 +53,13 @@ public record InteractionActionC2SPacket(int entityId, String action) implements
             switch (this.action()) {
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
                 case "sit" -> girl.setSitting(!girl.isSitting());
+                case "talk" -> girl.talkToPlayer(player);
+                case "inventory" -> {
+                    girl.setGUIOpenState(true, player);
+                    player.openMenu(
+                            new com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandlerFactory(girl),
+                            buf -> buf.writeVarInt(girl.getId()));
+                }
             }
         });
     }

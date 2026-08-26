@@ -202,6 +202,21 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 int y = startY + i * (buttonHeight + paddingY);
                 this.drawButton(dynamicLabel(action), action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);
             }
+
+            if (tabIndex == TAB_SETTINGS) {
+                // Mod-wide/client options (freecam, thrust behaviour, girl shading) are not
+                // per-girl, so they live in their own screen reached from the settings tab.
+                int y = startY + Math.max(left.size(), right.size()) * (buttonHeight + paddingY) + 4;
+                this.addRenderableWidget(Button.builder(
+                                Component.translatable("gui.pleasurehorizons.settings.open"),
+                                b -> {
+                                    this.onClose();
+                                    net.minecraft.client.Minecraft.getInstance()
+                                            .setScreen(new FreecamSettingsScreen());
+                                })
+                        .bounds(startX, y, buttonWidth, buttonHeight)
+                        .build());
+            }
         }
     }
 
