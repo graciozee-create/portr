@@ -1105,3 +1105,40 @@ goal-системой), `AIMode` (ни у кого не используется
 
 Вывод: порт функционально завершён, догонять нечего. Дальнейшие правки — только по
 реальным жалобам пользователя.
+
+### 5.44 Зависание одиночной игры при вызове девушек + краш от старых стрел
+
+**Симптом 1 (зависание):** «при телепортации девушек в одиночном мире все мобы
+застывают на секунды, как при пинге». Пак: 100+ модов, c2me + Sable + alternate-current.
+
+**Корень:** `TameableGirlEntity.tickPendingCalls` каждый тик (до 100 тиков на pending)
+кликал `level.getChunk(x, z, ChunkStatus.FULL, true)` девять раз вокруг сохранённой
+позиции выгруженной девушки. Это БЛОКИРУЮЩАЯ синхронная загрузка/генерация далёких
+чанков прямо на серверном треде; с асинхронными chunk-системами каждый вызов ждал
+будущее, заполняемое параллельно, и «замораживал» весь integrated server.
+
+**Фикс (`3028e5b`):** синхронные `getChunk` удалены — FORCE_LOAD-тикеты из
+`callOwnedGirlsTo` (`setChunkForced`) сами гонят загрузку, а реальная проверка
+готовности — поиск девушки по UUID через `getAllEntities`. Таймаут-путь (100 тиков →
+«старая запись» → `girlCallFailed`) сохранён.
+
+**Симптом 2 (краши):** три серверных краша `IllegalStateException: Cannot encode
+empty ItemStack` в `AbstractArrow.addAdditionalSaveData` (стр. 525 — `save` поля
+`pickupItemStack` БЕЗ guard на пустоту). Конструктор AbstractArrow копирует ammo
+прямо в приватное поле, минуя безопасный `setPickupItemStack`. Стрелы, выпущенные до
+фикса `getProjectile` (или сторонними ranged-предметами с пустым ammo), падали при
+любой сериализации: autosave (стрела терялась) и портал (`changeDimension` → краш
+всего сервера).
+
+**Фикс (`3028e5b`):** `PleasureHorizons.onEntityJoinLevel` (game bus, server-side):
+`AbstractArrow` с пустым `getPickupItemStackOrigin()` → `arrow.getSlot(0).set(ItemStack.EMPTY)`
+— публичный vanilla-путь: `setPickupItemStack(EMPTY)` сам подставляет
+`getDefaultPickupItem()` (arrow → `minecraft:arrow`, spectral → spectral, любой
+модовый `AbstractArrow` → свой дефолт). Без рефлексии, без mixin'ов.
+Новые стрелы мода больше не стреляются с пустым ammo (`SettlementGirlEntityAI.getProjectile`
+возвращает реальную стрелу из рюкзака или `minecraft:arrow`).
+
+**Проверка в игре:** G с выгруженными далёкими девушками — без фриза серверного
+треда (девушка добегает через pending-путь или получает `girlCallFailed` через 5с);
+стрелы, выпущенные до обновления, при загрузке чанка/портале не крашат (в логе
+появится одна строка `[PH] sanitized empty arrow pickup item ...` на каждую).
