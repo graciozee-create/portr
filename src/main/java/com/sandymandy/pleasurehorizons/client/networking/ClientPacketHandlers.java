@@ -3,9 +3,11 @@ package com.sandymandy.pleasurehorizons.client.networking;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GalathGrabScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GirlCustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GirlSceneScreen;
+import com.sandymandy.pleasurehorizons.client.gui.screen.GoblinCaughtScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.KoboldCustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.hud.SceneProgressOverlay;
 import com.sandymandy.pleasurehorizons.entity.girls.GalathEntity;
+import com.sandymandy.pleasurehorizons.entity.girls.GoblinEntity;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -60,6 +62,21 @@ public class ClientPacketHandlers {
                     mc.setScreen(new GalathGrabScreen(galath, mc.player));
                 }
             } else if (mc.screen instanceof GalathGrabScreen screen) {
+                screen.onClose();
+            }
+        });
+    }
+
+    public static void handleGoblinCaughtScreen(int entityId, boolean active) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        mc.execute(() -> {
+            Entity entity = mc.level.getEntity(entityId);
+            if (active) {
+                if (entity instanceof GoblinEntity goblin) {
+                    mc.setScreen(new GoblinCaughtScreen(goblin, mc.player));
+                }
+            } else if (mc.screen instanceof GoblinCaughtScreen screen) {
                 screen.onClose();
             }
         });
