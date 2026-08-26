@@ -1072,3 +1072,36 @@ GirlInventoryScreenHandler, GirlMeleeAttackGoal, TameableGirlEntity-голы) �
 `ModConfigSpec` + `FreecamSettingsScreen`), ModMenu, `entity/ai/brain/*` (заменены
 goal-системой), `AIMode` (ни у кого не используется), `PleasureHorizonsHudRegistry`
 (HUD на NeoForge-событиях в `PleasureHorizonsClientEvents`).
+
+### 5.43 Кросс-аудит против других портов (сессионный вывод: «всё перенесено»)
+
+Найденные порты/зеркала оригинала:
+- **`WitherAce/Pleasure-Horizons`** (переименован в «PleasureCraft», пакет
+  `com.sandymandy.pleasurecraft`) — независимый Fabric-порт, ветки `1.21.4`…`1.21.11`
+  + экспериментальные `Better-AI-System`, `Better-Scene-System`,
+  `Better-Animation-System`, `Data-Driven-Entities`, `XMODERLIVE-patch-1`.
+- `sandyymandy/Pleasure-Horizons-Resources` — только исходники Blockbench (`.bbmodel`)
+  и PSD для уже экспортированных моделей; `bee_girl` там — не вышедший в мод ассет.
+- Форки `UnderratedHakr/`, `DZScape007/`, `saaaiiiiii/` — 100% зеркала оригинала
+  (в `src/` нулевая разница).
+
+Результат сверки (класс-по-классу и ресурс-по-ресурсу, по basename):
+- Java: наш порт — полный суперсет оригинала. Из новых классов WitherAce ничего
+  переносимого нет: `CustomBoneRender` — GeckoLib 5.x API (мы на 4.9.2, `renderRecursively`),
+  `GirlEntityScene` = наш `GirlSceneEntity`, остальные `PleasureCraft*` — переименования.
+- Экспериментальные ветки WitherAce: Brain-AI (`GirlEntityAI`/`SmartBrainOwner`) —
+  альтернативный дизайн, подмножество нашей goal-системы (у нас больше: survival-голы,
+  guard, pack tactics, anti-stuck, water escape); `CollisionBehavior` + `BlockStateBaseMixin`
+  (freecam сквозь блоки) — неприменимо: наш `FreeCamera` — `@OnlyIn(CLIENT)`,
+  `noPhysics = true`, летает сквозь блоки по проекту (`setPos`, без физики);
+  settlement «pages» — GUI-рефактор
+  того же функционала (у нас полный settlement + даже лишний `SettlementSnapshot`);
+  `CustomGirlSpawnCommand` — у нас уже есть `/girls summon <profile_id>`; 115 keyframe-
+  звуков — собственный контент WitherAce, данные оригинала у нас идентичны (4 JSON в
+  `keyframe_events/` побайтово совпадают с оригиналом).
+- Ресурсы: ни одного geo/animation/ogg/item-model/entity-текстуры оригинала не потеряно
+  (у нас строго суперсет: +8 geo, +7 анимаций, +49 звуков, +32 item-модели, +6 текстур).
+  WitherAce 1.21.11 ресурсов даже меньше оригинала (498 против 514).
+
+Вывод: порт функционально завершён, догонять нечего. Дальнейшие правки — только по
+реальным жалобам пользователя.
