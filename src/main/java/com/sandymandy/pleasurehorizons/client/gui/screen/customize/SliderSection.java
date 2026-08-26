@@ -23,23 +23,23 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
 
     public SliderSection(T entity, T previewEntity, Component label, int minValue, int maxValue,
                          Supplier<Integer> valueGetter, Consumer<Integer> valueSetter) {
+        this(entity, previewEntity, label, minValue, maxValue, valueGetter, valueSetter, "");
+    }
+
+    public SliderSection(T entity, T previewEntity, String label, int minValue, int maxValue,
+                         Supplier<Integer> valueGetter, Consumer<Integer> valueSetter) {
+        this(entity, previewEntity, Component.literal(label), minValue, maxValue,
+                valueGetter, valueSetter, "");
+    }
+
+    public SliderSection(T entity, T previewEntity, Component label, int minValue, int maxValue,
+                         Supplier<Integer> valueGetter, Consumer<Integer> valueSetter, String tooltip) {
         super(entity, previewEntity);
         this.label = label;
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.valueGetter = valueGetter;
         this.valueSetter = valueSetter;
-        this.tooltip = "";
-    }
-
-    public SliderSection(T entity, T previewEntity, String label, int minValue, int maxValue,
-                         Supplier<Integer> valueGetter, Consumer<Integer> valueSetter) {
-        this(entity, previewEntity, Component.literal(label), minValue, maxValue, valueGetter, valueSetter);
-    }
-
-    public SliderSection(T entity, T previewEntity, Component label, int minValue, int maxValue,
-                         Supplier<Integer> valueGetter, Consumer<Integer> valueSetter, String tooltip) {
-        this(entity, previewEntity, label, minValue, maxValue, valueGetter, valueSetter);
         this.tooltip = tooltip;
     }
 
