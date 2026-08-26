@@ -1474,7 +1474,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     double distToTarget = this.distanceToSqr(target);
                     // If target is close (< 4 blocks) but path is long, she's stuck behind
                     // an obstacle - jump to try to clear it
-                    if (distToTarget < 16.0D && this.getNavigation().getPath().getLength() > 8) {
+                    if (distToTarget < 16.0D && this.getNavigation().getPath().getNodeCount() > 8) {
                         this.jumpFromGround();
                     }
                 }
@@ -1543,8 +1543,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                         // Try to path to the same target again
                         net.minecraft.world.entity.ai.navigation.PathNavigation nav = this.getNavigation();
                         if (nav.getPath() != null) {
-                            net.minecraft.core.BlockPos target = nav.getPath().getTarget();
-                            nav.moveTo(target, 1.0D);
+                            net.minecraft.core.BlockPos pathTarget = nav.getPath().getTarget();
+                            nav.moveTo(pathTarget.getX() + 0.5D, pathTarget.getY(), pathTarget.getZ() + 0.5D, 1.0D);
                         }
                     }
                     // Stage 4 (4 sec): jump + sideways movement burst
