@@ -548,27 +548,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.isFollowing(), this.isSceneActive(), this.isInWater());
     }
 
-    /** Wall-clock throttle (ms) for the SLOW profiler logs below. */
-    private long lastSlowLogMs = 0L;
-
-    /**
-     * Profiling hook for the "Can't keep up" investigation: logs any of our operations that
-     * takes 100ms or more (a normal girl tick is single-digit ms). At most one SLOW line per
-     * girl per 5 seconds, so a real stall is still visible without spamming the log.
-     */
-    private void slowLog(String op, long elapsedNanos) {
-        long ms = elapsedNanos / 1_000_000L;
-        if (ms < 100L) return;
-        long now = System.currentTimeMillis();
-        if (now - this.lastSlowLogMs < 5000L) return;
-        this.lastSlowLogMs = now;
-        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
-                "[PH] SLOW {}: {}ms | girl={} ({} id={}) target={} following={} scene={} inWater={}",
-                op, ms, this.getGirlDisplayName(), this.getGirlID(), this.getId(),
-                this.getTarget() == null ? "none" : this.getTarget().getName().getString(),
-                this.isFollowing(), this.isSceneActive(), this.isInWater());
-    }
-
     public boolean teleportNear(Player player) {
         final long nearStartNanos = System.nanoTime();
         try {
@@ -1566,6 +1545,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     @Override
     public void tick() {
         super.tick();
+        final long tickStartNanos = System.nanoTime();
         if (!this.level().isClientSide() && this.isTamed()) {
             net.minecraft.world.level.ChunkPos chunk = this.chunkPosition();
             if (chunk.x != this.lastRegistryChunkX || chunk.z != this.lastRegistryChunkZ
