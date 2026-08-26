@@ -19,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -53,9 +54,11 @@ import java.util.UUID;
  *       is marked so the coin (summon/dismiss) works in survival.</li>
  * </ul>
  */
-public class GalathEntity extends SettlementGirlEntityAI {
+public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideableJumping {
 
     private static final String DEFEATED_KEY = "PleasureHorizonsGalathDefeated";
+    private static final int RIDE_COOLDOWN = 100;
+    private static final int THREESOME_DISTANCE_SQ = 36;          // owner must stay within 6 blocks
 
     // Boss combat tuning (canon values from the upstream 1.21.1 port).
     private static final int ENERGY_WAVE_INTERVAL = 200;          // 10 seconds
@@ -75,6 +78,12 @@ public class GalathEntity extends SettlementGirlEntityAI {
     private int escapeTaps = 0;
     private int skeletonSummonCooldown = 0;
     private int damageAccumulated = 0;
+    private int rideCooldown = 0;
+
+    // Manglelie threesome ("dark ritual") state, mirrored by ManglelieEntity.
+    public boolean isInThreesome = false;
+    public String threesomePartnerUUID = "";
+    public int threesomeTicks = 0;
 
     public GalathEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -154,7 +163,13 @@ public class GalathEntity extends SettlementGirlEntityAI {
     @Override
     public void tick() {
         super.tick();
-        if (this.level().isClientSide() || this.isTamed()) return;
+        if (this.level().isClientSide()) return;
+
+        if (this.rideCooldown > 0) this.rideCooldown--;
+        this.tickThreesome();
+
+        // Bound Galath is a companion again; her boss attacks stop.
+        if (this.isTamed()) return;
 
         // Active combat grab takes priority over the other attacks.
         if (!this.grabbedPlayerUUID.isEmpty()) {
@@ -394,14 +409,217 @@ public class GalathEntity extends SettlementGirlEntityAI {
         return !this.grabbedPlayerUUID.isEmpty();
     }
 
+    // ------------------------------------------------------------ threesome
+
+    private void tickThreesome() {
+        if (!this.isInThreesome || this.threesomePartnerUUID.isEmpty()) return;
+        this.threesomeTicks++;
+
+        ManglelieEntity mang = this.findManglelieByUUID(this.threesomePartnerUUID);
+        Player owner = this.getOwner() instanceof Player player ? player : null;
+        if (mang == null || !mang.isAlive() || !mang.isInThreesome
+                || owner == null || owner.distanceToSqr(this) > THREESOME_DISTANCE_SQ) {
+            this.exitThreesome();
+            return;
+        }
+
+        this.setFreeze(true);
+        if (this.threesomeTicks % 20 == 0) this.lookAt(mang, 360.0F, 360.0F);
+        if (this.threesomeTicks % 10 == 0 && this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.WITCH,
+                    this.getX(), this.getY() + 1.2D, this.getZ(),
+                    3, 0.3D, 0.3D, 0.3D, 0.02D);
+        }
+    }
+
+    /** Initiate the Manglelie + Galath "dark ritual". */
+    public void startThreesome(ManglelieEntity mang, Player player) {
+        if (this.level().isClientSide()) return;
+        this.isInThreesome = true;
+        this.threesomePartnerUUID = mang.getUUID().toString();
+        this.threesomeTicks = 0;
+
+        mang.isInThreesome = true;
+        mang.threesomePartnerUUID = this.getUUID().toString();
+        mang.threesomeTicks = 0;
+
+        this.setFreeze(true);
+        mang.setFreeze(true);
+        if (this.getNavigation() != null) this.getNavigation().stop();
+        if (mang.getNavigation() != null) mang.getNavigation().stop();
+
+        Vec3 playerPos = player.position();
+        this.teleportTo(playerPos.x - 1.0D, playerPos.y, playerPos.z);
+        mang.teleportTo(playerPos.x + 1.0D, playerPos.y, playerPos.z);
+        this.lookAt(mang, 360.0F, 360.0F);
+        mang.lookAt(this, 360.0F, 360.0F);
+
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.galath_ritual_start"), true);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.WITCH,
+                    this.getX(), this.getY() + 1.2D, this.getZ(),
+                    12, 0.6D, 0.5D, 0.6D, 0.05D);
+        }
+    }
+
+    /** Clears this Galath's side of the ritual (also called back by Manglelie). */
+    public void clearThreesomeSelf() {
+        this.isInThreesome = false;
+        this.threesomePartnerUUID = "";
+        this.threesomeTicks = 0;
+        this.setFreeze(false);
+    }
+
+    private void exitThreesome() {
+        ManglelieEntity mang = this.findManglelieByUUID(this.threesomePartnerUUID);
+        this.clearThreesomeSelf();
+        if (mang != null) mang.clearThreesomeSelf();
+    }
+
+    @Nullable
+    private ManglelieEntity findManglelieByUUID(String uuid) {
+        if (uuid == null || uuid.isEmpty()) return null;
+        UUID target;
+        try {
+            target = UUID.fromString(uuid);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        for (ManglelieEntity mang : this.level().getEntitiesOfClass(ManglelieEntity.class,
+                this.getBoundingBox().inflate(50.0D))) {
+            if (mang.getUUID().equals(target) && mang.isAlive()) {
+                return mang;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private ManglelieEntity findNearbyManglelie(Player player) {
+        for (ManglelieEntity mang : this.level().getEntitiesOfClass(ManglelieEntity.class,
+                this.getBoundingBox().inflate(3.0D))) {
+            if (mang.isTamed() && mang.isOwner(player) && mang.isAlive()) {
+                return mang;
+            }
+        }
+        return null;
+    }
+
+    /** Toggle riding for a bound Galath (Shift + empty hand). */
+    private InteractionResult toggleRide(Player player) {
+        if (this.getPassengers().isEmpty()) {
+            if (this.rideCooldown <= 0) {
+                player.startRiding(this);
+                rideCooldown = RIDE_COOLDOWN;
+                player.displayClientMessage(
+                        Component.translatable("msg.pleasurehorizons.galath_mounted"), true);
+                return InteractionResult.SUCCESS;
+            }
+        } else if (this.getFirstPassenger() == player) {
+            player.stopRiding();
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.galath_dismounted"), true);
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
+    }
+
     @Override
     public void travel(Vec3 travelVector) {
-        // While holding a victim she plants herself and only the grab logic moves the player.
-        if (this.isGrabbingPlayer()) {
+        // While holding a victim (or inside a ritual) she plants herself.
+        if (this.isGrabbingPlayer() || this.isInThreesome || this.isFrozenInPlace()) {
             this.setDeltaMovement(0.0D, 0.0D, 0.0D);
             return;
         }
+
+        LivingEntity rider = this.getControllingPassenger();
+        if (rider != null && this.isVehicle()) {
+            float forward = rider.zza;
+            float strafe = rider.xxa;
+            boolean sneak = rider.isShiftKeyDown();
+            this.setYRot(rider.getYRot());
+            this.yRotO = this.getYRot();
+            this.yBodyRot = this.getYRot();
+            this.yHeadRot = this.getYRot();
+            Vec3 lookVec = rider.getLookAngle();
+            double hSpeed = 0.5D;
+            double vSpeed = 0.3D;
+            double mx = 0.0D;
+            double my = 0.0D;
+            double mz = 0.0D;
+            if (strafe != 0.0F) {
+                mx = -lookVec.z * hSpeed * strafe;
+                mz = lookVec.x * hSpeed * strafe;
+            }
+            if (forward != 0.0F) {
+                mx += lookVec.x * hSpeed * forward;
+                mz += lookVec.z * hSpeed * forward;
+            }
+            if (this.jumping) {
+                my = vSpeed;
+                this.jumping = false;
+            } else if (sneak) {
+                my = -vSpeed;
+            }
+            this.setDeltaMovement(mx, my, mz);
+            this.hasImpulse = true;
+            this.fallDistance = 0.0F;
+            super.travel(Vec3.ZERO);
+            return;
+        }
         super.travel(travelVector);
+    }
+
+    @Override
+    public boolean isNoGravity() {
+        return this.getControllingPassenger() != null || super.isNoGravity();
+    }
+
+    @Override
+    public boolean canAddPassenger(Entity passenger) {
+        return this.getPassengers().isEmpty() && passenger instanceof Player;
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger instanceof Player player ? player : null;
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return 1.0F;
+    }
+
+    @Override
+    public Vec3 getPassengerRidingPosition(Entity passenger) {
+        return new Vec3(0.0D, 0.8D, 0.0D);
+    }
+
+    @Override
+    public boolean canJump() {
+        return true;
+    }
+
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        this.jumping = true;
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+        this.jumping = true;
+    }
+
+    @Override
+    public void handleStopJump() {
+    }
+
+    @Override
+    public int getJumpCooldown() {
+        return 0;
     }
 
     @Nullable
@@ -427,6 +645,20 @@ public class GalathEntity extends SettlementGirlEntityAI {
         }
 
         if (this.isTamed()) {
+            if (this.isOwner(player) && player.isShiftKeyDown()) {
+                if (player.getItemInHand(hand).isEmpty()) {
+                    return this.toggleRide(player);
+                }
+                if (this.isInThreesome) {
+                    this.exitThreesome();
+                    return InteractionResult.SUCCESS;
+                }
+                ManglelieEntity mang = this.findNearbyManglelie(player);
+                if (mang != null && !mang.isInThreesome) {
+                    this.startThreesome(mang, player);
+                    return InteractionResult.SUCCESS;
+                }
+            }
             return super.mobInteract(player, hand);
         }
 
