@@ -1142,3 +1142,52 @@ empty ItemStack` в `AbstractArrow.addAdditionalSaveData` (стр. 525 — `save
 треда (девушка добегает через pending-путь или получает `girlCallFailed` через 5с);
 стрелы, выпущенные до обновления, при загрузке чанка/портале не крашат (в логе
 появится одна строка `[PH] sanitized empty arrow pickup item ...` на каждую).
+
+### 5.45. Фризы: инструментальный билд v4 (инструментация, а не фикс)
+
+**Решающий тест пользователя (2026-08-27):** без PleasureHorizons фриза НЕТ
+(«без pleasure horizon нету такого»). То есть фризы «Can't keep up» на 10+ с
+вызваны (по крайней мере, сильно усугубляются) именно нашим модом. Важно: в
+singleplayer интегрированный сервер тикает на клиентском треде, поэтому
+«Can't keep up» — это EITHER медленный серверный tick (наш AI: поиск берега,
+aggro-скан, телепорты) EITHER тяжёлый клиентский кадр (GirlRenderer/GeckoLib)
+— оба варианта дают одну и ту же строку в latest.log. Аудит показал: все
+циклы в tick-пути ограничены (chop ≤192, BuildingScanner 20×15 и только по
+событию BlockEntity, SettlementManager без периодического скана), т.е.
+«зависание на цикле» исключено; осталась подозрительная блокирующая
+работа/сетевые пакеты/рендер.
+
+**Что добавлено (коммиты 6a2d955 + 859f1730, HEAD `859f1730`, CI green,
+маркер `v4 :: slow-op instrumentation`):**
+- `TameableGirlEntity.slowLog(op, nanos)` — warn `[PH] SLOW <op>: <ms>ms |
+  girl=<имя> (<girlID> id=<entityId>) target=... following=... scene=...
+  inWater=...` при ≥100 мс, троттль 1 строка/5 с на девушку (wall clock,
+  поле `lastSlowLogMs`). Обёрнуты try/finally: `tick` целиком
+  (`tickStartNanos`), поиск берега (`shore search`), aggro-скан
+  (`aggro scan (N mobs)` с числом просканированных мобов), `teleportNear`,
+  `callToOwner`.
+- `client/render/GirlRenderProfiler.java` (game bus, Dist.CLIENT):
+  `GirlRenderer.preRender` пишет `renderStartNanos`, `postRender`
+  (только `!isReRender`) — `GirlRenderProfiler.record(start)`; при
+  `RenderLevelStageEvent` стадия `AFTER_ENTITIES` суммируется за кадр; ≥100 мс
+  — warn `[PH] SLOW-CLIENT girl render: <ms>ms for <n> girl render(s) in this
+  frame`, троттль 1 строка/5 с. **НЕ класть в PleasureHorizonsClientEvents —
+  он на MOD bus, а это game-bus событие.**
+- Маркер в `PleasureHorizons.java` → v4.
+
+**Ожидаемый результат у пользователя:** воспроизвести фриз со старым миром и
+всеми девушками; в latest.log появятся либо `[PH] SLOW ...` (какая операция,
+какая девушка, target/inWater — т.е. диагноз на сервере), либо
+`[PH] SLOW-CLIENT girl render` (рендер), либо ни тех ни других (фриз не в
+этих местах — тогда смотреть на пакеты/сетевой ввод/другие моды). Просить
+прислать 10–15 строк вокруг каждой `Can't keep up` + все `[PH] SLOW` строки.
+
+**Ошибки при сборке первого push (не повторять):** (1) edit_file с fuzzy-якорем
+на `super.tick();` НЕ применил объявление `tickStartNanos` (не было в файле,
+CI: cannot find symbol) — после edit_file ВСЕГДА grep'ить, что вставка на месте;
+(2) helper `slowLog` вставился ДВАЖДЫ (якорь logTeleport «сработал» несмотря на
+сообщение об ошибке, + якорь teleportNear) → дублирование поля/метода. Проверка:
+`grep -c 'private void slowLog'` = 1.
+
+**Путь к артефакту:** repo graciozee-create/portr → branch
+`arena/01a03d65-portr` → Actions → последний зелёный run → артефакт `mod-jar`.
