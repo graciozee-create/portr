@@ -26,11 +26,23 @@ public class GalathCoinItem extends Item {
         super(properties.stacksTo(1));
     }
 
+    private static final String DEFEATED_KEY = "PleasureHorizonsGalathDefeated";
+
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
         if (level instanceof ServerLevel serverLevel) {
+            // In survival the coin is only usable after Galath has been defeated at least once;
+            // in creative it stays a convenience item. The defeat marker lives in the server-side
+            // persistent data, so the check must stay server-side (client data is not synced).
+            if (!player.getAbilities().instabuild
+                    && !player.getPersistentData().getBoolean(DEFEATED_KEY)) {
+                player.displayClientMessage(
+                        Component.translatable("msg.pleasurehorizons.galath_coin_locked"), true);
+                return InteractionResultHolder.fail(stack);
+            }
+
             // Check if player already has an active Galath
             GalathEntity existing = null;
             for (var entity : serverLevel.getAllEntities()) {
