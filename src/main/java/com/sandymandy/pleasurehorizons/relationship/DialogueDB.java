@@ -20,24 +20,23 @@ public class DialogueDB {
     }
 
     /** Random greeting translation key for a girl at the given affection tier. */
-    public static String greetingKey(String girlId, AffectionLevel level) {
+    public static String greetingKey(String girlId, AffectionData.AffectionLevel level) {
         String girl = girlId == null ? "" : girlId.toLowerCase(java.util.Locale.ROOT);
         String base = GIRL_SPECIFIC.getOrDefault(girl, "generic");
-        int max = base.equals("generic") ? 3 : 3;
-        int line = ThreadLocalRandom.current().nextInt(1, max + 1);
+        int line = ThreadLocalRandom.current().nextInt(1, 3 + 1);
         return "dialogue.pleasurehorizons.greeting." + base + "." + level.name().toLowerCase(java.util.Locale.ROOT) + "." + line;
     }
 
     /** Non-random first line, used by the NPC editor's static preview. */
-    public static String previewKey(AffectionLevel level) {
+    public static String previewKey(AffectionData.AffectionLevel level) {
         return "dialogue.pleasurehorizons.greeting.generic."
                 + level.name().toLowerCase(java.util.Locale.ROOT) + ".1";
     }
 
-    /** Simple helper to keep the greeting key list symmetrical with {@link AffectionLevel}. */
+    /** Simple helper to keep the greeting key list symmetrical with {@link AffectionData.AffectionLevel}. */
     public static Map<String, String> debugKeys() {
-        Map<String, String> keys = new EnumMap<>(AffectionLevel.class);
-        for (AffectionLevel level : AffectionLevel.values()) {
+        Map<String, String> keys = new EnumMap<>(AffectionData.AffectionLevel.class);
+        for (AffectionData.AffectionLevel level : AffectionData.AffectionLevel.values()) {
             keys.put(level.name(), previewKey(level));
         }
         return keys;

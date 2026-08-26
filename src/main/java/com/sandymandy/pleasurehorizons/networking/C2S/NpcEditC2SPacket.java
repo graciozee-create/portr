@@ -94,7 +94,6 @@ public record NpcEditC2SPacket(int entityId, Action action, String stringValue) 
                 case QUEST_COMPLETE -> completeQuest(player, girl);
             }
         });
-        ctx.setPacketHandled(true);
     }
 
     private static boolean holdsWand(ServerPlayer player) {

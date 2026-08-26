@@ -27,7 +27,7 @@ public class HornyPotionItem extends Item {
                         .alwaysEdible()
                         .nutrition(1)
                         .saturationModifier(0.0F)
-                        .effect(() -> new MobEffectInstance(PleasureHorizonsEffects.HORNY.get(), 600, 0), 1.0F)
+                        .effect(() -> new MobEffectInstance(PleasureHorizonsEffects.HORNY, 600, 0), 1.0F)
                         .effect(() -> new MobEffectInstance(MobEffects.REGENERATION, 200, 0), 1.0F)
                         .effect(() -> new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 400, 0), 1.0F)
                         .build()));

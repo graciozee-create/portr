@@ -263,7 +263,7 @@ public class QuestManager {
             return false;
         }
         ResourceLocation itemId = ResourceLocation.parse(quest.itemId());
-        Item item = itemId == null ? null : BuiltInRegistries.ITEM.getValue(itemId);
+        Item item = BuiltInRegistries.ITEM.get(itemId);
         if (item == null) {
             return false;
         }
@@ -306,7 +306,7 @@ public class QuestManager {
     public void grantReward(GirlEntity girl, ServerPlayer player, Quest quest) {
         girl.addAffection(quest.rewardAffection());
         if (quest.rewardItemId() != null && !quest.rewardItemId().isEmpty()) {
-            Item reward = BuiltInRegistries.ITEM.getValue(ResourceLocation.parse(quest.rewardItemId()));
+            Item reward = BuiltInRegistries.ITEM.get(ResourceLocation.parse(quest.rewardItemId()));
             if (reward != null) {
                 if (!player.getInventory().add(new ItemStack(reward, 1))) {
                     player.drop(new ItemStack(reward, 1), false);
