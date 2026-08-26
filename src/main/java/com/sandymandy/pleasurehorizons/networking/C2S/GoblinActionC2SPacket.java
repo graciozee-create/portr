@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
@@ -39,11 +40,11 @@ public record GoblinActionC2SPacket(int entityId, String action) implements Cust
     public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!VALID_ACTIONS.contains(this.action())) return;
-            ServerPlayer player = ctx.player();
-            if (player == null) return;
-            Entity entity = player.level().getEntity(this.entityId());
+            Player player = ctx.player();
+            if (!(player instanceof ServerPlayer serverPlayer)) return;
+            Entity entity = serverPlayer.level().getEntity(this.entityId());
             if (entity instanceof GoblinEntity goblin) {
-                goblin.handleCatchAction(player, this.action());
+                goblin.handleCatchAction(serverPlayer, this.action());
             }
         });
     }

@@ -65,7 +65,7 @@ public class GoblinEntity extends SettlementGirlEntityAI {
     private static final int STEAL_COOLDOWN_TICKS = 300;      // 15 seconds between thefts
     private static final int STEAL_RANGE_SQ = 16;             // 4 blocks
     private static final int QUEEN_SPAWN_INTERVAL = 32000;    // ~26 min between queen births
-    private static final int QUEEN_SPAWN_RANGE = 64.0D;
+    private static final double QUEEN_SPAWN_RANGE = 64.0D;
 
     private int stealCooldown = 0;
     private int stealCount = 0;
