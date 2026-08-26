@@ -1343,6 +1343,47 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     }
 
     /**
+     * Finds the nearest non-water solid block at or above the water surface within 12 blocks.
+     * Used by the water escape AI to swim toward shore instead of floating aimlessly.
+     */
+    @Nullable
+    private BlockPos findNearestShore() {
+        BlockPos center = this.blockPosition();
+        int waterY = center.getY();
+        // Find the water surface Y
+        for (int dy = 0; dy <= 3; dy++) {
+            if (!this.level().getFluidState(center.above(dy)).isSource()) {
+                waterY = center.getY() + dy;
+                break;
+            }
+        }
+        // Spiral outward looking for solid non-water blocks at surface level
+        BlockPos closest = null;
+        double closestDistSq = Double.MAX_VALUE;
+        for (int r = 1; r <= 12; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    BlockPos candidate = new BlockPos(center.getX() + dx, waterY, center.getZ() + dz);
+                    net.minecraft.world.level.block.state.BlockState state = this.level().getBlockState(candidate);
+                    // Solid block at water surface with air above = shore
+                    if (state.blocksMotion()
+                            && !this.level().getFluidState(candidate).isSource()
+                            && this.level().getBlockState(candidate.above()).isAir()) {
+                        double distSq = candidate.distSqr(center);
+                        if (distSq < closestDistSq) {
+                            closestDistSq = distSq;
+                            closest = candidate;
+                        }
+                    }
+                }
+            }
+            if (closest != null) return closest; // Found at this radius, don't search further
+        }
+        return null;
+    }
+
+    /**
      * Sends the vehicle's passenger list to the vehicle player themselves.
      *
      * <p>Required because vanilla entity tracking never informs a player about their own entity,
@@ -1493,26 +1534,91 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 this.combatSpeedBoosted = false;
             }
             
-            // Water-stuck detection: if she's been in water for 3+ seconds while actively
-            // trying to move somewhere, force her to swim up or teleport out.
-            // Only triggers when navigation is active (she's trying to go somewhere).
-            if (this.isInWater() && !inCombat && !this.isSceneActive() && !this.isDowned()
-                    && !this.isPassenger() && !this.getNavigation().isDone()) {
+            // Water escape AI: proactive system that helps girls get out of water quickly
+            // instead of floating helplessly. Works regardless of navigation state.
+            if (this.isInWater() && !this.isSceneActive() && !this.isDowned()
+                    && !this.isPassenger()) {
                 this.waterStuckTicks++;
-                // After 60 ticks (3 seconds): try to jump/swim up forcefully
-                if (this.waterStuckTicks == 60) {
-                    this.jumpFromGround();
-                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.3D, 0));
+                
+                // Boost swim speed (vanilla swim is very slow without attributes)
+                if (this.waterStuckTicks == 1) {
+                    var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                    if (swimAttr != null && !this.combatSpeedBoosted) {
+                        // Temporary boost while in water
+                        swimAttr.setBaseValue(swimAttr.getBaseValue() * 1.3D);
+                    }
                 }
-                // After 120 ticks (6 seconds): teleport to owner if still stuck
-                if (this.waterStuckTicks >= 120) {
-                    LivingEntity owner = this.getOwner();
-                    if (owner != null && owner.isAlive() && !owner.isInWater()) {
-                        this.teleportNear((Player) owner);
+                
+                // Every 10 ticks (0.5s): jump to try to get onto blocks above water level.
+                // This is the primary escape method - most shorelines are 1 block above water.
+                if (this.waterStuckTicks % 10 == 0 && !inCombat) {
+                    this.jumpFromGround();
+                    // Add forward momentum toward nearest shore
+                    net.minecraft.core.BlockPos shorePos = findNearestShore();
+                    if (shorePos != null) {
+                        double dx = shorePos.getX() + 0.5D - this.getX();
+                        double dz = shorePos.getZ() + 0.5D - this.getZ();
+                        double dist = Math.sqrt(dx * dx + dz * dz);
+                        if (dist > 0.5D) {
+                            double speed = 0.15D;
+                            this.setDeltaMovement(this.getDeltaMovement().add(
+                                    (dx / dist) * speed, 0.05D, (dz / dist) * speed));
+                        }
+                    } else {
+                        // No shore found - just swim up
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.1D, 0));
+                    }
+                }
+                
+                // If underwater (block above head): swim sideways to find air
+                if (this.waterStuckTicks % 15 == 0 && this.isUnderWater() && !inCombat) {
+                    // Try all 4 directions to find air
+                    float yaw = this.getYRot();
+                    for (int turn = 0; turn < 4; turn++) {
+                        float testYaw = yaw + turn * 90F;
+                        double dx = -Math.sin(Math.toRadians(testYaw));
+                        double dz = Math.cos(Math.toRadians(testYaw));
+                        net.minecraft.core.BlockPos checkPos = this.blockPosition().offset(
+                                (int) dx, 1, (int) dz);
+                        if (this.level().getBlockState(checkPos).isAir()
+                                || !this.level().getFluidState(checkPos).isSource()) {
+                            // Found air in this direction - swim toward it
+                            this.setYRot(testYaw);
+                            this.setDeltaMovement(this.getDeltaMovement().add(
+                                    dx * 0.2D, 0.15D, dz * 0.2D));
+                            break;
+                        }
+                    }
+                }
+                
+                // After 4 seconds: teleport to owner if following, or force big jump
+                if (this.waterStuckTicks >= 80 && !inCombat) {
+                    if (this.isFollowing()) {
+                        LivingEntity owner = this.getOwner();
+                        if (owner != null && owner.isAlive() && !owner.isInWater()) {
+                            this.teleportNear((Player) owner);
+                            this.waterStuckTicks = 0;
+                            // Restore speed
+                            var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                            if (swimAttr != null && !this.combatSpeedBoosted) {
+                                swimAttr.setBaseValue(swimAttr.getBaseValue() / 1.3D);
+                            }
+                        }
+                    } else {
+                        // Not following - just force a big jump
+                        this.jumpFromGround();
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
                         this.waterStuckTicks = 0;
                     }
                 }
             } else {
+                // Not in water - reset counter and restore swim speed if needed
+                if (this.waterStuckTicks > 0) {
+                    var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                    if (swimAttr != null && !this.combatSpeedBoosted) {
+                        swimAttr.setBaseValue(swimAttr.getBaseValue() / 1.3D);
+                    }
+                }
                 this.waterStuckTicks = 0;
             }
             
