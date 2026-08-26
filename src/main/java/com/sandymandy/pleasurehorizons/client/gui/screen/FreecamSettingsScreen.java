@@ -68,7 +68,8 @@ public class FreecamSettingsScreen extends Screen {
         return Math.max(0, this.contentHeight - (this.panelH - 42));
     }
 
-    private void rebuildWidgets() {
+    @Override
+    protected void rebuildWidgets() {
         this.clearWidgets();
         this.scrollOffset = Math.max(0, Math.min(this.maxScroll(), this.scrollOffset));
 

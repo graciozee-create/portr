@@ -127,8 +127,6 @@ public class InteractionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, this.width, this.height, 0x88000000);
-
         int cx = this.width / 2;
         int cy = this.height / 2;
         int panelX = cx - PANEL_W / 2;
