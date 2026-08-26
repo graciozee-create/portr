@@ -154,7 +154,10 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             navigation.setCanPassDoors(true);
             navigation.setCanFloat(true);
             // Wider pathfinding tolerance: accept slightly longer paths instead of giving up
-            navigation.setMaxVisitedNodesMultiplier(2.0F);
+            navigation.setMaxVisitedNodesMultiplier(1.0F);
+            // Keep the vanilla pathfinding budget: 2.0x made every re-path noticeably heavier
+            // when several girls path at the same time (the server-thread hitches the user
+            // experienced as "everything freezes for a moment").
         }
         // Make survival tasks route around water instead of wading in and swimming slowly.
         // Following still crosses water: GirlFollowOwnerGoal temporarily zeroes this malus.
@@ -758,6 +761,23 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Drops runtime requests (e.g. when the integrated server restarts). */
     public static void clearPendingCalls() {
         PENDING_CALLS.clear();
+        LAST_AGGRO_SCAN.clear();
+    }
+
+    /**
+     * The preemptive-aggro box is centered on the OWNER, so with several girls nearby the same
+     * 17x9x17 entity scan would run once per girl every 10 ticks. Throttle it to one scan per
+     * owner per 10 ticks of game time.
+     */
+    private static final java.util.Map<java.util.UUID, Long> LAST_AGGRO_SCAN = new java.util.HashMap<>();
+
+    private static boolean shouldRunAggroScan(LivingEntity owner, long gameTime) {
+        long last = LAST_AGGRO_SCAN.getOrDefault(owner.getUUID(), Long.MIN_VALUE);
+        if (gameTime - last < 10L) {
+            return false;
+        }
+        LAST_AGGRO_SCAN.put(owner.getUUID(), gameTime);
+        return true;
     }
 
     // ------------------------------------------------- survival utility toggles
@@ -1378,7 +1398,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         // Spiral outward looking for solid non-water blocks at surface level
         BlockPos closest = null;
         double closestDistSq = Double.MAX_VALUE;
-        for (int r = 1; r <= 12; r++) {
+        for (int r = 1; r <= 8; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
@@ -1708,7 +1728,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             if (this.tickCount % 10 == 0) {
                 LivingEntity owner = this.getOwner();
                 if (owner != null && owner.isAlive()
-                        && this.distanceToSqr(owner) < 16.0D * 16.0D) {
+                        && this.distanceToSqr(owner) < 16.0D * 16.0D
+                        && shouldRunAggroScan(owner, this.level().getGameTime())) {
                     net.minecraft.world.phys.AABB box = owner.getBoundingBox().inflate(8.0D, 4.0D, 8.0D);
                     for (net.minecraft.world.entity.Mob mob : this.level().getEntitiesOfClass(
                             net.minecraft.world.entity.Mob.class, box)) {
