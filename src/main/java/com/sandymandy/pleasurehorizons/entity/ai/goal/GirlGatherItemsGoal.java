@@ -13,11 +13,13 @@ import java.util.List;
 public class GirlGatherItemsGoal extends Goal {
     private static final int GIVE_UP_TICKS = 600;
     private static final int GIVE_UP_COOLDOWN = 200;
+    private static final int SCAN_COOLDOWN = 20;
 
     private final TameableGirlEntity girl;
     private ItemEntity targetItem;
     private int elapsed = 0;
     private int cooldown = 0;
+    private int scanCooldown = 0;
     private boolean gaveUp = false;
 
     public GirlGatherItemsGoal(TameableGirlEntity girl) {
@@ -35,12 +37,17 @@ public class GirlGatherItemsGoal extends Goal {
         if (girl.isSitting() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
+        if (scanCooldown > 0) {
+            scanCooldown--;
+            return false;
+        }
         double range = 8.0D * girl.workRadiusScale();
         List<ItemEntity> items = girl.level().getEntitiesOfClass(ItemEntity.class,
                 girl.getBoundingBox().inflate(range, 3.0D, range),
                 item -> item.isAlive() && !item.hasPickUpDelay() && !item.getItem().isEmpty()
                         && canFit(item.getItem()));
         if (items.isEmpty()) {
+            scanCooldown = SCAN_COOLDOWN;
             return false;
         }
         // Nearest first - without this she could stomp past an item at her feet towards one
@@ -66,10 +73,12 @@ public class GirlGatherItemsGoal extends Goal {
 
     @Override
     public void stop() {
-        if (gaveUp) {
+        boolean wasGiveUp = gaveUp;
+        if (wasGiveUp) {
             cooldown = GIVE_UP_COOLDOWN;
             gaveUp = false;
         }
+        scanCooldown = wasGiveUp ? 60 : SCAN_COOLDOWN;
         targetItem = null;
         girl.getNavigation().stop();
     }

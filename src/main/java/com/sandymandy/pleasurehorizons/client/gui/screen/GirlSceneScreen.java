@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
@@ -51,7 +52,7 @@ public class GirlSceneScreen extends Screen {
         int y = this.height / 4;
 
         for (Scene scene : this.scenes) {
-            Button button = Button.builder(Component.literal(scene.displayName()), b -> {
+            Button button = Button.builder(sceneLabel(scene), b -> {
                 PacketDistributor.sendToServer(new StartSceneC2SPacket(this.entityId, scene.displayName()));
                 this.onClose();
             }).bounds(this.width / 2 - 100, y, 200, 20).build();
@@ -92,6 +93,11 @@ public class GirlSceneScreen extends Screen {
         if (ScreenUtils.isMouseOverHere(mouseX, mouseY, itemX, iconY, 16, 16)) {
             guiGraphics.renderTooltip(this.font, this.attractedTo.getHoverName(), mouseX, mouseY);
         }
+    }
+
+    private Component sceneLabel(Scene scene) {
+        String key = scene.localizedNameKey();
+        return I18n.exists(key) ? Component.translatable(key) : Component.literal(scene.displayName());
     }
 
     @Override

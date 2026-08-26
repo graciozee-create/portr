@@ -5,6 +5,7 @@ import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.Consumer;
@@ -17,6 +18,8 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
     private final int maxValue;
     private final Supplier<Integer> valueGetter;
     private final Consumer<Integer> valueSetter;
+    /** Localisation key for a description shown on hover; empty/blank disables the tooltip. */
+    private final String tooltip;
 
     public SliderSection(T entity, T previewEntity, Component label, int minValue, int maxValue,
                          Supplier<Integer> valueGetter, Consumer<Integer> valueSetter) {
@@ -26,6 +29,7 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
         this.maxValue = maxValue;
         this.valueGetter = valueGetter;
         this.valueSetter = valueSetter;
+        this.tooltip = "";
     }
 
     public SliderSection(T entity, T previewEntity, String label, int minValue, int maxValue,
@@ -36,11 +40,13 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
     public SliderSection(T entity, T previewEntity, Component label, int minValue, int maxValue,
                          Supplier<Integer> valueGetter, Consumer<Integer> valueSetter, String tooltip) {
         this(entity, previewEntity, label, minValue, maxValue, valueGetter, valueSetter);
+        this.tooltip = tooltip;
     }
 
     public SliderSection(T entity, T previewEntity, String label, int minValue, int maxValue,
                          Supplier<Integer> valueGetter, Consumer<Integer> valueSetter, String tooltip) {
-        this(entity, previewEntity, Component.literal(label), minValue, maxValue, valueGetter, valueSetter);
+        this(entity, previewEntity, Component.literal(label), minValue, maxValue,
+                valueGetter, valueSetter, tooltip);
     }
 
     @Override
@@ -49,6 +55,9 @@ public class SliderSection<T extends GirlSceneEntity> extends CustomizeSection<T
 
         StringWidget labelWidget = new StringWidget(layout.centerX, currentY, layout.contentWidth, 20,
                 label, Minecraft.getInstance().font);
+        if (tooltip != null && !tooltip.isEmpty()) {
+            labelWidget.setTooltip(Tooltip.create(Component.translatable(tooltip)));
+        }
         screen.addWidget(labelWidget);
         currentY += 20;
 

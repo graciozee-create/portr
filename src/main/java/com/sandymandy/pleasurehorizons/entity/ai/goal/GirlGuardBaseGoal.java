@@ -11,7 +11,10 @@ import net.minecraft.world.phys.AABB;
 import java.util.EnumSet;
 
 public class GirlGuardBaseGoal extends TargetGoal {
+    private static final int SCAN_INTERVAL = 20;
+
     private final TameableGirlEntity girl;
+    private int scanCooldown = 0;
 
     public GirlGuardBaseGoal(TameableGirlEntity girl) {
         super(girl, false);
@@ -25,6 +28,11 @@ public class GirlGuardBaseGoal extends TargetGoal {
         if (girl.isSitting() || girl.isFollowing() || girl.isSceneActive() || girl.isDowned() || girl.isPassenger()) {
             return false;
         }
+        if (scanCooldown > 0) {
+            scanCooldown--;
+            return false;
+        }
+        scanCooldown = SCAN_INTERVAL;
         BlockPos center = girl.getBasePos();
         if (center.equals(BlockPos.ZERO)) {
             center = girl.blockPosition();

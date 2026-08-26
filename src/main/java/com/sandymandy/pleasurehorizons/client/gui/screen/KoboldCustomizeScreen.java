@@ -11,7 +11,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import static com.sandymandy.pleasurehorizons.util.Utils.getFormattedByUnderscore;
+import java.util.Locale;
 
 public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
 
@@ -58,7 +58,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 Component.translatable("gui.pleasurehorizons.customize.bodySize"), 65, 115,
                 () -> bodySize,
                 value -> bodySize = value,
-                "Size affects hitbox height"
+                "gui.pleasurehorizons.customize.bodySize.tooltip"
         ));
 
         sections.add(new SliderSection<>(
@@ -66,7 +66,7 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 Component.translatable("gui.pleasurehorizons.customize.breastSize"), 60, 160,
                 () -> breastSize,
                 value -> breastSize = value,
-                "Adjust breast size"
+                "gui.pleasurehorizons.customize.breastSize.tooltip"
         ));
 
         sections.add(new ButtonGridSection<>(
@@ -75,7 +75,8 @@ public class KoboldCustomizeScreen extends CustomizeScreen<KoboldEntity> {
                 "color_preset",
                 KoboldEntity.PatternPresets.values(),
                 2,
-                preset -> Component.literal(getFormattedByUnderscore(preset.name())),
+                preset -> Component.translatable("gui.pleasurehorizons.customize.pattern."
+                        + preset.name().toLowerCase(Locale.ROOT)),
                 preset -> {
                     primaryColor = preset.primary;
                     secondaryColor = preset.secondary;

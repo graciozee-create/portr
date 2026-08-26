@@ -27,9 +27,14 @@ import static com.sandymandy.pleasurehorizons.util.PleasureHorizonsIcons.HEART_I
 public class GirlStatusOverlay {
 
     private static final double TRACK_RANGE = 24.0D;
+    /** Re-scan owned girls only once a second; entity scans in the HUD are far too costly per frame. */
+    private static final long SCAN_INTERVAL = 20L;
 
     /** Off by default so the panel never obscures normal play; toggled with a keybind. */
     private static boolean show = false;
+    /** Last game-time the nearest-girl scan ran, plus the entity that came out of it. */
+    private static long lastScanTick = Long.MIN_VALUE;
+    private static int nearestGirlId = -1;
 
     private GirlStatusOverlay() {
     }
@@ -52,7 +57,7 @@ public class GirlStatusOverlay {
         // The scene progress bar already occupies the left edge; avoid stacking panels.
         if (player.getVehicle() instanceof GirlSceneEntity) return;
 
-        TameableGirlEntity girl = nearestOwnedGirl(player);
+        TameableGirlEntity girl = cachedNearestGirl(player);
         if (girl == null) return;
 
         int x = 8;
@@ -88,6 +93,34 @@ public class GirlStatusOverlay {
             guiGraphics.drawString(mc.font, lines.get(i), x + 4, ty, 0xFFFFFFFF, true);
             ty += lineHeight;
         }
+    }
+
+    private static TameableGirlEntity cachedNearestGirl(LocalPlayer player) {
+        long now = player.level().getGameTime();
+
+        // Reuse the previous scan when the entity is still valid, so the expensive entity query
+        // runs once a second instead of on every render frame.
+        if (nearestGirlId >= 0) {
+            if (player.level().getEntity(nearestGirlId) instanceof TameableGirlEntity girl
+                    && girl.isTamed() && girl.isOwner(player) && girl.isAlive()) {
+                if (now - lastScanTick < SCAN_INTERVAL) {
+                    return girl;
+                }
+            } else {
+                nearestGirlId = -1;
+            }
+        }
+
+        // Always scan at least once per world (a fresh world can start below the old timestamp),
+        // then only on the 1-second cadence.
+        if (lastScanTick >= 0 && now >= lastScanTick && now - lastScanTick < SCAN_INTERVAL) {
+            return null;
+        }
+
+        TameableGirlEntity girl = nearestOwnedGirl(player);
+        nearestGirlId = girl == null ? -1 : girl.getId();
+        lastScanTick = now;
+        return girl;
     }
 
     private static TameableGirlEntity nearestOwnedGirl(LocalPlayer player) {

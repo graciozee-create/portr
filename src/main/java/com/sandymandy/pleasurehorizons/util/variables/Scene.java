@@ -8,6 +8,7 @@ import net.minecraft.network.codec.StreamCodec;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Definition of a single scene a girl can perform.
@@ -62,6 +63,21 @@ public class Scene {
     }
 
     public final String displayName() { return this.displayName; }
+
+    /**
+     * Localisation key for the human-readable scene name shown in the scene picker.
+     *
+     * <p>The wire-format field stays the original {@code displayName} so scene selection and
+     * server-side resolution are unaffected while the client can still show translated names.
+     * Custom scenes without a matching language entry fall back to {@link #displayName()}.</p>
+     */
+    public final String localizedNameKey() {
+        String slug = this.displayName.toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "_")
+                .replaceAll("^_|_$", "");
+        return "scene.pleasurehorizons." + slug;
+    }
+
     public final int requiredRelationshipLevel() { return this.requiredRelationshipLevel; }
     public final List<String> introAnim() { return this.animations.introAnim(); }
     public final List<String> slowAnim() { return this.animations.slowAnim(); }
