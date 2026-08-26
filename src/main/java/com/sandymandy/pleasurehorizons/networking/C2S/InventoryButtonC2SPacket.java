@@ -5,7 +5,7 @@ import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.entity.girls.KoboldEntity;
 import com.sandymandy.pleasurehorizons.networking.S2C.OpenCustomizeScreenS2CPacket;
-import com.sandymandy.pleasurehorizons.networking.S2C.SceneOptionsS2CPacket;
+import com.sandymandy.pleasurehorizons.networking.S2C.OpenInteractionScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.networking.S2C.OpenKoboldCustomizeScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.screen.GirlInventoryScreenHandler;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -81,15 +81,12 @@ public record InventoryButtonC2SPacket(int entityId, String actionId) implements
                 case "sit" -> girl.setSitting(!girl.isSitting());
                 case "follow" -> girl.setFollowing(!girl.isFollowing());
                 case "talk" -> {
-                    // Upstream sends the scene list here; the GirlSceneScreen is what the Talk
-                    // button is supposed to open. Girls without scenes fall back to small talk.
-                    if (ctx.player() instanceof ServerPlayer serverPlayer && !girl.getScenes().isEmpty()) {
+                    // Open the unified interaction screen. It shows the greeting, affection and
+                    // quick actions; the scene picker is opened from inside it.
+                    if (ctx.player() instanceof ServerPlayer serverPlayer) {
                         girl.setGUIOpenState(true, ctx.player());
-                        PacketDistributor.sendToPlayer(serverPlayer, new SceneOptionsS2CPacket(
-                                girl.getId(),
-                                girl.getCurrentRelationshipLevel(),
-                                new net.minecraft.world.item.ItemStack(girl.isAttractedTo()),
-                                girl.getScenes()));
+                        PacketDistributor.sendToPlayer(serverPlayer,
+                                new OpenInteractionScreenS2CPacket(girl.getId()));
                     } else {
                         girl.talkToPlayer(ctx.player());
                     }

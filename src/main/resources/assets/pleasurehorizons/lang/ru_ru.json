@@ -708,5 +708,19 @@
   "quest.pleasurehorizons.jenny_kill_skeleton.desc": "Чтобы поиграть со мной, убери 4 скелетов.",
   "quest.pleasurehorizons.custom_flowers.desc": "Принеси 8 маков! Каждой девочке нравятся цветы.",
   "quest.pleasurehorizons.custom_gold.desc": "Принеси 4 золотых слитка. Что-нибудь блестящее!",
-  "quest.pleasurehorizons.custom_kill_zombie.desc": "Победи 4 зомби, и я буду благодарна."
+  "quest.pleasurehorizons.custom_kill_zombie.desc": "Победи 4 зомби, и я буду благодарна.",
+  "hud.pleasurehorizons.relationship": "♥ %s  %s/%s",
+  "hud.pleasurehorizons.affection": "♡ %s/%s  %s",
+  "gui.pleasurehorizons.scene.relationship": "Отношения: %s",
+  "gui.pleasurehorizons.interaction.title": "Разговор",
+  "gui.pleasurehorizons.interaction.header": "%s",
+  "gui.pleasurehorizons.interaction.relationship": "♥ %s  %s/%s",
+  "gui.pleasurehorizons.interaction.follow": "👣 Следуй за мной",
+  "gui.pleasurehorizons.interaction.stop_follow": "👋 Перестань следовать",
+  "gui.pleasurehorizons.interaction.sit": "🐸 Сидеть",
+  "gui.pleasurehorizons.interaction.stand": "🐸 Встать",
+  "gui.pleasurehorizons.interaction.scenes": "♥ Сцены",
+  "gui.pleasurehorizons.interaction.talk": "💬 Поговорить",
+  "gui.pleasurehorizons.interaction.inventory": "🎛 Инвентарь",
+  "gui.pleasurehorizons.interaction.close": "Закрыть"
 }

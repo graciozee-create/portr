@@ -5,6 +5,7 @@ import com.sandymandy.pleasurehorizons.client.gui.screen.GirlCustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GirlSceneScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GoblinCaughtScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GuideBookScreen;
+import com.sandymandy.pleasurehorizons.client.gui.screen.InteractionScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.KoboldCustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.NpcEditorScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.hud.SceneProgressOverlay;
@@ -100,6 +101,18 @@ public class ClientPacketHandlers {
             Entity entity = mc.level.getEntity(entityId);
             if (entity instanceof GirlEntity girl) {
                 mc.setScreen(new NpcEditorScreen(girl));
+            }
+        });
+    }
+
+    /** Called by {@code OpenInteractionScreenS2CPacket} from common code. */
+    public static void handleOpenInteractionScreen(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        mc.execute(() -> {
+            Entity entity = mc.level.getEntity(entityId);
+            if (entity instanceof com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity girl) {
+                mc.setScreen(new InteractionScreen(girl));
             }
         });
     }

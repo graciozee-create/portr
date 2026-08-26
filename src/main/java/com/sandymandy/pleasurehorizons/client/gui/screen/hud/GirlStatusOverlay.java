@@ -2,6 +2,7 @@ package com.sandymandy.pleasurehorizons.client.gui.screen.hud;
 
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
+import com.sandymandy.pleasurehorizons.relationship.AffectionData;
 import com.sandymandy.pleasurehorizons.util.GirlStatusCache;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.client.Minecraft;
@@ -70,6 +71,17 @@ public class GirlStatusOverlay {
         lines.add(Component.translatable("hud.pleasurehorizons.role",
                 Component.translatable("role.pleasurehorizons." + girl.getRole().id())));
         lines.add(buildActivity(girl));
+        int relationship = girl.getCurrentRelationshipLevel();
+        int relationshipMax = girl.maxRelationshipLevel();
+        lines.add(Component.translatable("hud.pleasurehorizons.relationship",
+                characterHeart(relationship, relationshipMax),
+                relationship, relationshipMax));
+
+        AffectionData.AffectionLevel level = AffectionData.levelFor(girl.getAffection());
+        lines.add(Component.translatable("hud.pleasurehorizons.affection",
+                girl.getAffection(), AffectionData.MAX_AFFECTION,
+                Component.translatable(level.labelKey)));
+
         lines.add(Component.literal(
                 Math.round(girl.getHealth()) + "/" + Math.round(girl.getMaxHealth())));
 
@@ -86,7 +98,7 @@ public class GirlStatusOverlay {
         panelWidth += 22; // heart icon + padding
 
         guiGraphics.fill(x, y, x + panelWidth, y + lines.size() * lineHeight + 6, 0x99000000);
-        guiGraphics.blit(HEART_ICON, x + 2, y + 3 * lineHeight, 0, 0, 9, 9, 9, 9);
+        guiGraphics.blit(HEART_ICON, x + 2, y + 5 * lineHeight, 0, 0, 9, 9, 9, 9);
 
         int ty = y + 2;
         for (int i = 0; i < lines.size(); i++) {
@@ -157,5 +169,14 @@ public class GirlStatusOverlay {
 
     private static String t(String key) {
         return Component.translatable(key).getString();
+    }
+
+    /** Compact heart progress bar to avoid a wide text panel in the HUD. */
+    private static String characterHeart(int value, int max) {
+        if (max <= 0) {
+            return "\u2665";
+        }
+        int filled = Math.max(0, Math.min(max, value));
+        return "\u2665".repeat(filled) + "\u2661".repeat(max - filled);
     }
 }

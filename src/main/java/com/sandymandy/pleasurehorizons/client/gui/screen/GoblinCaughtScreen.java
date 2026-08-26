@@ -20,6 +20,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @OnlyIn(Dist.CLIENT)
 public class GoblinCaughtScreen extends Screen {
 
+    private static final int BUTTON_HEIGHT = 20;
+    private static final int BUTTON_SPACING = 24;
+
     private final GoblinEntity goblin;
     private final Player player;
 
@@ -31,32 +34,37 @@ public class GoblinCaughtScreen extends Screen {
 
     @Override
     protected void init() {
-        int y = this.height / 4;
+        int panelWidth = Math.min(240, this.width - 40);
+        int buttonWidth = panelWidth - 20;
+        int panelHeight = 4 * BUTTON_SPACING + 44;
+        int panelX = (this.width - panelWidth) / 2;
+        int panelY = Math.max(20, (this.height - panelHeight) / 2);
 
+        int y = panelY + 30;
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.pleasurehorizons.goblin_caught.return"),
                         b -> this.send("return"))
-                .bounds(this.width / 2 - 100, y, 200, 20).build());
-        y += 25;
+                .bounds(panelX + 10, y, buttonWidth, BUTTON_HEIGHT).build());
+        y += BUTTON_SPACING;
 
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.pleasurehorizons.goblin_caught.scene"),
                         b -> this.send("scene"))
-                .bounds(this.width / 2 - 100, y, 200, 20).build());
-        y += 25;
+                .bounds(panelX + 10, y, buttonWidth, BUTTON_HEIGHT).build());
+        y += BUTTON_SPACING;
 
         Button queen = Button.builder(
                         Component.translatable("gui.pleasurehorizons.goblin_caught.queen"),
                         b -> this.send("make_queen"))
-                .bounds(this.width / 2 - 100, y, 200, 20).build();
+                .bounds(panelX + 10, y, buttonWidth, BUTTON_HEIGHT).build();
         queen.active = !this.goblin.isQueen() && !this.goblin.isTamed();
         this.addRenderableWidget(queen);
-        y += 25;
+        y += BUTTON_SPACING;
 
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.pleasurehorizons.goblin_caught.leave"),
                         b -> this.send("dismiss"))
-                .bounds(this.width / 2 - 100, y, 200, 20).build());
+                .bounds(panelX + 10, y, buttonWidth, BUTTON_HEIGHT).build());
     }
 
     private void send(String action) {
@@ -68,9 +76,19 @@ public class GoblinCaughtScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         guiGraphics.fill(0, 0, this.width, this.height, 0x88000000);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        int panelWidth = Math.min(240, this.width - 40);
+        int panelHeight = 4 * BUTTON_SPACING + 44;
+        int panelX = (this.width - panelWidth) / 2;
+        int panelY = Math.max(20, (this.height - panelHeight) / 2);
+
+        guiGraphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0x66000000);
+        guiGraphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF664466);
+        guiGraphics.fill(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight, 0xFF664466);
+
         guiGraphics.drawCenteredString(this.font,
                 Component.translatable("gui.pleasurehorizons.goblin_caught.subtitle"),
-                this.width / 2, this.height / 4 - 25, 0xFFDDCCDD);
+                this.width / 2, panelY + 8, 0xFFDDCCDD);
     }
 
     @Override

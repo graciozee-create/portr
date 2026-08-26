@@ -34,6 +34,7 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(GalathGrabTapsC2SPacket.TYPE, GalathGrabTapsC2SPacket.STREAM_CODEC, GalathGrabTapsC2SPacket::handle);
         registrar.playToServer(GoblinActionC2SPacket.TYPE, GoblinActionC2SPacket.STREAM_CODEC, GoblinActionC2SPacket::handle);
         registrar.playToServer(NpcEditC2SPacket.TYPE, NpcEditC2SPacket.STREAM_CODEC, NpcEditC2SPacket::handle);
+        registrar.playToServer(InteractionActionC2SPacket.TYPE, InteractionActionC2SPacket.STREAM_CODEC, InteractionActionC2SPacket::handle);
         registrar.playToClient(ClothingArmorVisibilityS2CPacket.TYPE, ClothingArmorVisibilityS2CPacket.STREAM_CODEC, ClothingArmorVisibilityS2CPacket::handle);
         registrar.playToClient(GirlStatusS2CPacket.TYPE, GirlStatusS2CPacket.STREAM_CODEC, GirlStatusS2CPacket::handle);
         registrar.playToClient(SceneOptionsS2CPacket.TYPE, SceneOptionsS2CPacket.STREAM_CODEC, SceneOptionsS2CPacket::handle);
@@ -45,5 +46,6 @@ public class PleasureHorizonsPackets {
         registrar.playToClient(GalathGrabScreenS2CPacket.TYPE, GalathGrabScreenS2CPacket.STREAM_CODEC, GalathGrabScreenS2CPacket::handle);
         registrar.playToClient(GoblinCaughtScreenS2CPacket.TYPE, GoblinCaughtScreenS2CPacket.STREAM_CODEC, GoblinCaughtScreenS2CPacket::handle);
         registrar.playToClient(OpenNpcEditorS2CPacket.TYPE, OpenNpcEditorS2CPacket.STREAM_CODEC, OpenNpcEditorS2CPacket::handle);
+        registrar.playToClient(OpenInteractionScreenS2CPacket.TYPE, OpenInteractionScreenS2CPacket.STREAM_CODEC, OpenInteractionScreenS2CPacket::handle);
     }
 }

@@ -38,41 +38,55 @@ public class NpcEditorScreen extends Screen {
     protected void init() {
         int cx = this.width / 2;
         int cy = this.height / 2;
-        int bw = 140;
+        int bw = 150;
+        int btnH = 20;
+        int gap = 24;
         int bx = cx - bw / 2;
+        int panelW = bw + 24;
+        int panelH = 7 * gap + 28;
+        int panelX = cx - panelW / 2;
+        int panelY = Math.max(16, cy - panelH / 2);
 
+        int y = panelY + 34;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.talk"),
-                b -> this.send(NpcEditC2SPacket.Action.TALK, "")).bounds(bx, cy - 96, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.TALK, "")).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.affection"),
-                b -> this.send(NpcEditC2SPacket.Action.ADD_AFFECTION, "")).bounds(bx, cy - 72, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.ADD_AFFECTION, "")).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.home"),
-                b -> this.send(NpcEditC2SPacket.Action.GO_HOME, "")).bounds(bx, cy - 48, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.GO_HOME, "")).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.accept_quest"),
-                b -> this.send(NpcEditC2SPacket.Action.QUEST_ACCEPT, "")).bounds(bx, cy - 24, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.QUEST_ACCEPT, "")).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.complete_quest"),
-                b -> this.send(NpcEditC2SPacket.Action.QUEST_COMPLETE, "")).bounds(bx, cy, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.QUEST_COMPLETE, "")).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
-        this.nameBox = new EditBox(this.font, bx, cy + 28, bw, 20,
+        this.nameBox = new EditBox(this.font, bx, y, bw, btnH,
                 Component.translatable("gui.pleasurehorizons.npc_editor.name_hint"));
         this.nameBox.setMaxLength(32);
         this.addRenderableWidget(this.nameBox);
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.rename"),
-                b -> this.send(NpcEditC2SPacket.Action.RENAME, this.nameBox.getValue())).bounds(bx, cy + 52, bw, 20).build());
+                b -> this.send(NpcEditC2SPacket.Action.RENAME, this.nameBox.getValue())).bounds(bx, y, bw, btnH).build());
+        y += gap;
 
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.pleasurehorizons.npc_editor.close"),
-                b -> this.onClose()).bounds(bx, cy + 80, bw, 20).build());
+                b -> this.onClose()).bounds(bx, y, bw, btnH).build());
     }
 
     private void send(NpcEditC2SPacket.Action action, String value) {
@@ -84,17 +98,23 @@ public class NpcEditorScreen extends Screen {
         this.renderBackground(g, mouseX, mouseY, partialTick);
         int cx = this.width / 2;
         int cy = this.height / 2;
-        g.fill(cx - 90, cy - 112, cx + 90, cy + 116, COLOR_BORDER);
-        g.fill(cx - 88, cy - 110, cx + 88, cy + 114, COLOR_PANEL);
+        int bw = 150;
+        int panelW = bw + 24;
+        int panelH = 7 * 24 + 28;
+        int panelX = cx - panelW / 2;
+        int panelY = Math.max(16, cy - panelH / 2);
+
+        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, COLOR_BORDER);
+        g.fill(panelX + 2, panelY + 2, panelX + panelW - 2, panelY + panelH - 2, COLOR_PANEL);
 
         g.drawCenteredString(this.font,
                 Component.translatable("gui.pleasurehorizons.npc_editor.header", this.girlName()),
-                cx, cy - 104, COLOR_HEADER);
+                cx, panelY + 8, COLOR_HEADER);
         g.drawCenteredString(this.font,
                 Component.translatable("gui.pleasurehorizons.npc_editor.affection_display",
                         this.girl.getAffection(),
                         Component.translatable(AffectionData.levelFor(this.girl.getAffection()).labelKey)),
-                cx, cy - 88, COLOR_TEXT);
+                cx, panelY + 20, COLOR_TEXT);
         super.render(g, mouseX, mouseY, partialTick);
     }
 

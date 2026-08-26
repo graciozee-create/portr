@@ -708,5 +708,19 @@
   "quest.pleasurehorizons.jenny_kill_skeleton.desc": "Helping me game means clearing 4 Skeletons.",
   "quest.pleasurehorizons.custom_flowers.desc": "Bring 8 Poppies! Every girl likes flowers.",
   "quest.pleasurehorizons.custom_gold.desc": "Bring me 4 Gold Ingots. Something shiny!",
-  "quest.pleasurehorizons.custom_kill_zombie.desc": "Smash 4 Zombies and I'll be grateful."
+  "quest.pleasurehorizons.custom_kill_zombie.desc": "Smash 4 Zombies and I'll be grateful.",
+  "hud.pleasurehorizons.relationship": "♥ %s  %s/%s",
+  "hud.pleasurehorizons.affection": "♡ %s/%s  %s",
+  "gui.pleasurehorizons.scene.relationship": "Relationship: %s",
+  "gui.pleasurehorizons.interaction.title": "Conversation",
+  "gui.pleasurehorizons.interaction.header": "%s",
+  "gui.pleasurehorizons.interaction.relationship": "♥ %s  %s/%s",
+  "gui.pleasurehorizons.interaction.follow": "👣 Follow me",
+  "gui.pleasurehorizons.interaction.stop_follow": "👋 Stop following",
+  "gui.pleasurehorizons.interaction.sit": "🐸 Sit",
+  "gui.pleasurehorizons.interaction.stand": "🐸 Stand up",
+  "gui.pleasurehorizons.interaction.scenes": "♥ Scenes",
+  "gui.pleasurehorizons.interaction.talk": "💬 Talk",
+  "gui.pleasurehorizons.interaction.inventory": "🎛 Inventory",
+  "gui.pleasurehorizons.interaction.close": "Close"
 }

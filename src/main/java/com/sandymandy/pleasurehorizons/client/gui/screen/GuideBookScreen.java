@@ -16,6 +16,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class GuideBookScreen extends Screen {
     private final String[] pageKeys;
     private int currentPage = 0;
+    private int pageX = 0;
+    private int pageY = 0;
+    private int pageW = 0;
+    private int pageH = 0;
 
     private static final int COLOR_BG = 0x88000000;
     private static final int COLOR_BORDER = 0xFF664466;
@@ -36,10 +40,10 @@ public class GuideBookScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, this.width, this.height, COLOR_BG);
 
-        int pageW = Math.min(300, this.width - 40);
-        int pageH = Math.min(210, this.height - 60);
-        int pageX = (this.width - pageW) / 2;
-        int pageY = (this.height - pageH) / 2;
+        this.pageW = Math.min(300, this.width - 40);
+        this.pageH = Math.min(210, this.height - 60);
+        this.pageX = (this.width - pageW) / 2;
+        this.pageY = (this.height - pageH) / 2;
 
         g.fill(pageX - 2, pageY - 2, pageX + pageW + 2, pageY + pageH + 2, COLOR_BORDER);
         g.fill(pageX, pageY, pageX + pageW, pageY + pageH, COLOR_PAGE);
@@ -87,10 +91,12 @@ public class GuideBookScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int pageW = Math.min(300, this.width - 40);
-        int pageH = Math.min(210, this.height - 60);
-        int pageX = (this.width - pageW) / 2;
-        int pageY = (this.height - pageH) / 2;
+        if (this.pageW == 0) {
+            this.pageW = Math.min(300, this.width - 40);
+            this.pageH = Math.min(210, this.height - 60);
+            this.pageX = (this.width - pageW) / 2;
+            this.pageY = (this.height - pageH) / 2;
+        }
         int btnY = pageY + pageH + 10;
         int btnW = Math.min(100, pageW / 2 - 10);
 

@@ -2,7 +2,6 @@ package com.sandymandy.pleasurehorizons.client.gui.screen;
 
 import com.sandymandy.pleasurehorizons.networking.C2S.SetGUIOpenStateC2SPacket;
 import com.sandymandy.pleasurehorizons.networking.C2S.StartSceneC2SPacket;
-import com.sandymandy.pleasurehorizons.util.Colors;
 import com.sandymandy.pleasurehorizons.util.ScreenUtils;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.client.gui.GuiGraphics;
@@ -47,15 +46,26 @@ public class GirlSceneScreen extends Screen {
         this.scenes = scenes;
     }
 
+    private static final int BUTTON_HEIGHT = 20;
+    private static final int BUTTON_SPACING = 24;
+
     @Override
     protected void init() {
-        int y = this.height / 4;
+        // The panel is centred and sized to the scene list (with a static cap), so a handful of
+        // buttons no longer sprawl across the top half of the screen.
+        int panelWidth = Math.min(280, this.width - 40);
+        int panelHeight = Math.max(70, this.scenes.size() * BUTTON_SPACING + 40);
+        int panelX = (this.width - panelWidth) / 2;
+        int panelY = Math.max(20, (this.height - panelHeight) / 2 - 20);
+        int buttonWidth = panelWidth - 20;
+        int buttonX = panelX + 10;
 
+        int y = panelY + 32;
         for (Scene scene : this.scenes) {
             Button button = Button.builder(sceneLabel(scene), b -> {
                 PacketDistributor.sendToServer(new StartSceneC2SPacket(this.entityId, scene.displayName()));
                 this.onClose();
-            }).bounds(this.width / 2 - 100, y, 200, 20).build();
+            }).bounds(buttonX, y, buttonWidth, BUTTON_HEIGHT).build();
 
             if (this.currentRelationshipLevel < scene.requiredRelationshipLevel()) {
                 button.active = false;
@@ -64,13 +74,13 @@ public class GirlSceneScreen extends Screen {
             }
 
             this.addRenderableWidget(button);
-            y += 25;
+            y += BUTTON_SPACING;
         }
 
         if (this.scenes.isEmpty()) {
             this.addRenderableWidget(Button.builder(Component.translatable("gui.pleasurehorizons.scene.none"),
                             b -> this.onClose())
-                    .bounds(this.width / 2 - 100, y, 200, 20).build());
+                    .bounds(buttonX, y, buttonWidth, BUTTON_HEIGHT).build());
         }
     }
 
@@ -78,17 +88,26 @@ public class GirlSceneScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        int iconY = this.height / 4 - 30;
+        int panelWidth = Math.min(280, this.width - 40);
+        int panelHeight = Math.max(70, this.scenes.size() * BUTTON_SPACING + 40);
         int centerX = this.width / 2;
+        int panelX = (this.width - panelWidth) / 2;
+        int panelY = Math.max(20, (this.height - panelHeight) / 2 - 20);
 
+        guiGraphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0x66000000);
+        guiGraphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF664466);
+        guiGraphics.fill(panelX, panelY + panelHeight - 1, panelX + panelWidth, panelY + panelHeight, 0xFF664466);
+
+        guiGraphics.drawCenteredString(this.font,
+                Component.translatable("gui.pleasurehorizons.scene.relationship", this.currentRelationshipLevel),
+                centerX, panelY + 12, 0xFFFFDDEE);
+
+        int iconY = panelY + 6;
         int itemX = centerX - 30;
         guiGraphics.renderItem(this.attractedTo, itemX, iconY);
 
         int heartX = centerX - 10;
         guiGraphics.blit(HEART_ICON, heartX, iconY, 0, 0, 18, 18, 18, 18);
-
-        guiGraphics.drawString(this.font, String.valueOf(this.currentRelationshipLevel),
-                heartX + 20, iconY + 4, Colors.WHITE, true);
 
         if (ScreenUtils.isMouseOverHere(mouseX, mouseY, itemX, iconY, 16, 16)) {
             guiGraphics.renderTooltip(this.font, this.attractedTo.getHoverName(), mouseX, mouseY);

@@ -1642,58 +1642,54 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             }
             
             // Anti-stuck: smart escape sequence. Only fires when navigation is active (girl
-            // is trying to go somewhere) but she hasn't moved. Each stage tries a different
-            // escape strategy before resorting to teleport.
+            // is trying to go somewhere) but she has not made horizontal progress. Stuckness is
+            // deliberately measured in the XZ plane only: a vertical jump is NOT progress, so a
+            // girl stuck behind a wall no longer resets the counter every hop and jumps forever.
+            // Stages are conservative (one gentle hop, re-path, one shimmy) and end in a teleport
+            // for followers; non-followers stop trying instead of jumping on the spot.
             if (!this.isSceneActive() && !this.isSitting() && !this.isDowned()
                     && !this.isPassenger()
                     && !this.getNavigation().isDone()) {
                 net.minecraft.world.phys.Vec3 currentPos = this.position();
-                double moved = currentPos.distanceTo(this.lastStuckCheckPos);
-                if (moved < 0.3D) {
+                double dx = currentPos.x - this.lastStuckCheckPos.x;
+                double dz = currentPos.z - this.lastStuckCheckPos.z;
+                double movedSq = dx * dx + dz * dz;
+                if (movedSq < 0.09D) { // Less than 0.3 blocks of horizontal movement.
                     this.stuckTicks++;
                     
-                    // Stage 1 (1 sec): jump - clears 1-block obstacles, fences, carpets
-                    if (this.stuckTicks == 20) {
+                    // Stage 1 (~1.25s): one gentle hop once, not every tick.
+                    if (this.stuckTicks == 25) {
                         this.jumpFromGround();
                     }
-                    // Stage 2 (2 sec): turn 90° and try a different approach direction
-                    if (this.stuckTicks == 40) {
-                        float turnAngle = (this.random.nextBoolean() ? 90F : -90F);
-                        this.setYRot(this.getYRot() + turnAngle);
-                        this.jumpFromGround();
-                    }
-                    // Stage 3 (3 sec): force recalculate path from scratch
-                    if (this.stuckTicks == 60) {
+                    // Stage 2 (~3.75s): force a fresh path in case the old one is stale.
+                    if (this.stuckTicks == 75) {
                         this.getNavigation().stop();
-                        // Try to path to the same target again
                         net.minecraft.world.entity.ai.navigation.PathNavigation nav = this.getNavigation();
                         if (nav.getPath() != null) {
                             net.minecraft.core.BlockPos pathTarget = nav.getPath().getTarget();
                             nav.moveTo(pathTarget.getX() + 0.5D, pathTarget.getY(), pathTarget.getZ() + 0.5D, 1.0D);
                         }
                     }
-                    // Stage 4 (4 sec): jump + sideways movement burst
-                    if (this.stuckTicks == 80) {
+                    // Stage 3 (~5.5s): one sideways shimmy to slide off a lip/carpet.
+                    if (this.stuckTicks == 110) {
                         this.jumpFromGround();
                         double sideAngle = Math.toRadians(this.getYRot() + (this.random.nextBoolean() ? 90 : -90));
                         this.setDeltaMovement(
-                                this.getDeltaMovement().add(-Math.sin(sideAngle) * 0.3D, 0.2D, Math.cos(sideAngle) * 0.3D));
+                                this.getDeltaMovement().add(-Math.sin(sideAngle) * 0.25D, 0.15D, Math.cos(sideAngle) * 0.25D));
                     }
-                    // Stage 5 (6 sec): teleport to owner if following, or just force-unstuck
-                    if (this.stuckTicks >= 120) {
-                        if (this.isFollowing()) {
+                    // Stage 4 (~7s): stop wasting movement. Followers teleport to the owner
+                    // (matching follow-teleport), everyone else just gives up pathing silently.
+                    if (this.stuckTicks >= 140) {
+                        if (this.isFollowing() && this.isFollowTeleportEnabled()) {
                             LivingEntity owner = this.getOwner();
                             if (owner != null && owner.isAlive()) {
                                 this.teleportNear((Player) owner);
                             }
                         } else {
-                            // Not following - just force a big jump to escape
                             this.getNavigation().stop();
-                            this.jumpFromGround();
-                            this.setDeltaMovement(this.getDeltaMovement().add(0, 0.5D, 0));
                         }
                         this.stuckTicks = 0;
-                        this.lastStuckCheckPos = this.position();
+                        this.lastStuckCheckPos = currentPos;
                     }
                 } else {
                     this.stuckTicks = 0;
