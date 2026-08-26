@@ -122,6 +122,31 @@ public class PleasureHorizons {
     }
 
     /**
+     * Sanitises arrows with an empty pickup item stack.
+     *
+     * <p>1.21.1's {@code AbstractArrow} constructor copies the firing ammo into the private
+     * {@code pickupItemStack} field directly (bypassing the safe setter), and
+     * {@code addAdditionalSaveData} saves that field WITHOUT an empty check. Any arrow shot
+     * with empty ammo (old PH builds before the {@code getProjectile} fix, or third-party
+     * ranged items) therefore kills the whole server with
+     * {@code IllegalStateException: Cannot encode empty ItemStack} the first time it is
+     * serialized - chunk autosave drops it, and a portal crossing crashes
+     * {@code changeDimension}. On join we route an empty stack through the entity's slot 0
+     * accessor, whose vanilla setter falls back to the arrow type's own default item
+     * ({@code minecraft:arrow} for {@code Arrow}, spectral for {@code SpectralArrow}, and the
+     * correct default for any modded {@code AbstractArrow} subclass).</p>
+     */
+    @SubscribeEvent
+    public void onEntityJoinLevel(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide()) return;
+        if (!(event.getEntity() instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow)) return;
+        if (!arrow.getPickupItemStackOrigin().isEmpty()) return;
+        arrow.getSlot(0).set(ItemStack.EMPTY);
+        LOGGER.info("[PH] sanitized empty arrow pickup item on {} (id {})",
+                arrow.getType().getDescriptionId(), arrow.getId());
+    }
+
+    /**
      * Inventory-charm effects. The healing charm heals the player's nearby girls every 2 seconds;
      * the bond bracelet is a no-op placeholder until affection decay is modelled, but is kept as
      * a real item so its tooltip matches upstream.

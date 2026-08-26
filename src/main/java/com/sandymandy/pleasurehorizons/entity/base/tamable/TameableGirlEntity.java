@@ -710,14 +710,13 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 continue;
             }
 
-            // Force-loading can be asynchronous in optimized chunk systems. Touch all nine FULL
-            // chunks explicitly before resolving by stable UUID.
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    level.getChunk(call.center().x + dx, call.center().z + dz,
-                            net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
-                }
-            }
+            // NOTE: no blocking chunk access here. The FORCE_LOAD tickets set in
+            // callOwnedGirlsTo are already driving the load (asynchronously under
+            // c2me/alternate-current/Sable). The old loop called
+            // level.getChunk(x, z, FULL, true) nine times EVERY tick for up to 100 ticks:
+            // in a heavy modpack that blocks the server thread on distant chunk generation,
+            // which the user experienced as "all mobs freeze for seconds when I press G".
+            // The UUID lookup below is the real readiness check.
 
             net.minecraft.world.entity.Entity entity = null;
             for (net.minecraft.world.entity.Entity candidate : level.getAllEntities()) {
