@@ -252,6 +252,11 @@ public class FreecamSettingsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+        // Only eat the scroll while the cursor is over the panel, so scrolling the world or
+        // other UI behind the screen keeps working.
+        if (mouseX < panelX || mouseX > panelX + panelW || mouseY < panelY || mouseY > panelY + panelH) {
+            return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
+        }
         double previous = this.scrollOffset;
         this.scrollOffset = Math.max(0, Math.min(this.maxScroll(), this.scrollOffset - deltaY * 14));
         if (previous != this.scrollOffset) {

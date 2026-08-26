@@ -1034,3 +1034,41 @@ CI: run `32562459004` (коммит `6893128`, зелёный; промежут�
   связное дерево (до 192 брёвен), показывает прогресс ломания, рубит снизу вверх без попыток
   pathfind к висящим брёвнам, использует топор для loot и тратит его прочность. Соблюдает
   `mobGriefing`; обязательные guards scene/downed/passenger сохранены.
+
+### 5.42 UI-фиксы (текстуры, blur, «Поговорить», настройки) — финальный аудит порта
+
+**Корень жалобы пользователя на «фиговое UI»:** коммит `278d16f` (перерисовка 34 текстур
+предметов, убран полный fullscreen-blur со всех in-game панелей, кликабельный «Поговорить»,
+новый `FreecamSettingsScreen`) **упал в CI**: единственный javac-ошибка —
+`FreecamSettingsScreen.rebuildWidgets()` был объявлен без доступа к
+`Screen.rebuildWidgets()` (нужен `protected`). Пользователь тестировал последнюю зелёную
+сборку `879022e5`, где ещё были: 15x15 однотонные текстуры, дефолтный blurred
+`renderBackground` (blur на весь экран, в т.ч. в книге) и в `InteractionScreen` вызов
+`super.render()` **до** отрисовки панели (кнопки рисовались под панелью).
+
+**Сделано (всё на `arena/01a03d65-portr`, PR #10):**
+- `726f5d7` (зелёный CI): `rebuildWidgets()` → `@Override protected`; убран
+  fullscreen-затемнение `g.fill(0,0,w,h,0x88000000)` из `InteractionScreen` (мир виден,
+  как и на остальных панелях).
+- `FreecamSettingsScreen.mouseScrolled` скроллит только когда курсор над панелью.
+- Перерисованные текстуры (скрипт `tools/gen_item_textures.py`) визуально проверены:
+  нормальные 16x16 пиксель-иконки, а не квадратики.
+- Локализация: 725 = 725 ключей en/ru, все новые ключи (`setting.*`,
+  `text.autoconfig.pleasurehorizons.*`, `gui.pleasurehorizons.settings.open`,
+  `gui.pleasurehorizons.button.confirm/cancel`) в обоих файлах.
+
+**Финальный аудит против оригинала** (`colorgarden/Pleasure-Horizons-I18n`,
+`reworked-girls`, клонится в `/tmp/orig`): порт **функционально полон**. Метод-по-методу
+сверены все файлы с разницей размеров (KoboldEntity, Settlement*, SettlementGirlEntityAI,
+GirlInventoryScreenHandler, GirlMeleeAttackGoal, TameableGirlEntity-голы) — отсутствуют
+только комменты/форматирование. Список «заглушек» из старого HANDOFF устарел:
+`PleasureHorizonsDispenserBehavior`, `PleasureHorizonsCriteria` (TameGirlCriterion),
+`GirlMeleeAttackGoal`, `GirlAttackSwitchGoal` уже доделаны; `TamedGirlManager`,
+`GirlMemoryTypes`, `PleasureHorizonsLangUtils`, `PacketCodecExtra`, `AbstractGirlRenderer`,
+`AbstractGirlModel`, `CustomGirlModel` удалены; `maxRelationshipLevel()` — чистое
+вычисление из `getScenes()` с фолбэком на synched-значение (баг «4/4» закрыт).
+Сознательно не портируется (Fabric-only / мёртвое в оригинале): mixins (freecam в порту
+на событиях + `RegisterKeyMappingsEvent`), Cloth/AutoConfig (замена — `FreecamConfig` на
+`ModConfigSpec` + `FreecamSettingsScreen`), ModMenu, `entity/ai/brain/*` (заменены
+goal-системой), `AIMode` (ни у кого не используется), `PleasureHorizonsHudRegistry`
+(HUD на NeoForge-событиях в `PleasureHorizonsClientEvents`).
