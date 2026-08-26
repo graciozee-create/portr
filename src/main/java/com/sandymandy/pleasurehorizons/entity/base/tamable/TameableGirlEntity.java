@@ -1770,7 +1770,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                     for (net.minecraft.world.entity.Mob mob : this.level().getEntitiesOfClass(
                             net.minecraft.world.entity.Mob.class, box)) {
                         mobsScanned++;
-                        if (mob.isAlive() && !(mob instanceof TameableGirlEntity)) {
+                        // Hostiles only: force-targeting passive water mobs is not harmless -
+                        // axolotls (and similar) start chasing and attacking whatever is in
+                        // their target slot, so the lake turned into a fight scene.
+                        if (mob.isAlive() && !(mob instanceof TameableGirlEntity)
+                                && mob instanceof net.minecraft.world.entity.monster.Enemy) {
                             LivingEntity mobTarget = mob.getTarget();
                             // Priority 1: mob is attacking owner - switch to girl immediately
                             if (mobTarget == owner) {

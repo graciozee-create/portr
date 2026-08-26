@@ -61,6 +61,14 @@ public class GirlAttackWithOwnerGoal extends TargetGoal {
             return false;
         }
 
+        // Only join REAL fights. The owner's last-hurt target can be anything: a fish
+        // hit with a sword, a turtle, a villager bopped on the head. Following that made
+        // the girls chase and attack passive underwater mobs. Restrict to natural
+        // hostiles: Enemy covers every Monster plus Phantom and friends.
+        if (!(this.attacking instanceof net.minecraft.world.entity.monster.Enemy)) {
+            return false;
+        }
+
         return this.canAttack(this.attacking, TargetingConditions.DEFAULT);
     }
 
