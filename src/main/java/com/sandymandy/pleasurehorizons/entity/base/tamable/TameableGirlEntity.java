@@ -23,6 +23,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
 import com.sandymandy.pleasurehorizons.entity.PleasureHorizonsEntityStatuses;
+import com.sandymandy.pleasurehorizons.item.items.GiftItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -1136,6 +1137,24 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             player.displayClientMessage(
                     Component.translatable("msg.pleasurehorizons.alreadyInRelationship"), true);
             return InteractionResult.FAIL;
+        }
+
+        // Gadget gifts raise affection (0-100) and one relationship level, capped by max.
+        if (stack.getItem() instanceof GiftItem gift
+                && this.getCurrentRelationshipLevel() < this.maxRelationshipLevel()) {
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+            this.addAffection(gift.getAffectionValue());
+            this.setCurrentRelationshipLevel(this.getCurrentRelationshipLevel() + 1);
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.gift_given", gift.getAffectionValue(),
+                            this.getAffection()), true);
+            if (!this.giftRepliesLike().isEmpty()) {
+                this.messageAsEntity(player, this.giftRepliesLike().get(RANDOM.nextInt(this.giftRepliesLike().size())));
+            }
+            this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
+            return InteractionResult.SUCCESS;
         }
 
         // Gifting her favourite item raises the relationship level.

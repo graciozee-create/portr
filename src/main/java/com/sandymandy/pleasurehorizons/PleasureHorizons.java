@@ -5,26 +5,36 @@ import com.sandymandy.pleasurehorizons.block.PleasureHorizonsBlocks;
 import com.sandymandy.pleasurehorizons.block.entity.PleasureHorizonsBlockEntities;
 import com.sandymandy.pleasurehorizons.command.Commands;
 import com.sandymandy.pleasurehorizons.component.PleasureHorizonsDataComponentTypes;
+import com.sandymandy.pleasurehorizons.effects.PleasureHorizonsEffects;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItemGroups;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
+import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsScreenHandlerRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsTrackedDataRegistry;
+import com.sandymandy.pleasurehorizons.relationship.QuestManager;
 import com.sandymandy.pleasurehorizons.util.json.CustomGirlLoader;
 import com.sandymandy.pleasurehorizons.util.managers.TamedGirlRegistry;
 import com.sandymandy.pleasurehorizons.util.managers.TamedGirlSavedData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +65,7 @@ public class PleasureHorizons {
         GirlRegistry.register(modEventBus);
         PleasureHorizonsScreenHandlerRegistry.register(modEventBus);
         PleasureHorizonsDataComponentTypes.register(modEventBus);
+        PleasureHorizonsEffects.register(modEventBus);
 
         // Other systems
         PleasureHorizonsCriteria.register(modEventBus);
@@ -101,6 +112,70 @@ public class PleasureHorizons {
         // Complete summons whose target girl lives in a chunk that had to be force-loaded.
         for (ServerLevel level : event.getServer().getAllLevels()) {
             TameableGirlEntity.tickPendingCalls(level);
+        }
+        tickPassiveItems(event.getServer().getAllLevels());
+    }
+
+    /**
+     * Inventory-charm effects. The healing charm heals the player's nearby girls every 2 seconds;
+     * the bond bracelet is a no-op placeholder until affection decay is modelled, but is kept as
+     * a real item so its tooltip matches upstream.
+     */
+    private void tickPassiveItems(Iterable<ServerLevel> levels) {
+        for (ServerLevel level : levels) {
+            if ((level.getGameTime() % 40) != 0) continue;
+            for (ServerPlayer player : level.players()) {
+                boolean healing = hasItem(player, PleasureHorizonsItems.HEALING_CHARM.get());
+                if (!healing && !hasItem(player, PleasureHorizonsItems.BOND_BRACELET.get())) {
+                    continue;
+                }
+                for (TameableGirlEntity girl : level.getEntitiesOfClass(TameableGirlEntity.class,
+                        player.getBoundingBox().inflate(12.0D))) {
+                    UUID owner = girl.getOwnerUUID();
+                    if (owner != null && !owner.equals(player.getUUID())) continue;
+                    if (healing && girl.isAlive() && girl.getHealth() < girl.getMaxHealth()) {
+                        girl.heal(1.0F);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean hasItem(ServerPlayer player, net.minecraft.world.item.Item item) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.is(item)) return true;
+        }
+        return false;
+    }
+
+    private static String girlName(GirlEntity girl) {
+        if (girl.hasCustomName()) {
+            return girl.getCustomName().getString();
+        }
+        String id = girl.getGirlID();
+        return id.isEmpty() ? "Girl" : Character.toUpperCase(id.charAt(0)) + id.substring(1);
+    }
+
+    /** Count KILL quest progress when a player kills the target mob. */
+    @SubscribeEvent
+    public void onLivingDeath(LivingDeathEvent event) {
+        if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
+        Level level = player.level();
+        LivingEntity victim = event.getEntity();
+        ResourceLocation mobId = victim.getType().builtInRegistryHolder().key().location();
+        for (GirlEntity girl : level.getEntitiesOfClass(GirlEntity.class, player.getBoundingBox().inflate(64.0D))) {
+            QuestManager manager = girl.getQuestManager();
+            QuestManager.Quest quest = manager.activeQuest();
+            if (quest == null || quest.type() != QuestManager.QuestType.KILL) continue;
+            if (!manager.getOwner().equals(player.getStringUUID())) continue;
+            if (manager.addKill(mobId, 1)) {
+                QuestManager.Quest finished = manager.complete();
+                manager.grantReward(girl, player, finished);
+                player.displayClientMessage(Component.translatable(
+                        "msg.pleasurehorizons.quest_kill_completed", girlName(girl),
+                        finished.rewardAffection()), false);
+            }
         }
     }
 

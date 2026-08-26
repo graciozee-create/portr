@@ -4,8 +4,11 @@ import com.sandymandy.pleasurehorizons.client.gui.screen.GalathGrabScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GirlCustomizeScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GirlSceneScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.GoblinCaughtScreen;
+import com.sandymandy.pleasurehorizons.client.gui.screen.GuideBookScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.KoboldCustomizeScreen;
+import com.sandymandy.pleasurehorizons.client.gui.screen.NpcEditorScreen;
 import com.sandymandy.pleasurehorizons.client.gui.screen.hud.SceneProgressOverlay;
+import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.girls.GalathEntity;
 import com.sandymandy.pleasurehorizons.entity.girls.GoblinEntity;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
@@ -78,6 +81,25 @@ public class ClientPacketHandlers {
                 }
             } else if (mc.screen instanceof GoblinCaughtScreen screen) {
                 screen.onClose();
+            }
+        });
+    }
+
+    /** Called reflectively by the Guide Book item from common code. */
+    public static void openGuideBook(ItemStack stack, String[] pageKeys) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        mc.execute(() -> mc.setScreen(new GuideBookScreen(pageKeys)));
+    }
+
+    /** Called by {@code OpenNpcEditorS2CPacket} from common code. */
+    public static void handleOpenNpcEditorScreen(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        mc.execute(() -> {
+            Entity entity = mc.level.getEntity(entityId);
+            if (entity instanceof GirlEntity girl) {
+                mc.setScreen(new NpcEditorScreen(girl));
             }
         });
     }

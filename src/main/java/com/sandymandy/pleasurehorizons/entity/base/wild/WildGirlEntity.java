@@ -8,6 +8,7 @@ import com.sandymandy.pleasurehorizons.entity.ai.goal.StationaryContactGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StopMovementGoal;
 import com.sandymandy.pleasurehorizons.entity.ai.goal.StripGoal;
 import com.sandymandy.pleasurehorizons.entity.base.GirlSceneEntity;
+import com.sandymandy.pleasurehorizons.item.items.GiftItem;
 import com.sandymandy.pleasurehorizons.networking.S2C.SceneOptionsS2CPacket;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -127,6 +128,25 @@ public abstract class WildGirlEntity extends GirlSceneEntity {
         ItemStack stack = player.getItemInHand(hand);
         if (this.level().isClientSide()) {
             return InteractionResult.SUCCESS;
+        }
+
+        if (stack.getItem() instanceof GiftItem gift
+                && this.getCurrentRelationshipLevel() < this.maxRelationshipLevel()) {
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
+            this.addAffection(gift.getAffectionValue());
+            this.setCurrentRelationshipLevel(this.getCurrentRelationshipLevel() + 1);
+            this.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.4F);
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable(
+                            "msg.pleasurehorizons.gift_given", gift.getAffectionValue(), this.getAffection()), true);
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.HEART,
+                        this.getX(), this.getY() + 1.5D, this.getZ(), 7,
+                        0.4D, 0.4D, 0.4D, 0.1D);
+            }
+            return InteractionResult.CONSUME;
         }
 
         if (stack.is(this.isAttractedTo())

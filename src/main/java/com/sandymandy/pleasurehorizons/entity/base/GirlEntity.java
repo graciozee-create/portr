@@ -2,6 +2,8 @@ package com.sandymandy.pleasurehorizons.entity.base;
 
 import com.sandymandy.pleasurehorizons.config.GirlsConfig;
 import com.sandymandy.pleasurehorizons.networking.S2C.ClothingArmorVisibilityS2CPacket;
+import com.sandymandy.pleasurehorizons.relationship.AffectionData;
+import com.sandymandy.pleasurehorizons.relationship.QuestManager;
 import com.sandymandy.pleasurehorizons.util.inventory.GirlInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -93,6 +95,8 @@ public abstract class GirlEntity extends PathfinderMob {
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MAX_RELATIONSHIP_LEVEL =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> AFFECTION =
+            SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> PREGNANCY_STAGE =
             SynchedEntityData.defineId(GirlEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MILKED_AMOUNT =
@@ -147,6 +151,10 @@ public abstract class GirlEntity extends PathfinderMob {
     public String currentAnimState = "idle";
 
     public final GirlInventory inventory = GirlInventory.ofSize();
+
+    /** Affection (0-100) and quest state are saved with the girl entity (see NBT keys below). */
+    private final AffectionData affectionData = new AffectionData();
+    private final QuestManager questManager = new QuestManager();
 
     private boolean guiOpenState = false;
     @Nullable
@@ -230,6 +238,7 @@ public abstract class GirlEntity extends PathfinderMob {
         builder.define(PREGNANCY_STAGE, 0);
         builder.define(RELATIONSHIP_LEVEL, 0);
         builder.define(MAX_RELATIONSHIP_LEVEL, 4);
+        builder.define(AFFECTION, 0);
         builder.define(BREAST_SIZE, 100);
         builder.define(MILKED_AMOUNT, 0);
         builder.define(BREAST_OFFSET, new Vector3f());
@@ -930,6 +939,33 @@ public abstract class GirlEntity extends PathfinderMob {
         this.entityData.set(RELATIONSHIP_LEVEL, value);
     }
 
+    // -------------------------------------------------------------- affection + quests
+
+    public AffectionData getAffectionData() {
+        return this.affectionData;
+    }
+
+    public int getAffection() {
+        // Server keeps the persistent AffectionData authoritative; clients read the synced value.
+        if (this.level().isClientSide()) {
+            return this.entityData.get(AFFECTION);
+        }
+        return this.affectionData.getAffection();
+    }
+
+    public void addAffection(int amount) {
+        this.affectionData.addAffection(amount, AffectionData.MAX_AFFECTION);
+        this.entityData.set(AFFECTION, this.affectionData.getAffection());
+    }
+
+    public AffectionData.AffectionLevel getAffectionLevel() {
+        return this.affectionData.getLevel();
+    }
+
+    public QuestManager getQuestManager() {
+        return this.questManager;
+    }
+
     public void setBasePos(BlockPos pos) {
         this.entityData.set(BASE_POS, pos);
     }
@@ -1123,6 +1159,8 @@ public abstract class GirlEntity extends PathfinderMob {
         compound.putBoolean("Temporary", isTemporary());
         compound.putInt("PregnancyStage", getPregnancyStage());
         compound.putInt("RelationshipLevel", getCurrentRelationshipLevel());
+        compound.put("AffectionData", this.affectionData.toNBT());
+        compound.put("QuestData", this.questManager.toNBT());
         compound.putInt("BreastSize", getBreastSize());
         Vec3 breastOffset = getBreastOffset();
         compound.putDouble("BreastOffsetX", breastOffset.x);
@@ -1155,6 +1193,13 @@ public abstract class GirlEntity extends PathfinderMob {
         setTemporaryState(compound.getBoolean("Temporary"));
         setPregnancyStage(compound.getInt("PregnancyStage"));
         setCurrentRelationshipLevel(compound.getInt("RelationshipLevel"));
+        if (compound.contains("AffectionData")) {
+            this.affectionData.fromNBT(compound.getCompound("AffectionData"));
+            this.entityData.set(AFFECTION, this.affectionData.getAffection());
+        }
+        if (compound.contains("QuestData")) {
+            this.questManager.fromNBT(compound.getCompound("QuestData"));
+        }
         if (compound.contains("BreastSize")) {
             setBreastSize(compound.getInt("BreastSize"));
         }
