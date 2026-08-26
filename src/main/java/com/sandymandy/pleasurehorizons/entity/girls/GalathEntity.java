@@ -3,47 +3,78 @@ package com.sandymandy.pleasurehorizons.entity.girls;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
+import com.sandymandy.pleasurehorizons.networking.S2C.GalathGrabScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Galath - a hostile mini-boss from the original Jenny/Fapcraft mod.
  *
  * <p>The original character starts as an enemy in the Nether: she is aggressive, has boss-tier
- * stats, and can only become a companion after the player defeats her. This port keeps that
- * flow while reusing the shared tamed-girl ownership model:</p>
+ * stats, and can only become a companion after the player defeats her. This is the full port
+ * of that fight, including the wave/skeleton/grab combat extras:</p>
  *
  * <ul>
- *   <li>While untamed and standing, Galath targets nearby survival players.</li>
- *   <li>When defeated she vanishes, drops her {@link PleasureHorizonsItems#GALATH_COIN} and a
- *       handful of nether stars, and the winning survival player is marked as the one who beat
- *       her - the only state that unlocks the coin.</li>
- *   <li>{@code GalathCoinItem} remains a soul-bound summon/dismiss item, but in survival it is
- *       locked until the player has actually defeated Galath; creative keeps the old behavior.</li>
+ *   <li>Boss stats: 300 HP, 8 damage, follow 64, speed 0.3, 50 XP.</li>
+ *   <li>Untamed Galath hunts survival players and periodically releases a wither/weakness
+ *       energy wave and summons skeletons while she is damaged.</li>
+ *   <li>Every 15 seconds she can grab a nearby player: the victim has 8 seconds to mash A/D
+ *       (60 escape points); success knocks them free, failure deals heavy damage.</li>
+ *   <li>When defeated she vanishes, drops her soul coin + nether stars, and the winning player
+ *       is marked so the coin (summon/dismiss) works in survival.</li>
  * </ul>
  */
 public class GalathEntity extends SettlementGirlEntityAI {
 
     private static final String DEFEATED_KEY = "PleasureHorizonsGalathDefeated";
+
+    // Boss combat tuning (canon values from the upstream 1.21.1 port).
+    private static final int ENERGY_WAVE_INTERVAL = 200;          // 10 seconds
+    private static final double ENERGY_WAVE_RANGE = 6.0D;
+    private static final int SKELETON_SUMMON_INTERVAL = 600;      // 30 seconds
+    private static final int DAMAGE_FOR_SKELETONS = 30;           // skeleton burst every 30 damage
+    private static final int GRAB_INTERVAL = 300;                 // 15 seconds between grab attempts
+    private static final int GRAB_RANGE = 3;                      // 3 block range for grab
+    private static final int ESCAPE_THRESHOLD = 60;
+    private static final int ESCAPE_DURATION = 160;               // 8 seconds
+    private static final int GRAB_CUM_DAMAGE = 8;
+
+    private int energyCooldown = 0;
+    private int grabCooldown = 0;
+    private int grabPhaseTicks = 0;
+    private String grabbedPlayerUUID = "";
+    private int escapeTaps = 0;
+    private int skeletonSummonCooldown = 0;
+    private int damageAccumulated = 0;
 
     public GalathEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -97,6 +128,11 @@ public class GalathEntity extends SettlementGirlEntityAI {
     }
 
     @Override
+    public int getBaseExperienceReward() {
+        return 50;
+    }
+
+    @Override
     protected void registerGoals() {
         super.registerGoals();
         // Untamed Galath hunts survival players until she is beaten. The shared hierarchy's
@@ -115,17 +151,123 @@ public class GalathEntity extends SettlementGirlEntityAI {
                 && !this.isSceneActive() && !this.isPassenger() && !this.isSitting();
     }
 
-    /**
-     * Defeating (lethal damage) triggers the boss reward. The shared hierarchy converts lethal
-     * damage into the DOWNED state; the one-time transition below is what drops the coin and
-     * removes her, matching the original "she dies and drops her coin" flow.
-     */
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.level().isClientSide() || this.isTamed()) return;
+
+        // Active combat grab takes priority over the other attacks.
+        if (!this.grabbedPlayerUUID.isEmpty()) {
+            this.tickActiveGrab();
+            return;
+        }
+
+        // Damage-accumulated skeleton burst.
+        if (this.damageAccumulated >= DAMAGE_FOR_SKELETONS && this.skeletonSummonCooldown <= 0) {
+            this.damageAccumulated = 0;
+            this.skeletonSummonCooldown = SKELETON_SUMMON_INTERVAL;
+            this.summonSkeletons();
+        }
+
+        this.tickEnergyWave();
+        this.tickGrabAttempt();
+
+        if (this.skeletonSummonCooldown > 0) this.skeletonSummonCooldown--;
+
+        // Random skeleton summon while actively fighting (1% per tick).
+        if (this.getTarget() != null && this.skeletonSummonCooldown <= 0
+                && this.random.nextFloat() < 0.01F) {
+            this.skeletonSummonCooldown = SKELETON_SUMMON_INTERVAL;
+            this.summonSkeletons();
+        }
+    }
+
+    private void tickEnergyWave() {
+        if (this.energyCooldown > 0) {
+            this.energyCooldown--;
+            return;
+        }
+        this.energyCooldown = ENERGY_WAVE_INTERVAL;
+        LivingEntity target = this.getTarget();
+        if (target == null) return;
+
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    this.getX(), this.getY() + 1.5D, this.getZ(),
+                    10, 1.0D, 0.5D, 1.0D, 0.12D);
+        }
+
+        AABB area = this.getBoundingBox().inflate(ENERGY_WAVE_RANGE);
+        for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, area,
+                e -> e != this && !(e instanceof TameableGirlEntity))) {
+            if (entity.getType().getCategory().isFriendly()) continue;
+            entity.hurt(this.damageSources().magic(), 4.0F);
+            entity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 1, false, true));
+            entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, false, true));
+        }
+    }
+
+    private void tickGrabAttempt() {
+        if (this.grabCooldown > 0) {
+            this.grabCooldown--;
+            return;
+        }
+        if (this.getTarget() == null) return;
+
+        this.grabCooldown = GRAB_INTERVAL;
+        Player nearestPlayer = null;
+        double nearestDist = (double) GRAB_RANGE * GRAB_RANGE;
+        for (Player player : this.level().getEntitiesOfClass(Player.class,
+                this.getBoundingBox().inflate(GRAB_RANGE))) {
+            if (player.isCreative() || player.isSpectator()) continue;
+            double dist = player.distanceToSqr(this);
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestPlayer = player;
+            }
+        }
+        if (nearestPlayer != null) {
+            this.startGrab(nearestPlayer);
+        }
+    }
+
+    private void tickActiveGrab() {
+        Player grabbed = this.grabbedPlayer();
+        if (grabbed == null || !grabbed.isAlive() || grabbed.isCreative() || grabbed.isSpectator()) {
+            this.releaseGrab(null);
+            return;
+        }
+
+        this.grabPhaseTicks++;
+
+        if (this.grabPhaseTicks >= ESCAPE_DURATION) {
+            grabbed.hurt(this.damageSources().mobAttack(this), GRAB_CUM_DAMAGE);
+            grabbed.hurt(this.damageSources().magic(), 4.0F);
+            Vec3 knockback = grabbed.position().subtract(this.position()).normalize();
+            grabbed.knockback(2.0D, knockback.x, knockback.z);
+            this.releaseGrab(grabbed);
+            return;
+        }
+
+        // Light damage over time while she holds the victim.
+        if (this.grabPhaseTicks % 20 == 0) {
+            grabbed.hurt(this.damageSources().mobAttack(this), 1.0F + this.random.nextFloat());
+        }
+
+        Vec3 lockPos = this.position().add(this.getLookAngle().scale(1.0D));
+        grabbed.teleportTo(lockPos.x, this.getY(), lockPos.z);
+        grabbed.setYRot(this.getYRot());
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean wasDowned = this.isDowned();
         boolean result = super.hurt(source, amount);
         if (!this.level().isClientSide() && !this.isTamed() && !wasDowned && this.isDowned()) {
             this.onDefeated(source);
+        } else if (!this.level().isClientSide() && !this.isTamed() && result) {
+            // Skeleton summon tracks real damage taken while the boss is still alive.
+            this.damageAccumulated += (int) amount;
         }
         return result;
     }
@@ -134,6 +276,18 @@ public class GalathEntity extends SettlementGirlEntityAI {
         Player player = playerFromDamage(source);
         this.setTarget(null);
         this.getNavigation().stop();
+
+        // If she goes down mid-grab, release the victim and close the escape screen.
+        if (!this.grabbedPlayerUUID.isEmpty()) {
+            Player grabbed = this.grabbedPlayer();
+            this.grabbedPlayerUUID = "";
+            this.grabPhaseTicks = 0;
+            this.escapeTaps = 0;
+            if (grabbed instanceof ServerPlayer serverPlayer) {
+                PacketDistributor.sendToPlayer(serverPlayer,
+                        new GalathGrabScreenS2CPacket(this.getId(), false));
+            }
+        }
 
         if (this.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
@@ -146,6 +300,9 @@ public class GalathEntity extends SettlementGirlEntityAI {
                 this.spawnAtLocation(new ItemStack(PleasureHorizonsItems.GALATH_COIN.get()));
                 int stars = 1 + this.random.nextInt(3);
                 this.spawnAtLocation(new ItemStack(Items.NETHER_STAR, stars));
+                if (player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.giveExperiencePoints(this.getBaseExperienceReward());
+                }
             }
         }
         this.playSound(SoundEvents.WITHER_SPAWN, 0.8F, 0.6F);
@@ -158,6 +315,103 @@ public class GalathEntity extends SettlementGirlEntityAI {
 
         // Canon flow: she is gone after losing; the dropped coin is what summons the bound Galath.
         this.discard();
+    }
+
+    /** Summon 2-3 skeletons that fight for Galath. */
+    private void summonSkeletons() {
+        if (this.level().isClientSide()) return;
+
+        int count = 2 + this.random.nextInt(2);
+        for (int i = 0; i < count; i++) {
+            Skeleton skeleton = EntityType.SKELETON.create(this.level());
+            if (skeleton == null) continue;
+            double angle = this.random.nextDouble() * Math.PI * 2;
+            double dist = 2.0D + this.random.nextDouble() * 3.0D;
+            double sx = this.getX() + Math.cos(angle) * dist;
+            double sz = this.getZ() + Math.sin(angle) * dist;
+            skeleton.setPos(sx, this.getY(), sz);
+            LivingEntity target = this.getTarget();
+            if (target != null) skeleton.setTarget(target);
+            skeleton.setPersistenceRequired();
+            this.level().addFreshEntity(skeleton);
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.SMOKE,
+                        sx, this.getY(), sz, 8, 0.3D, 0.5D, 0.3D, 0.05D);
+            }
+        }
+
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    this.getX(), this.getY() + 1.5D, this.getZ(),
+                    10, 1.0D, 0.5D, 1.0D, 0.1D);
+        }
+    }
+
+    private void startGrab(Player player) {
+        this.grabbedPlayerUUID = player.getUUID().toString();
+        this.grabPhaseTicks = 0;
+        this.escapeTaps = 0;
+        this.getNavigation().stop();
+        Vec3 lockPos = this.position().add(this.getLookAngle().scale(1.0D));
+        player.teleportTo(lockPos.x, this.getY(), lockPos.z);
+        player.setYRot(this.getYRot());
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.galath_grabbed"), true);
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer,
+                    new GalathGrabScreenS2CPacket(this.getId(), true));
+        }
+    }
+
+    /** Receives batched escape-tap packets from the client. */
+    public void onEscapeTap(int taps) {
+        if (this.grabbedPlayerUUID.isEmpty() || this.isTamed()) return;
+        this.escapeTaps += Math.max(1, Math.min(taps, 10));
+        if (this.escapeTaps >= ESCAPE_THRESHOLD) {
+            Player grabbed = this.grabbedPlayer();
+            this.releaseGrab(grabbed);
+        }
+    }
+
+    private void releaseGrab(@Nullable Player player) {
+        if (player != null) {
+            player.displayClientMessage(
+                    Component.translatable("msg.pleasurehorizons.galath_escaped"), true);
+            Vec3 knockback = player.position().subtract(this.position()).normalize();
+            player.knockback(1.5D, knockback.x, knockback.z);
+            if (player instanceof ServerPlayer serverPlayer) {
+                PacketDistributor.sendToPlayer(serverPlayer,
+                        new GalathGrabScreenS2CPacket(this.getId(), false));
+            }
+        }
+        this.grabbedPlayerUUID = "";
+        this.grabPhaseTicks = 0;
+        this.escapeTaps = 0;
+        this.grabCooldown = GRAB_INTERVAL / 2;
+    }
+
+    public boolean isGrabbingPlayer() {
+        return !this.grabbedPlayerUUID.isEmpty();
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        // While holding a victim she plants herself and only the grab logic moves the player.
+        if (this.isGrabbingPlayer()) {
+            this.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            return;
+        }
+        super.travel(travelVector);
+    }
+
+    @Nullable
+    private Player grabbedPlayer() {
+        if (this.grabbedPlayerUUID.isEmpty()) return null;
+        try {
+            return this.level().getPlayerByUUID(UUID.fromString(this.grabbedPlayerUUID));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     @Override

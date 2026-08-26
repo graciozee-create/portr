@@ -31,6 +31,7 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(RemovePreviewEntityC2SPacket.TYPE, RemovePreviewEntityC2SPacket.STREAM_CODEC, RemovePreviewEntityC2SPacket::handle);
         registrar.playToServer(ShiftRolesC2SPacket.TYPE, ShiftRolesC2SPacket.STREAM_CODEC, ShiftRolesC2SPacket::handle);
         registrar.playToServer(CallGirlsC2SPacket.TYPE, CallGirlsC2SPacket.STREAM_CODEC, CallGirlsC2SPacket::handle);
+        registrar.playToServer(GalathGrabTapsC2SPacket.TYPE, GalathGrabTapsC2SPacket.STREAM_CODEC, GalathGrabTapsC2SPacket::handle);
         registrar.playToClient(ClothingArmorVisibilityS2CPacket.TYPE, ClothingArmorVisibilityS2CPacket.STREAM_CODEC, ClothingArmorVisibilityS2CPacket::handle);
         registrar.playToClient(GirlStatusS2CPacket.TYPE, GirlStatusS2CPacket.STREAM_CODEC, GirlStatusS2CPacket::handle);
         registrar.playToClient(SceneOptionsS2CPacket.TYPE, SceneOptionsS2CPacket.STREAM_CODEC, SceneOptionsS2CPacket::handle);
@@ -39,5 +40,6 @@ public class PleasureHorizonsPackets {
         registrar.playToClient(PlayAttackAnimationS2CPacket.TYPE, PlayAttackAnimationS2CPacket.STREAM_CODEC, PlayAttackAnimationS2CPacket::handle);
         registrar.playToClient(RunAnimEventsS2CPacket.TYPE, RunAnimEventsS2CPacket.STREAM_CODEC, RunAnimEventsS2CPacket::handle);
         registrar.playToClient(OpenKoboldCustomizeScreenS2CPacket.TYPE, OpenKoboldCustomizeScreenS2CPacket.STREAM_CODEC, OpenKoboldCustomizeScreenS2CPacket::handle);
+        registrar.playToClient(GalathGrabScreenS2CPacket.TYPE, GalathGrabScreenS2CPacket.STREAM_CODEC, GalathGrabScreenS2CPacket::handle);
     }
 }
