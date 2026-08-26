@@ -342,6 +342,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
      * exist in memory, so she is skipped if her chunk is not loaded.
      */
     public boolean callToOwner(Player owner) {
+        final long callStartNanos = System.nanoTime();
+        try {
         if (this.level().isClientSide() || owner == null || this.isSceneActive()) {
             return false;
         }
@@ -372,6 +374,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             resyncTo(serverPlayer);
         }
         return true;
+        } finally {
+            this.slowLog("callToOwner", System.nanoTime() - callStartNanos);
+        }
     }
 
     /**
@@ -522,7 +527,51 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         }
     }
 
+    /** Wall-clock throttle (ms) for the SLOW profiler logs below. */
+    private long lastSlowLogMs = 0L;
+
+    /**
+     * Profiling hook for the "Can't keep up" investigation: logs any of our operations that
+     * takes 100ms or more (a normal girl tick is single-digit ms). At most one SLOW line per
+     * girl per 5 seconds, so a real stall is still visible without spamming the log.
+     */
+    private void slowLog(String op, long elapsedNanos) {
+        long ms = elapsedNanos / 1_000_000L;
+        if (ms < 100L) return;
+        long now = System.currentTimeMillis();
+        if (now - this.lastSlowLogMs < 5000L) return;
+        this.lastSlowLogMs = now;
+        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
+                "[PH] SLOW {}: {}ms | girl={} ({} id={}) target={} following={} scene={} inWater={}",
+                op, ms, this.getGirlDisplayName(), this.getGirlID(), this.getId(),
+                this.getTarget() == null ? "none" : this.getTarget().getName().getString(),
+                this.isFollowing(), this.isSceneActive(), this.isInWater());
+    }
+
+    /** Wall-clock throttle (ms) for the SLOW profiler logs below. */
+    private long lastSlowLogMs = 0L;
+
+    /**
+     * Profiling hook for the "Can't keep up" investigation: logs any of our operations that
+     * takes 100ms or more (a normal girl tick is single-digit ms). At most one SLOW line per
+     * girl per 5 seconds, so a real stall is still visible without spamming the log.
+     */
+    private void slowLog(String op, long elapsedNanos) {
+        long ms = elapsedNanos / 1_000_000L;
+        if (ms < 100L) return;
+        long now = System.currentTimeMillis();
+        if (now - this.lastSlowLogMs < 5000L) return;
+        this.lastSlowLogMs = now;
+        com.sandymandy.pleasurehorizons.PleasureHorizons.LOGGER.warn(
+                "[PH] SLOW {}: {}ms | girl={} ({} id={}) target={} following={} scene={} inWater={}",
+                op, ms, this.getGirlDisplayName(), this.getGirlID(), this.getId(),
+                this.getTarget() == null ? "none" : this.getTarget().getName().getString(),
+                this.isFollowing(), this.isSceneActive(), this.isInWater());
+    }
+
     public boolean teleportNear(Player player) {
+        final long nearStartNanos = System.nanoTime();
+        try {
         if (this.level().isClientSide() || this.isSceneActive()) {
             return false;
         }
@@ -564,6 +613,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             }
         }
         return true;
+        } finally {
+            this.slowLog("teleportNear", System.nanoTime() - nearStartNanos);
+        }
     }
 
     /** Matches a user-supplied name against her custom name or her rig id (case-insensitive). */
@@ -1592,7 +1644,9 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 if (this.waterStuckTicks % 10 == 0 && !inCombat) {
                     this.jumpFromGround();
                     // Add forward momentum toward nearest shore
+                    long shoreNanos = System.nanoTime();
                     net.minecraft.core.BlockPos shorePos = findNearestShore();
+                    this.slowLog("shore search", System.nanoTime() - shoreNanos);
                     if (shorePos != null) {
                         double dx = shorePos.getX() + 0.5D - this.getX();
                         double dz = shorePos.getZ() + 0.5D - this.getZ();
@@ -1731,8 +1785,11 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                         && this.distanceToSqr(owner) < 16.0D * 16.0D
                         && shouldRunAggroScan(owner, this.level().getGameTime())) {
                     net.minecraft.world.phys.AABB box = owner.getBoundingBox().inflate(8.0D, 4.0D, 8.0D);
+                    long scanNanos = System.nanoTime();
+                    int mobsScanned = 0;
                     for (net.minecraft.world.entity.Mob mob : this.level().getEntitiesOfClass(
                             net.minecraft.world.entity.Mob.class, box)) {
+                        mobsScanned++;
                         if (mob.isAlive() && !(mob instanceof TameableGirlEntity)) {
                             LivingEntity mobTarget = mob.getTarget();
                             // Priority 1: mob is attacking owner - switch to girl immediately
@@ -1747,6 +1804,7 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                             }
                         }
                     }
+                    this.slowLog("aggro scan (" + mobsScanned + " mobs)", System.nanoTime() - scanNanos);
                 }
             }
         }
@@ -1832,6 +1890,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         } else if (this.isNoGravity() && !this.isSceneActive() && !this.level().isClientSide()) {
             // Failsafe: never leave her weightless once the carry has ended.
             this.setNoGravity(false);
+        }
+
+        // Profiler: any single tick over 100ms is abnormal; the [PH] SLOW sub-operation logs
+        // (shore search, aggro scan, teleports) identify the responsible path.
+        if (!this.level().isClientSide() && this.isTamed()) {
+            this.slowLog("girl tick", System.nanoTime() - tickStartNanos);
         }
     }
 

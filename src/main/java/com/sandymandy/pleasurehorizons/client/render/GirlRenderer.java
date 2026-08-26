@@ -65,6 +65,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                           @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer,
                           boolean isReRender, float partialTick, int packedLight,
                           int packedOverlay, int colour) {
+        this.renderStartNanos = System.nanoTime();
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, colour);
 
@@ -542,6 +543,7 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
                            boolean isReRender, float partialTick, int packedLight,
                            int packedOverlay, int colour) {
         if (!isReRender) {
+            GirlRenderProfiler.record(this.renderStartNanos);
             renderedBoneStates.forEach((bone, state) -> state.restore(bone));
             renderedBoneStates.clear();
             boneOverridesApplied = false;
@@ -555,6 +557,8 @@ public class GirlRenderer<T extends GirlSceneEntity> extends GeoEntityRenderer<T
     @Nullable
     private BakedGeoModel currentRenderModel;
     private boolean boneOverridesApplied;
+    /** Start of the current girl render pass (profiling). */
+    private long renderStartNanos;
 
     private record BoneRenderState(boolean hidden, boolean childrenHidden,
                                    float rotX, float rotY, float rotZ,
