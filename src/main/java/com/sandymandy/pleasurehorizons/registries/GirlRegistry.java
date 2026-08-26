@@ -48,6 +48,36 @@ public class GirlRegistry {
                     .sized(0.5f, 1.35f)
                     .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "coppie").toString()));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<AllieEntity>> ALLIE = ENTITY_TYPES.register("allie",
+            () -> EntityType.Builder.<AllieEntity>of(AllieEntity::new, MobCategory.CREATURE)
+                    .sized(0.5f, 1.85f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "allie").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<BiaEntity>> BIA = ENTITY_TYPES.register("bia",
+            () -> EntityType.Builder.<BiaEntity>of(BiaEntity::new, MobCategory.CREATURE)
+                    .sized(0.5f, 1.85f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "bia").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GoblinEntity>> GOBLIN = ENTITY_TYPES.register("goblin",
+            () -> EntityType.Builder.<GoblinEntity>of(GoblinEntity::new, MobCategory.CREATURE)
+                    .sized(0.6f, 1.5f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "goblin").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GalathEntity>> GALATH = ENTITY_TYPES.register("galath",
+            () -> EntityType.Builder.<GalathEntity>of(GalathEntity::new, MobCategory.CREATURE)
+                    .sized(0.6f, 2.0f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "galath").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ManglelieEntity>> MANGLELIE = ENTITY_TYPES.register("manglelie",
+            () -> EntityType.Builder.<ManglelieEntity>of(ManglelieEntity::new, MobCategory.CREATURE)
+                    .sized(0.5f, 1.75f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "manglelie").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<JennyEntity>> JENNY = ENTITY_TYPES.register("jenny",
+            () -> EntityType.Builder.<JennyEntity>of(JennyEntity::new, MobCategory.CREATURE)
+                    .sized(0.5f, 1.85f)
+                    .build(ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "jenny").toString()));
+
     public static final DeferredHolder<EntityType<?>, EntityType<CustomGirlEntity>> CUSTOM_GIRL = ENTITY_TYPES.register("custom_girl",
             () -> EntityType.Builder.<CustomGirlEntity>of(CustomGirlEntity::new, MobCategory.CREATURE)
                     .sized(0.5f, 1.95f)
@@ -55,10 +85,6 @@ public class GirlRegistry {
 
     public static void register(IEventBus bus) {
         ENTITY_TYPES.register(bus);
-    }
-
-    public static void registerGirls() {
-        PleasureHorizons.LOGGER.info("Registering girls for " + PleasureHorizons.MOD_NAME);
     }
 
     @SubscribeEvent
@@ -70,5 +96,11 @@ public class GirlRegistry {
         event.put(KOBOLD.get(), KoboldEntity.createAttributes().build());
         event.put(COPPIE.get(), CoppieEntity.createAttributes().build());
         event.put(CUSTOM_GIRL.get(), CustomGirlEntity.createAttributes().build());
+        event.put(ALLIE.get(), AllieEntity.createAttributes().build());
+        event.put(BIA.get(), BiaEntity.createAttributes().build());
+        event.put(GOBLIN.get(), GoblinEntity.createAttributes().build());
+        event.put(GALATH.get(), GalathEntity.createAttributes().build());
+        event.put(MANGLELIE.get(), ManglelieEntity.createAttributes().build());
+        event.put(JENNY.get(), JennyEntity.createAttributes().build());
     }
 }

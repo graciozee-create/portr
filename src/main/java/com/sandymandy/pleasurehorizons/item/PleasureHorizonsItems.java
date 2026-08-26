@@ -60,11 +60,20 @@ public class PleasureHorizonsItems {
     public static final DeferredHolder<Item, Item> CARVED_GIRL_PUMPKIN_ITEM = ITEMS.register("carved_girl_pumpkin",
             () -> new BlockItem(PleasureHorizonsBlocks.CARVED_GIRL_PUMPKIN.get(), new Item.Properties()));
 
+    // Jenny Mod special items (ported from Mine335/JennysMod1.21.1)
+    public static final DeferredHolder<Item, Item> ALLIE_LAMP = ITEMS.register("allies_lamp",
+            () -> new com.sandymandy.pleasurehorizons.item.items.AllieLampItem(new Item.Properties()));
+
+    public static final DeferredHolder<Item, Item> GALATH_COIN = ITEMS.register("galath_coin",
+            () -> new com.sandymandy.pleasurehorizons.item.items.GalathCoinItem(new Item.Properties()));
+
+    public static final DeferredHolder<Item, Item> DRAGON_STAFF = ITEMS.register("dragon_staff",
+            () -> new com.sandymandy.pleasurehorizons.item.items.DragonStaffItem(new Item.Properties()));
+
+    public static final DeferredHolder<Item, Item> TRIBE_EGG = ITEMS.register("tribe_egg",
+            () -> new com.sandymandy.pleasurehorizons.item.items.TribeEggItem(new Item.Properties()));
+
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
-    }
-
-    public static void registerItems() {
-        PleasureHorizons.LOGGER.info("Registering items for " + PleasureHorizons.MOD_NAME);
     }
 }

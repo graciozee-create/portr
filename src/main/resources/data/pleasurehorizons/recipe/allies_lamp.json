@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [" G ", "GLG", " G "],
+  "key": {
+    "G": { "item": "minecraft:gold_ingot" },
+    "L": { "item": "minecraft:lantern" }
+  },
+  "result": { "id": "pleasurehorizons:allies_lamp", "count": 1 }
+}

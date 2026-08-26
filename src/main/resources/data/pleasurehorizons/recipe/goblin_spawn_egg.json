@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:emerald" },
+    { "tag": "c:eggs" }
+  ],
+  "result": { "count": 1, "id": "pleasurehorizons:goblin_spawn_egg" }
+}

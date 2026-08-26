@@ -41,6 +41,18 @@ public class PleasureHorizonsSpawnEggs {
             registerEgg("kobold_spawn_egg", GirlRegistry.KOBOLD::get, 0xC97B3D, 0x6E4326);
     public static final DeferredHolder<Item, Item> COPPIE_SPAWN_EGG =
             registerEgg("coppie_spawn_egg", GirlRegistry.COPPIE::get, 0xE0794B, 0x4FBFA8);
+    public static final DeferredHolder<Item, Item> ALLIE_SPAWN_EGG =
+            registerEgg("allie_spawn_egg", GirlRegistry.ALLIE::get, 0xF2C4A0, 0xD4629A);
+    public static final DeferredHolder<Item, Item> BIA_SPAWN_EGG =
+            registerEgg("bia_spawn_egg", GirlRegistry.BIA::get, 0xE8C8A0, 0x6B8E5A);
+    public static final DeferredHolder<Item, Item> GOBLIN_SPAWN_EGG =
+            registerEgg("goblin_spawn_egg", GirlRegistry.GOBLIN::get, 0x8B9A6B, 0x4A5A3A);
+    public static final DeferredHolder<Item, Item> GALATH_SPAWN_EGG =
+            registerEgg("galath_spawn_egg", GirlRegistry.GALATH::get, 0x7B3FA0, 0xC9A03D);
+    public static final DeferredHolder<Item, Item> MANGLELIE_SPAWN_EGG =
+            registerEgg("manglelie_spawn_egg", GirlRegistry.MANGLELIE::get, 0xA0A0B0, 0x5050A0);
+    public static final DeferredHolder<Item, Item> JENNY_SPAWN_EGG =
+            registerEgg("jenny_spawn_egg", GirlRegistry.JENNY::get, 0xF2D4A0, 0xA06030);
 
     @SuppressWarnings("unchecked")
     private static DeferredHolder<Item, Item> registerEgg(String name,

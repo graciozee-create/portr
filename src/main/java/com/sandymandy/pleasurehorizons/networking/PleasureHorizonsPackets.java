@@ -21,10 +21,7 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(ThrustKeybindC2SPacket.TYPE, ThrustKeybindC2SPacket.STREAM_CODEC, ThrustKeybindC2SPacket::handle);
         registrar.playToServer(CumKeybindC2SPacket.TYPE, CumKeybindC2SPacket.STREAM_CODEC, CumKeybindC2SPacket::handle);
         registrar.playToServer(InventoryButtonC2SPacket.TYPE, InventoryButtonC2SPacket.STREAM_CODEC, InventoryButtonC2SPacket::handle);
-        registrar.playToServer(BonePosSyncC2SPacket.TYPE, BonePosSyncC2SPacket.STREAM_CODEC, BonePosSyncC2SPacket::handle);
-        registrar.playToServer(AnimationSyncC2SPacket.TYPE, AnimationSyncC2SPacket.STREAM_CODEC, AnimationSyncC2SPacket::handle);
         registrar.playToServer(AnimationFinishC2SPacket.TYPE, AnimationFinishC2SPacket.STREAM_CODEC, AnimationFinishC2SPacket::handle);
-        registrar.playToServer(ScenePhaseSyncC2SPacket.TYPE, ScenePhaseSyncC2SPacket.STREAM_CODEC, ScenePhaseSyncC2SPacket::handle);
         registrar.playToServer(SetGUIOpenStateC2SPacket.TYPE, SetGUIOpenStateC2SPacket.STREAM_CODEC, SetGUIOpenStateC2SPacket::handle);
         registrar.playToServer(SoundEventSyncC2SPacket.TYPE, SoundEventSyncC2SPacket.STREAM_CODEC, SoundEventSyncC2SPacket::handle);
         registrar.playToServer(StartSceneC2SPacket.TYPE, StartSceneC2SPacket.STREAM_CODEC, StartSceneC2SPacket::handle);
@@ -32,14 +29,13 @@ public class PleasureHorizonsPackets {
         registrar.playToServer(GirlCustomizeC2SPacket.TYPE, GirlCustomizeC2SPacket.STREAM_CODEC, GirlCustomizeC2SPacket::handle);
         registrar.playToServer(KoboldCustomizeC2SPacket.TYPE, KoboldCustomizeC2SPacket.STREAM_CODEC, KoboldCustomizeC2SPacket::handle);
         registrar.playToServer(RemovePreviewEntityC2SPacket.TYPE, RemovePreviewEntityC2SPacket.STREAM_CODEC, RemovePreviewEntityC2SPacket::handle);
-        registrar.playToServer(RegisterCustomGirlMessageC2SPacket.TYPE, RegisterCustomGirlMessageC2SPacket.STREAM_CODEC, RegisterCustomGirlMessageC2SPacket::handle);
-        registrar.playToServer(RegisterCustomGirlSoundC2SPacket.TYPE, RegisterCustomGirlSoundC2SPacket.STREAM_CODEC, RegisterCustomGirlSoundC2SPacket::handle);
-        registrar.playToServer(RegisterCustomGirlRandomSoundC2SPacket.TYPE, RegisterCustomGirlRandomSoundC2SPacket.STREAM_CODEC, RegisterCustomGirlRandomSoundC2SPacket::handle);
+        registrar.playToServer(ShiftRolesC2SPacket.TYPE, ShiftRolesC2SPacket.STREAM_CODEC, ShiftRolesC2SPacket::handle);
+        registrar.playToServer(CallGirlsC2SPacket.TYPE, CallGirlsC2SPacket.STREAM_CODEC, CallGirlsC2SPacket::handle);
         registrar.playToClient(ClothingArmorVisibilityS2CPacket.TYPE, ClothingArmorVisibilityS2CPacket.STREAM_CODEC, ClothingArmorVisibilityS2CPacket::handle);
+        registrar.playToClient(GirlStatusS2CPacket.TYPE, GirlStatusS2CPacket.STREAM_CODEC, GirlStatusS2CPacket::handle);
         registrar.playToClient(SceneOptionsS2CPacket.TYPE, SceneOptionsS2CPacket.STREAM_CODEC, SceneOptionsS2CPacket::handle);
         registrar.playToClient(PlayCumHudAnimationS2CPacket.TYPE, PlayCumHudAnimationS2CPacket.STREAM_CODEC, PlayCumHudAnimationS2CPacket::handle);
         registrar.playToClient(OpenCustomizeScreenS2CPacket.TYPE, OpenCustomizeScreenS2CPacket.STREAM_CODEC, OpenCustomizeScreenS2CPacket::handle);
-        registrar.playToClient(RefreshModelsS2CPacket.TYPE, RefreshModelsS2CPacket.STREAM_CODEC, RefreshModelsS2CPacket::handle);
         registrar.playToClient(PlayAttackAnimationS2CPacket.TYPE, PlayAttackAnimationS2CPacket.STREAM_CODEC, PlayAttackAnimationS2CPacket::handle);
         registrar.playToClient(RunAnimEventsS2CPacket.TYPE, RunAnimEventsS2CPacket.STREAM_CODEC, RunAnimEventsS2CPacket::handle);
         registrar.playToClient(OpenKoboldCustomizeScreenS2CPacket.TYPE, OpenKoboldCustomizeScreenS2CPacket.STREAM_CODEC, OpenKoboldCustomizeScreenS2CPacket::handle);

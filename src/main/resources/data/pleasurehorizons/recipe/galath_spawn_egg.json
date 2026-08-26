@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:netherite_ingot" },
+    { "tag": "c:eggs" }
+  ],
+  "result": { "count": 1, "id": "pleasurehorizons:galath_spawn_egg" }
+}
