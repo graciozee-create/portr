@@ -1,6 +1,5 @@
 package com.sandymandy.pleasurehorizons.relationship;
 
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -31,14 +30,5 @@ public class DialogueDB {
     public static String previewKey(AffectionData.AffectionLevel level) {
         return "dialogue.pleasurehorizons.greeting.generic."
                 + level.name().toLowerCase(java.util.Locale.ROOT) + ".1";
-    }
-
-    /** Simple helper to keep the greeting key list symmetrical with {@link AffectionData.AffectionLevel}. */
-    public static Map<String, String> debugKeys() {
-        Map<String, String> keys = new EnumMap<>(AffectionData.AffectionLevel.class);
-        for (AffectionData.AffectionLevel level : AffectionData.AffectionLevel.values()) {
-            keys.put(level.name(), previewKey(level));
-        }
-        return keys;
     }
 }
