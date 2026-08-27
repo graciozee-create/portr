@@ -111,7 +111,13 @@ public class InteractionScreen extends Screen {
 
     private void openScenes() {
         if (this.scenes.isEmpty()) return;
-        PacketDistributor.sendToServer(new SetGUIOpenStateC2SPacket(this.girl.getId(), false));
+        // Deliberately do NOT send SetGUIOpenState(false) here. StartSceneC2SPacket
+        // authorizes the pick against the server-side open interaction: guiOpenState must
+        // still be true, lookAtTarget must still be this player, and the girl's inventory
+        // container must still be open. Clearing the state here made every button in the
+        // picker a silent no-op (server rejected the pick). The state is cleared instead
+        // by GirlSceneScreen.onClose() when the user leaves without a pick, and by the
+        // server itself when a scene is accepted.
         net.minecraft.client.Minecraft.getInstance().setScreen(new GirlSceneScreen(
                 this.girl.getId(), this.girl.getCurrentRelationshipLevel(),
                 new net.minecraft.world.item.ItemStack(this.girl.isAttractedTo()), this.scenes));
