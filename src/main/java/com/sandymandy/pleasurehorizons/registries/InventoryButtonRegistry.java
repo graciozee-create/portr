@@ -7,17 +7,19 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.List;
 
 /**
- * The buttons shown in the girl inventory screen, split into a main tab (relationship and
- * comfort actions) and a survival tab (the AI behaviours that make her useful around a base).
+ * The buttons shown in the girl inventory screen.
  *
- * <p>Every action previously had an empty body, so the buttons did nothing at all.
- * They now send {@link InventoryButtonC2SPacket} to the server, which applies the
+ * <p>The screen is a single large menu (no tabs): every action is visible at once, grouped
+ * into three sections - relationship/comfort actions, AI behaviours and per-girl settings.
+ *
+ * <p>Every action sends {@link InventoryButtonC2SPacket} to the server, which applies the
  * change. The Fabric original used {@code ClientPlayNetworking.send}; the NeoForge
  * equivalent is {@link PacketDistributor#sendToServer}.</p>
  */
 public class InventoryButtonRegistry {
 
-    public static final List<InventoryButtonAction> BUTTONS_MAIN_LEFT = List.of(
+    /** Relationship and comfort actions (formerly the "Main" tab). */
+    public static final List<InventoryButtonAction> BUTTONS_MAIN = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.breakUp", 0,
                     (girl, player) -> send(girl.getId(), "breakUp")),
@@ -32,10 +34,8 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.customize", 1, true,
-                    (girl, player) -> send(girl.getId(), "customize"))
-    );
+                    (girl, player) -> send(girl.getId(), "customize")),
 
-    public static final List<InventoryButtonAction> BUTTONS_MAIN_RIGHT = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.sit", 2,
                     (girl, player) -> send(girl.getId(), "sit")),
@@ -53,7 +53,8 @@ public class InventoryButtonRegistry {
                     (girl, player) -> send(girl.getId(), "talk"))
     );
 
-    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_LEFT = List.of(
+    /** AI behaviours that make her useful around a base (formerly the "Survival" tab). */
+    public static final List<InventoryButtonAction> BUTTONS_BEHAVIOR = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.guardBase", 1,
                     (girl, player) -> send(girl.getId(), "guardBase")),
@@ -80,10 +81,8 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.cycleRole", 2,
-                    (girl, player) -> send(girl.getId(), "cycleRole"))
-    );
+                    (girl, player) -> send(girl.getId(), "cycleRole")),
 
-    public static final List<InventoryButtonAction> BUTTONS_SURVIVAL_RIGHT = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.chopTrees", 2,
                     (girl, player) -> send(girl.getId(), "chopTrees")),
@@ -102,12 +101,12 @@ public class InventoryButtonRegistry {
     );
 
     /**
-     * Fine-tuning settings, in their own tab. Every entry passes {@code opensSubscreen = true}:
-     * not because a subscreen opens, but because the screen must STAY OPEN - closing after
-     * every click would make adjusting eleven small settings miserable. The button labels are
-     * rendered stateful by {@code GirlInventoryScreen#dynamicLabel}.
+     * Fine-tuning per-girl settings (formerly the "Settings" tab). Every entry passes
+     * {@code opensSubscreen = true} to keep the screen OPEN after a click - closing after
+     * every single knob would make adjusting twelve settings miserable. The button labels
+     * are rendered stateful by {@code GirlInventoryScreen#dynamicLabel}.
      */
-    public static final List<InventoryButtonAction> BUTTONS_SETTINGS_LEFT = List.of(
+    public static final List<InventoryButtonAction> BUTTONS_SETTINGS = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.followTeleport", 2, true,
                     (girl, player) -> send(girl.getId(), "followTeleport")),
@@ -134,10 +133,8 @@ public class InventoryButtonRegistry {
 
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.avoidWater", 1, true,
-                    (girl, player) -> send(girl.getId(), "avoidWater"))
-    );
+                    (girl, player) -> send(girl.getId(), "avoidWater")),
 
-    public static final List<InventoryButtonAction> BUTTONS_SETTINGS_RIGHT = List.of(
             new InventoryButtonAction(
                     "gui.pleasurehorizons.button.stayRadius", 1, true,
                     (girl, player) -> send(girl.getId(), "stayRadius")),

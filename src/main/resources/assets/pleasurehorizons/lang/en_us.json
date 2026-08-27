@@ -723,5 +723,9 @@
   "gui.pleasurehorizons.interaction.talk": "💬 Talk",
   "gui.pleasurehorizons.interaction.inventory": "🎛 Inventory",
   "gui.pleasurehorizons.interaction.close": "Close",
+  "gui.pleasurehorizons.section.main": "Main",
+  "gui.pleasurehorizons.section.behavior": "Behavior",
+  "gui.pleasurehorizons.section.settings": "Settings",
+  "gui.pleasurehorizons.section.mod": "Mod",
   "gui.pleasurehorizons.settings.open": "Open Mod Settings"
 }

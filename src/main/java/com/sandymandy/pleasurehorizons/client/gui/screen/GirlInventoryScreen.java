@@ -27,18 +27,40 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PleasureHorizons.MOD_ID, "textures/gui/inventory.png");
     private static final int GUI_WIDTH = 176;
     private static final int GUI_HEIGHT = 170;
-    private static final int TAB_MAIN = 0;
-    private static final int TAB_SURVIVAL = 1;
-    private static final int TAB_SETTINGS = 2;
+    // Big-menu layout: all actions live on one screen in four button columns around the
+    // inventory panel (two per side), each column headed by its section name.
+    private static final int BTN_W = 80;
+    private static final int BTN_H = 20;
+    private static final int COL_GAP = 6;
+    private static final int ROW_GAP = 4;
+    private static final int COL_PAD = 10;
+    private static final int HEADER_H = 14;
+    private static final int COLOR_SECTION_HEADER = 0xFFCC88DD;
     private final TameableGirlEntity girl;
     private final Player player;
-    private int tabIndex = TAB_MAIN;
+    /** Section header rows (absolute screen coords + label), drawn in renderLabels. */
+    private final java.util.List<int[]> sectionHeaderPositions = new java.util.ArrayList<>();
+    private final java.util.List<Component> sectionHeaderLabels = new java.util.ArrayList<>();
+    private int frameCounter;
     /**
-     * Clicks made on Settings-tab buttons since the screen opened. Synched data only arrives
-     * from the server a few ticks later, so these counts let the labels/tooltips reflect the
-     * would-be state immediately (toggles flip per click, cycles advance per click).
+     * Clicks made on stateful setting buttons since the server state was last observed, plus
+     * the server value at the time of the first pending click ("base"). Synched data only
+     * arrives from the server a few ticks later, so the pending count lets the labels/tooltips
+     * reflect the would-be state immediately (toggles flip per click, cycles advance per
+     * click). The base is what makes the optimistic display self-correcting: the moment the
+     * server value differs from the base, one pending click is considered applied and the
+     * base is re-anchored to the new server value.
      */
     private final java.util.Map<String, Integer> pendingClicks = new java.util.HashMap<>();
+    private final java.util.Map<String, Boolean> pendingBaseToggle = new java.util.HashMap<>();
+    private final java.util.Map<String, Integer> pendingBaseMode = new java.util.HashMap<>();
+    /** Setting keys that cycle through three values instead of flipping on/off. */
+    private static final java.util.Set<String> MODE_SETTING_KEYS = java.util.Set.of(
+            "gui.pleasurehorizons.button.followDistance",
+            "gui.pleasurehorizons.button.workPace",
+            "gui.pleasurehorizons.button.workRadius",
+            "gui.pleasurehorizons.button.guardRange",
+            "gui.pleasurehorizons.button.stayRadius");
 
     public GirlInventoryScreen(GirlInventoryScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
@@ -50,13 +72,23 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Dynamic labels (sit/stand, on/off values, relationship gating) come from server
+        // sync a few ticks after a click - the screen no longer closes after a click, so
+        // refresh the widget list twice a second to keep the labels honest.
+        if (++this.frameCounter % 20 == 1) {
+            this.rebuildWidgets();
+        }
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Stops the container names from rendering
+        // Stops the container names from rendering.
+        for (int i = 0; i < this.sectionHeaderLabels.size(); i++) {
+            int[] pos = this.sectionHeaderPositions.get(i);
+            guiGraphics.drawString(this.font, this.sectionHeaderLabels.get(i), pos[0], pos[1], COLOR_SECTION_HEADER, false);
+        }
     }
 
     @Override
@@ -128,17 +160,15 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 btn -> {
                     if (girl != null && minecraft != null && player != null) {
                         action.action().accept(girl, player);
-                        // Talk and Customize replace this screen asynchronously after the server
-                        // validates the click. Closing here would send both the vanilla container
-                        // close and SetGUIOpenState(false) before the replacement screen can use
-                        // the interaction. That invalidates customization previews/confirmation
-                        // and makes every scene-selection button fail server authorization.
-                        // Settings buttons keep the screen open too: adjusting a stack of small
-                        // knobs must not close and reopen the inventory eleven times.
-                        if (!action.opensSubscreen()) {
-                            this.onClose();
-                        } else if (tabIndex == TAB_SETTINGS) {
-                            pendingClicks.merge(action.labelKey(), 1, Integer::sum);
+                        // Single-screen menu: clicks never close it. Talk and Customize
+                        // replace this screen asynchronously after the server validates the
+                        // click (closing early would invalidate the scene-selection
+                        // authorization), and every other button keeps it open so a stack of
+                        // toggles can be adjusted in one place.
+                        if (settingsTooltip(action.labelKey()) != null) {
+                            recordPendingSettingClick(action.labelKey());
+                        }
+                        if (this.minecraft != null && this.minecraft.screen == this) {
                             this.rebuildWidgets();
                         }
                     }
@@ -168,90 +198,41 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         int centerX = (this.width - GUI_WIDTH) / 2;
         int centerY = (this.height - GUI_HEIGHT) / 2;
 
-        int buttonHeight = 22;
-        int buttonWidth = 80;
-
-        int paddingX = 10;
-        int paddingY = 4;
-
-        int startX = centerX - (buttonWidth + paddingX);
-        int startY = centerY + 15;
+        this.sectionHeaderPositions.clear();
+        this.sectionHeaderLabels.clear();
 
         if (girl.isTamed()) {
-            initTabs(centerX, centerY);
-
-            List<InventoryButtonAction> left = switch (tabIndex) {
-                case TAB_SURVIVAL -> InventoryButtonRegistry.BUTTONS_SURVIVAL_LEFT;
-                case TAB_SETTINGS -> InventoryButtonRegistry.BUTTONS_SETTINGS_LEFT;
-                default -> InventoryButtonRegistry.BUTTONS_MAIN_LEFT;
-            };
-            List<InventoryButtonAction> right = switch (tabIndex) {
-                case TAB_SURVIVAL -> InventoryButtonRegistry.BUTTONS_SURVIVAL_RIGHT;
-                case TAB_SETTINGS -> InventoryButtonRegistry.BUTTONS_SETTINGS_RIGHT;
-                default -> InventoryButtonRegistry.BUTTONS_MAIN_RIGHT;
-            };
-
-            for (int i = 0; i < left.size(); i++) {
-                InventoryButtonAction action = left.get(i);
-                int y = startY + i * (buttonHeight + paddingY);
-                this.drawButton(dynamicLabel(action), action, startX, y, buttonWidth, buttonHeight);
-            }
-
-            for (int i = 0; i < right.size(); i++) {
-                InventoryButtonAction action = right.get(i);
-                int y = startY + i * (buttonHeight + paddingY);
-                this.drawButton(dynamicLabel(action), action, centerX + 176 + paddingX, y, buttonWidth, buttonHeight);
-            }
-
-            if (tabIndex == TAB_SETTINGS) {
-                // Mod-wide/client options (freecam, thrust behaviour, girl shading) are not
-                // per-girl, so they live in their own screen reached from the settings tab.
-                int y = startY + Math.max(left.size(), right.size()) * (buttonHeight + paddingY) + 4;
-                this.addRenderableWidget(Button.builder(
-                                Component.translatable("gui.pleasurehorizons.settings.open"),
-                                b -> {
-                                    this.onClose();
-                                    net.minecraft.client.Minecraft.getInstance()
-                                            .setScreen(new FreecamSettingsScreen());
-                                })
-                        .bounds(startX, y, buttonWidth, buttonHeight)
-                        .build());
-            }
+            int topY = centerY + 8;
+            // Two columns per side of the 176px panel:
+            //   [Main] [Behavior]  |panel|  [Settings] [Mod]
+            this.drawSectionColumn(centerX - COL_PAD - 2 * BTN_W - COL_GAP, topY,
+                    "gui.pleasurehorizons.section.main", InventoryButtonRegistry.BUTTONS_MAIN);
+            this.drawSectionColumn(centerX - COL_PAD - BTN_W, topY,
+                    "gui.pleasurehorizons.section.behavior", InventoryButtonRegistry.BUTTONS_BEHAVIOR);
+            this.drawSectionColumn(centerX + GUI_WIDTH + COL_PAD, topY,
+                    "gui.pleasurehorizons.section.settings", InventoryButtonRegistry.BUTTONS_SETTINGS);
+            // Mod-wide/client options (freecam, etc.) are not per-girl, so they open their
+            // own screen.
+            this.drawSectionColumn(centerX + GUI_WIDTH + COL_PAD + BTN_W + COL_GAP, topY,
+                    "gui.pleasurehorizons.section.mod", List.of(new InventoryButtonAction(
+                            "gui.pleasurehorizons.settings.open", 0, true,
+                            (g, p) -> {
+                                this.onClose();
+                                net.minecraft.client.Minecraft.getInstance()
+                                        .setScreen(new FreecamSettingsScreen());
+                            })));
         }
     }
 
-    /** Three small tab buttons above the panel; the active tab is rendered disabled. */
-    private void initTabs(int centerX, int centerY) {
-        int tabWidth = 84;
-        int tabHeight = 16;
-        int tabY = centerY - 46;
-        // The row is wider than the 176px panel, so centre it on the panel.
-        int rowWidth = tabWidth * 3 + 8;
-        int startX = centerX - (rowWidth - GUI_WIDTH) / 2;
-
-        Button mainTab = Button.builder(
-                        Component.translatable("gui.pleasurehorizons.tab.main"),
-                        b -> switchTab(TAB_MAIN))
-                .bounds(startX, tabY, tabWidth, tabHeight)
-                .build();
-        mainTab.active = tabIndex != TAB_MAIN;
-        this.addRenderableWidget(mainTab);
-
-        Button survivalTab = Button.builder(
-                        Component.translatable("gui.pleasurehorizons.tab.survival"),
-                        b -> switchTab(TAB_SURVIVAL))
-                .bounds(startX + tabWidth + 4, tabY, tabWidth, tabHeight)
-                .build();
-        survivalTab.active = tabIndex != TAB_SURVIVAL;
-        this.addRenderableWidget(survivalTab);
-
-        Button settingsTab = Button.builder(
-                        Component.translatable("gui.pleasurehorizons.tab.settings"),
-                        b -> switchTab(TAB_SETTINGS))
-                .bounds(startX + (tabWidth + 4) * 2, tabY, tabWidth, tabHeight)
-                .build();
-        settingsTab.active = tabIndex != TAB_SETTINGS;
-        this.addRenderableWidget(settingsTab);
+    /** A section header plus a vertical column of buttons under it. */
+    private void drawSectionColumn(int x, int topY, String headerKey, List<InventoryButtonAction> actions) {
+        this.sectionHeaderPositions.add(new int[]{x, topY});
+        this.sectionHeaderLabels.add(Component.translatable(headerKey));
+        int y = topY + HEADER_H;
+        for (InventoryButtonAction action : actions) {
+            this.drawButton(dynamicLabel(action), action, x, y, BTN_W, BTN_H);
+            y += BTN_H + ROW_GAP;
+        }
     }
 
     /** Tooltip shown on Settings-tab buttons: description + the (optimistic) current value. */
@@ -319,21 +300,78 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 Component.translatable(on ? onKey : offKey));
     }
 
-    /** Server state plus the clicks already made in this screen session. */
-    private boolean effectiveToggle(String key, boolean serverValue) {
-        int extra = pendingClicks.getOrDefault(key, 0);
-        return extra % 2 == 0 ? serverValue : !serverValue;
-    }
-
-    private int effectiveMode(String key, int serverValue) {
-        return Math.floorMod(serverValue + pendingClicks.getOrDefault(key, 0), 3);
-    }
-
-    private void switchTab(int tab) {
-        if (this.tabIndex != tab) {
-            this.tabIndex = tab;
-            this.rebuildWidgets();
+    /**
+     * Bumps the pending counter for a setting, anchoring the base to the CURRENT server value
+     * on the first pending click (the value captured before the server applies the new one).
+     */
+    private void recordPendingSettingClick(String key) {
+        int n = this.pendingClicks.getOrDefault(key, 0);
+        if (n == 0) {
+            if (MODE_SETTING_KEYS.contains(key)) {
+                this.pendingBaseMode.put(key, switch (key) {
+                    case "gui.pleasurehorizons.button.followDistance" -> girl.getFollowDistanceMode();
+                    case "gui.pleasurehorizons.button.workPace" -> girl.getWorkPaceMode();
+                    case "gui.pleasurehorizons.button.workRadius" -> girl.getWorkRadiusMode();
+                    case "gui.pleasurehorizons.button.guardRange" -> girl.getGuardRangeMode();
+                    default -> girl.getStayRadiusMode();
+                });
+            } else {
+                this.pendingBaseToggle.put(key, switch (key) {
+                    case "gui.pleasurehorizons.button.followTeleport" -> girl.isFollowTeleportEnabled();
+                    case "gui.pleasurehorizons.button.closeDoors" -> girl.isCloseDoorsEnabled();
+                    case "gui.pleasurehorizons.button.avoidWater" -> girl.isAvoidWaterEnabled();
+                    case "gui.pleasurehorizons.button.autoDeliver" -> girl.isAutoDeliverEnabled();
+                    case "gui.pleasurehorizons.button.autoEquipArmor" -> girl.isAutoEquipArmorEnabled();
+                    case "gui.pleasurehorizons.button.avoidCreepers" -> girl.isAvoidCreepersEnabled();
+                    default -> girl.isHighJumpEnabled();
+                });
+            }
         }
+        this.pendingClicks.put(key, n + 1);
+    }
+
+    /** Server state plus the clicks not yet confirmed by the server (self-correcting). */
+    private boolean effectiveToggle(String key, boolean serverValue) {
+        int n = this.pendingClicks.getOrDefault(key, 0);
+        if (n == 0) {
+            return serverValue;
+        }
+        boolean base = this.pendingBaseToggle.getOrDefault(key, serverValue);
+        if (serverValue != base) {
+            // The server applied one of the pending clicks.
+            n--;
+            base = serverValue;
+        }
+        if (n == 0) {
+            this.pendingClicks.remove(key);
+            this.pendingBaseToggle.remove(key);
+            return serverValue;
+        }
+        this.pendingClicks.put(key, n);
+        this.pendingBaseToggle.put(key, base);
+        return n % 2 == 0 ? serverValue : !serverValue;
+    }
+
+    /** Server mode plus the pending cycle steps (self-correcting, three values). */
+    private int effectiveMode(String key, int serverValue) {
+        int n = this.pendingClicks.getOrDefault(key, 0);
+        if (n == 0) {
+            return serverValue;
+        }
+        int base = this.pendingBaseMode.getOrDefault(key, serverValue);
+        while (serverValue != base && n > 0) {
+            // The server applied one of the pending cycle steps.
+            n--;
+            base = (base + 1) % 3;
+        }
+        if (n == 0) {
+            this.pendingClicks.remove(key);
+            this.pendingBaseMode.remove(key);
+            return serverValue;
+        }
+        this.pendingClicks.put(key, n);
+        this.pendingBaseMode.put(key, base);
+        return Math.floorMod(serverValue + n, 3);
     }
 
     /** Toggle buttons read the live state and show "Stop ..." when enabled. */
