@@ -727,5 +727,9 @@
   "gui.pleasurehorizons.section.behavior": "Поведение",
   "gui.pleasurehorizons.section.settings": "Настройки",
   "gui.pleasurehorizons.section.mod": "Мод",
-  "gui.pleasurehorizons.settings.open": "Открыть настройки мода"
+  "gui.pleasurehorizons.settings.open": "Открыть настройки мода",
+  "gui.pleasurehorizons.settings_screen.back": "Назад",
+  "gui.pleasurehorizons.settings_screen.open": "Полный экран со всеми настройками девушки",
+  "gui.pleasurehorizons.settings_screen.relationship": "Уровень отношений: %s/%s",
+  "gui.pleasurehorizons.settings_screen.title": "Настройки девушки"
 }

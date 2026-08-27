@@ -727,5 +727,9 @@
   "gui.pleasurehorizons.section.behavior": "Behavior",
   "gui.pleasurehorizons.section.settings": "Settings",
   "gui.pleasurehorizons.section.mod": "Mod",
-  "gui.pleasurehorizons.settings.open": "Open Mod Settings"
+  "gui.pleasurehorizons.settings.open": "Open Mod Settings",
+  "gui.pleasurehorizons.settings_screen.back": "Back",
+  "gui.pleasurehorizons.settings_screen.open": "Full screen with all girl settings",
+  "gui.pleasurehorizons.settings_screen.relationship": "Relationship level: %s/%s",
+  "gui.pleasurehorizons.settings_screen.title": "Girl settings"
 }
