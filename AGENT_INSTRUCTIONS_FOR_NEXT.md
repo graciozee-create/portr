@@ -1377,3 +1377,48 @@ method duplicated the block. Recovered by deleting the whole region by line
 numbers in python (`del lines[start:end]` between unique marker strings). Rule
 unchanged: after any big edit, grep-verify the final file — twice in v10 the
 reported edit state did not match the file.
+
+### 5.50 v11 — movement: super-speed, spinning, diving (0c8678d)
+
+User report: one girl «stands in place and just spins», another «flew off at
+super speed»; and girls «just spin at the water surface above the underwater
+zombies» — they must be able to submerge.
+
+**Root causes (all in `TameableGirlEntity.tick()`, the combat/water block):**
+
+1. **Super speed** — the water swim boost (`setBaseValue(*1.3)` when
+   `waterStuckTicks==1`) was paired with a single `/1.3` on leaving water, but
+   the 80-tick branch reset `waterStuckTicks` to 0 WHILE she was still in
+   water → next tick the counter hit 1 again → `*1.3` applied to the already
+   boosted value. One cycle every ~4 s: `1.3^15 ≈ 50x` after a minute in a
+   lake, and after leaving the water only ONE `/1.3` → permanently super-fast.
+   The combat `x1.4 // 1.4` (flag-guarded) also leaked a spurious `/1.3` when
+   the water boost had been skipped during combat (girl slower afterwards).
+   **Fix:** no bookkeeping at all. New field `baseMovementSpeed` (lazy capture
+   of the un-boosted base while `!inCombat && !isInWater()`); every tick the
+   attribute is recomputed `base * (inCombat?1.4:1) * (isInWater?1.3:1)` and
+   only written when it differs. Drift impossible by construction;
+   `combatSpeedBoosted` flag deleted. Note: `applyConfigScaledStats()`
+   (GirlEntity constructor, `GirlsConfig.speedMultiplier`) is one-shot and
+   idempotent — not a suspect.
+2. **Spinning in place** — the water-escape «find air sideways» step called
+   `setYRot(yaw + turn*90)` every 15 ticks while submerged → visible 90°
+   spin-sawtooth at the surface. Removed the yaw overwrite (gentle +0.03 y
+   drift every 20 ticks instead). The whole escape routine is now gated on
+   `!ownerInWater` — with the owner in the water she belongs in the water.
+3. **No submergence** — added a dive block: while `isInWater() &&
+   isFollowing() && ownerInWater` (owner `isInWater()||isUnderWater()`), she
+   steers straight at the owner (normalized vector, 0.08 horiz / 0.06 vert
+   per tick, water drag caps it ≈ 4–6 blocks/s), `navigation.stop()` while
+   actively diving (vanilla water path nodes run along the SURFACE and would
+   fight the descent; the follow goal re-paths every 10 ticks once the owner
+   surfaces). The WATER pathfinding malus is now `0` while
+   `inCombat || (isFollowing() && ownerInWater)` (written only on change).
+   Escape-teleport at 80 ticks kept for the owner-ON-LAND case; the big jump
+   softened 0.4 → 0.2.
+
+**Test path:** spawn two girls, walk them into a lake with the owner swimming
+→ both should submerge and swim to the owner; owner surfaces → they surface
+with the normal escape (jump toward shore within 8 blocks of
+`findNearestShore`). After any long swim the movement base value must equal
+the profile default (check via attributes, no more speed creep).
