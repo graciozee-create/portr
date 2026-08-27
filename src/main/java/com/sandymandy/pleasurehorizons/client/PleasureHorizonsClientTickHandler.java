@@ -30,7 +30,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class PleasureHorizonsClientTickHandler {
     private static boolean thrustToggleState = false;
     private static boolean lastSentThrustState = false;
-    private static boolean rawCallKeyWasDown = false;
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
@@ -44,14 +43,11 @@ public class PleasureHorizonsClientTickHandler {
             PacketDistributor.sendToServer(new ShiftRolesC2SPacket());
         }
 
-        // G is heavily occupied by the modpack (NTGL, Jetpack and GammaTweaks). Poll it
-        // directly so the advertised G shortcut cannot be swallowed by another KeyMapping.
-        boolean rawGDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(
-                mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_KEY_G);
-        boolean callPressed = PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()
-                || (rawGDown && !rawCallKeyWasDown);
-        rawCallKeyWasDown = rawGDown;
-        if (callPressed) {
+        // The call key responds ONLY to its configured binding (default P, changeable in
+        // Controls). The old build also polled GLFW_KEY_G directly (a leftover from the
+        // original modpack where G was advertised as the shortcut) - that made the keybind
+        // settings feel ignored, so the raw poll is gone.
+        if (PleasureHorizonsKeybinds.CALL_GIRLS_KEY.consumeClick()) {
             PacketDistributor.sendToServer(new CallGirlsC2SPacket());
         }
 
