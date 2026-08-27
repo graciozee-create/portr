@@ -1442,3 +1442,38 @@ in TameableGirlEntity now only WRITES (`base * 1.4 * 1.3` per state, write-only
 on change) and never re-captures. Chunk load re-runs the constructor → a jar
 restart resets any previously baked-in speed. The 80-tick water reset cycle and
 the combat flag are gone from the speed path entirely.
+
+### 5.52 v13 — underwater combat (e47e647)
+
+User: «они чела под водой не могут убить» — girls could not kill anything
+below the surface. Root cause (verified against MCP 1.21.1):
+
+- `MeleeAttackGoal.canUse` = `createPath(target,0) != null || withinMeleeRange`;
+  for a float-capable mob the water path nodes run along the SURFACE, so the
+  path to a drowned at the lake bottom ends at the point ABOVE it. The goal
+  then keeps ticking (canContinueToUse = restriction check only) but
+  `isWithinMeleeAttackRange` never becomes true (depth > reach) → she bobs
+  above the target forever. This is also why v11's water escape "spin above
+  the zombies" was observed.
+- `FloatGoal` holds only the JUMP flag (not MOVE!) — it does NOT block
+  movement goals; it just swim-ups (jump control + the 0.02 travel buoyancy).
+  So the earlier flag-contention hypothesis was wrong; the problem was purely
+  vertical reach.
+
+**Fix (both in TameableGirlEntity):**
+1. Combat dive in tick(): `inCombat && isInWater && (target.isInWater() ||
+   target.isUnderWater())` → steer straight at the target in 3D (0.09 h /
+   0.10 v per tick, stop adding at len < 1.0 = inside melee reach). No
+   navigation.stop() here — the melee goal re-paths every 4-11 ticks and its
+   horizontal points at the same XZ. The owner-follow dive is now gated by
+   `!inCombat` so combat steering wins.
+2. `FloatGoal` anonymous subclass in registerGoals(): canUse() false while
+   she is in water and has an alive underwater target (no swim-up fighting
+   the dive); resumes when the target dies/leaves. Flag is JUMP, so no
+   movement-goal interaction.
+
+Attack itself needs no changes: line of sight through water works,
+doHurtTarget works underwater, air supply is refilled every 20 ticks (no
+drowning). Target acquisition was already fine (track-owner-attacker,
+attack-with-owner Enemy-only, guard/pack/hunt goals, WATER malus 0 in
+combat).
