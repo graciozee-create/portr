@@ -198,7 +198,22 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         this.goalSelector.addGoal(0, new BedGoal(this, 1.25D));
         this.goalSelector.addGoal(0, new StripGoal(this));
         this.goalSelector.addGoal(0, new StopMovementGoal(this));
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        // Vanilla FloatGoal (JUMP flag) keeps making her swim up while in water. That is
+        // right 99% of the time, but while she fights an UNDERWATER target it would pull
+        // her back out of melee reach the moment she dives to it - so it yields in that
+        // case (see the combat dive in tick()).
+        this.goalSelector.addGoal(0, new FloatGoal(this) {
+            @Override
+            public boolean canUse() {
+                LivingEntity combatTarget = TameableGirlEntity.this.getTarget();
+                if (TameableGirlEntity.this.isInWater() && combatTarget != null
+                        && combatTarget.isAlive()
+                        && (combatTarget.isInWater() || combatTarget.isUnderWater())) {
+                    return false;
+                }
+                return super.canUse();
+            }
+        });
         this.goalSelector.addGoal(1, new GirlSitGoal(this));
         this.goalSelector.addGoal(1, new GirlOpenDoorGoal(this));
         // Self-healing declares no flags, so it never preempts anything; it just eats when hurt.
@@ -1606,12 +1621,34 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 }
             }
 
-            // Diving: while the owner is in the water and she follows him, swim straight at
-            // him - including DOWN, so she submerges when he dives instead of bobbing at the
-            // surface. Navigation is paused for the dive: water path nodes run along the
-            // surface and would fight the descent (the follow goal re-paths every 10 ticks
-            // and picks up where this leaves off once the owner surfaces).
-            if (this.isInWater() && this.isFollowing() && !this.isSceneActive()
+            // Combat dive (v13): an underwater target while she is in the water. The path to
+            // a target in water ends at the SURFACE (vanilla water path nodes run along the
+            // water top), so navigation alone leaves her bobbing above the target, out of
+            // melee reach - which is why she could not kill anything below the surface.
+            // Swim straight at the target (including DOWNWARD) until within reach; the melee
+            // goal then attacks (its horizontal pathing keeps pointing at the target, and
+            // the suppressed FloatGoal stops her from being pulled back up).
+            if (inCombat && this.isInWater() && !this.isSceneActive() && !this.isDowned()
+                    && !this.isPassenger()
+                    && (target.isInWater() || target.isUnderWater())) {
+                double dx = target.getX() - this.getX();
+                double dy = (target.getY() + 0.5D) - (this.getY() + 0.5D);
+                double dz = target.getZ() - this.getZ();
+                double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (len > 1.0D) {
+                    this.setDeltaMovement(this.getDeltaMovement()
+                            .add(dx / len * 0.09D, dy / len * 0.10D, dz / len * 0.09D));
+                }
+            }
+
+            // Diving (with the owner): while the owner is in the water and she follows him,
+            // swim straight at him - including DOWN, so she submerges when he dives instead
+            // of bobbing at the surface. Combat takes over the steering (see the combat dive
+            // above), so this only runs when she is not already chasing a target. Navigation
+            // is paused for the dive: water path nodes run along the surface and would fight
+            // the descent (the follow goal re-paths every 10 ticks and picks up where this
+            // leaves off once the owner surfaces).
+            if (!inCombat && this.isInWater() && this.isFollowing() && !this.isSceneActive()
                     && !this.isDowned() && !this.isPassenger() && ownerInWater) {
                 this.waterStuckTicks = 0;
                 double dx = ownerHere.getX() - this.getX();
