@@ -102,12 +102,18 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 if (this.rowLocked(row.key())) {
                     InventoryButtonAction action = this.settingsActions.get(row.key());
                     guiGraphics.renderTooltip(this.font,
-                            List.of(Component.translatable("gui.pleasurehorizons.requires_relationship",
-                                    action == null ? 1 : action.requiredRelationshipLevel())), mouseX, mouseY);
+                            Component.translatable("gui.pleasurehorizons.requires_relationship",
+                                    action == null ? 1 : action.requiredRelationshipLevel()),
+                            mouseX, mouseY);
                 } else {
                     java.util.List<Component> tip = settingsTooltip(row.key());
                     if (tip != null && tip.size() >= 2) {
-                        guiGraphics.renderTooltip(this.font, tip, mouseX, mouseY);
+                        // 1.21.1 renderTooltip takes wrapped FormattedCharSequence lines, not raw Components.
+                        java.util.List<net.minecraft.util.FormattedCharSequence> lines = tip.stream()
+                                .map(component -> this.font.getSplitter().split(component, 300))
+                                .flatMap(java.util.List::stream)
+                                .toList();
+                        guiGraphics.renderTooltip(this.font, lines, mouseX, mouseY);
                     }
                 }
             }
