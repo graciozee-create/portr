@@ -1191,3 +1191,46 @@ CI: cannot find symbol) — после edit_file ВСЕГДА grep'ить, чт�
 
 **Путь к артефакту:** repo graciozee-create/portr → branch
 `arena/01a03d65-portr` → Actions → последний зелёный run → артефакт `mod-jar`.
+
+### 5.46. GUI: вместо вкладок — одна большая менюха (v6)
+
+Пользователь попросил убрать вкладки из GUI девушки («можешь вместо вкладок
+сделать просто огромную минюху со всеми настройками»). Реализовано в
+`737c12f`, CI green, маркер `v6 :: big menu, no tabs`.
+
+**Что сделано:**
+- `GirlInventoryScreen` — один экран, 4 колонки кнопок вокруг панели 176×170
+  (по 2 с каждой стороны) с заголовками секций: **Основное** (8: breakUp,
+  setBase, goToBase, customize, sit, follow, strip, talk) | **Поведение** (11:
+  guardBase, guardOwner, stayNearBase, gather, harvest, cook, cycleRole,
+  chopTrees, hunt, feedOwner, dropLoot) | **Настройки** (12: followTeleport,
+  followDistance, workPace, workRadius, guardRange, closeDoors, avoidWater,
+  stayRadius, autoDeliver, autoEquipArmor, avoidCreepers, highJump) |
+  **Мод** (1: FreecamSettingsScreen). Табы (TAB_*/initTabs/switchTab) удалены.
+- **Клик больше НЕ закрывает экран** (раньше каждый неклей-клик закрывал).
+  Widgets обновляются 2 раза/сек в `render()` (`frameCounter % 20`), чтобы
+  динамические лейблы (sit/stand, on/off, relationship-gating) оставались
+  честными. Кнопки customize/talk по-прежнему асинхронно заменяют экран.
+- **Починена оптимистичная логика pendingClicks** (баг был раньше, но теперь
+  экран открыт надолго и его видно): каждый pending-клик запоминает значение
+  сервера на момент клика (base); как только server != base — один клик
+  считается применённым и base пере-якорится. Label'ы сами сходятся, вместо
+  того чтобы «дёрнуться в обратную» после синка. `pendingBaseToggle` /
+  `pendingBaseMode` + `MODE_SETTING_KEYS` (5 cikle-кнопок из 12 settings).
+- `InventoryButtonRegistry`: 6 per-tab списков → 3 плоских
+  (`BUTTONS_MAIN` / `BUTTONS_BEHAVIOR` / `BUTTONS_SETTINGS`).
+- Новые ключи `gui.pleasurehorizons.section.{main,behavior,settings,mod}` в
+  en_us + ru_ru (729=729). Старые `tab.*` ключи остались (мёртвые, но
+  паритет соблюдён).
+- Заголовки секций рисуются в `renderLabels` (координаты хранятся в
+  `sectionHeaderPositions/Labels`, сбрасываются в `init`).
+
+**Важно для будущих правок:** лимиты «7 слева / 6 справа» из ТЗ теперь
+неактуальны — это была структура вкладок. Экран ~528×~310 px вокруг панели;
+на экстремальных GUI scale (≤640×360 logical) нижние ряды могут уехать за
+край — если пользователь жалуется, делать скролл.
+
+**Infra-мелочь:** run 33027540606 pertama раза упал НЕ по коду —
+`net.neoforged.moddev:2.0.143` не скачался (Maven-сбой на раннере). Лечится
+rerun-failed-jobs (`POST .../actions/runs/{id}/rerun-failed-jobs`). Логи
+джобы: `GET /actions/jobs/{id}/logs` (302 на подписанный blob — curl -L).
