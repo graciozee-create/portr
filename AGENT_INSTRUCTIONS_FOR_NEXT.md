@@ -1276,3 +1276,38 @@ GirlCustomizeScreen) можно открывать поверх открытог
 — уровень 4). Это дизайн, не баг: кнопка disabled + тултип «нужен уровень N».
 Для нового мира уровень качается подарками (`gift` / `likedGift` flow в
 `WildGirlEntity`) и общением.
+
+### 5.48. Настройки — нормальный список, а не кнопки (v8)
+
+Пользователь после большой менюхи: «можешь нормальные настройки сделать».
+Настройки (12 штук) раньше были колонкой одинаковых кнопок, где состояние
+видно только в тултипе по ховеру. Заменено на **рамочный список** справа от
+панели (коммиты `797bb8e` + фиксы компиляции, HEAD `b38424b`, CI green,
+маркер `v8 :: settings as a list`):
+
+- каждая строка: **название слева + ТЕКУЩЕЕ значение справа**
+  (Вкл/Выкл — зелёное/тусклое; Близко/Обычно/Далеко — акцентный цвет);
+  значение видно без ховера;
+- клик по строке = то же C2S-переключение/цикл; оптимистичная логика
+  pendingClicks (из §5.46) подкармливает значение мгновенно;
+- строки ниже уровня отношений — приглушённые и некликабельные
+  (`rowLocked`, та же логика гейта, что была у кнопок) + тултип «нужен уровень N»;
+- ховер-тултип с описанием (desc.*) сохранён;
+- «Открыть настройки мода» (FreecamSettingsScreen) — последняя строка панели.
+
+**Код:** `GirlInventoryScreen` — record `SettingsRow(x,y,w,h,key,mod)`,
+`settingsRows`/`settingsActions` (перестраиваются в `init` →
+`initSettingsList`), отрисовка панели/строк в `renderLabels`, клики в
+`mouseClicked` (до `super.mouseClicked`), тултипы в `render()`.
+`settingValue`/`settingToggleState`/`serverMode`/`modeSettingBase` —
+геттеры живых значений (settingsTooltip для тултипов остаётся).
+Layout: панель 180px справа (`centerX+176+10`), строки 16px; левая часть —
+кнопки (Main 8, Behavior 11) без изменений. Общий размер ~542×~310.
+
+**1.21.1 тултипы (важно, два раза сломалось):** `GuiGraphics.renderTooltip`
+НЕ имеет перегрузки `(Font, List<Component>, int, int)`. Есть:
+`(Font, Component, int, int)`, `(Font, ItemStack, int, int)` и
+`(Font, List<? extends FormattedCharSequence>, int, int)`. Для списка строк:
+`components.stream().map(Component::getVisualOrderText).toList()`
+(`Font.getSplitter()` в 1.21.1 — это `StringSplitter` без `split(Component,int)`,
+WordWrapLineSplitter в 1.21.1 отсутствует).
