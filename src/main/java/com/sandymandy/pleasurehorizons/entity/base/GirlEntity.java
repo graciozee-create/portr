@@ -166,7 +166,7 @@ public abstract class GirlEntity extends PathfinderMob {
      * the live value would bake the boost in permanently (v12 fix for "girls run back and
      * forth at super speed").
      */
-    private double baseMovementSpeed = -1D;
+    protected double baseMovementSpeed = -1D;
     @Nullable
     private Player lookAtTarget = null;
 
