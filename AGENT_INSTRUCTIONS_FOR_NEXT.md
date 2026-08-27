@@ -1311,3 +1311,69 @@ Layout: панель 180px справа (`centerX+176+10`), строки 16px; �
 `components.stream().map(Component::getVisualOrderText).toList()`
 (`Font.getSplitter()` в 1.21.1 — это `StringSplitter` без `split(Component,int)`,
 WordWrapLineSplitter в 1.21.1 отсутствует).
+
+### 5.49 v10 — settings as a full screen (2a36011)
+
+The 13-row inline settings list of v8 ran off-screen next to the 176 px inventory
+panel on small resolutions. Per user request it now lives in its own full-screen
+screen; the inventory keeps only the Main + Behavior columns and one «Настройки»
+button (right of the panel, 80×20, at `centerX+GUI_WIDTH+COL_PAD, topY+4`).
+
+**New file** `client/gui/screen/GirlSettingsScreen.java` (plain `Screen`,
+`@OnlyIn(CLIENT)`, constructor `(GirlInventoryScreen previous, TameableGirlEntity girl,
+Player player)`):
+
+- centered 420 px panel (`Math.min(420, width-40)`, clamps to `height-40` + scroll
+  wheel, exact FreecamSettingsScreen pattern: `scrollOffset`, `maxScroll()`,
+  `mouseScrolled` only over the panel, `renderBackground` no-op so the world stays
+  visible, `isPauseScreen()` false).
+- 12 rows from `InventoryButtonRegistry.BUTTONS_SETTINGS`: `StringWidget` name left
+  + value `Button` right (116 px, Вкл/Выкл or Близко/Обычно/Далеко), then a
+  full-width «Открыть настройки мода» row, then a fixed «Назад» button bottom-right.
+- Title + a relationship line («Уровень отношений: N/M») fixed under the title;
+  palette = the old inline list colors (0xF01C1018 bg / 0xFF664466 border).
+- Click = `action.action().accept(girl, player)` C2S + local optimistic
+  `pendingClicks`/`pendingBaseToggle`/`pendingBaseMode` (base-anchoring, identical
+  to the v8 inventory logic, copied verbatim) + `rebuildWidgets()`; render()
+  re-rebuilds every 20 frames so the server sync re-anchors the display.
+- Gating: `girl.getCurrentRelationshipLevel() < action.requiredRelationshipLevel()`
+  → `button.active=false` + «Требуется уровень N» tooltip. Row tooltips:
+  `gui.pleasurehorizons.desc.<base>` + `gui.pleasurehorizons.currentValue` (2-arg
+  `Tooltip.create`).
+- **Back navigation (important):** Escape and «Назад» both go through the
+  overridden `onClose()`, which does `minecraft.setScreen(previous)` — the SAME
+  `GirlInventoryScreen` instance is re-shown. That is safe because
+  `Minecraft.setScreen` only calls `oldScreen.removed()` (for a container screen:
+  `menu.removed(player)` = carried-item return only) and then `init()`s the new
+  screen — the server container is never closed, so re-initing the inventory
+  screen restores it with its widgets and pending state. Verified against MCP
+  1.21.1: `Screen#keyPressed` ESC → `shouldCloseOnEsc()` → `onClose()` →
+  default `setScreen(null)`, so overriding `onClose()` intercepts Escape cleanly.
+- The mod-settings row calls `previous.onClose()` FIRST (GirlInventoryScreen
+  closes the container server-side: `player.closeContainer()` +
+  `SetGUIOpenStateC2SPacket(false)`), THEN `setScreen(new FreecamSettingsScreen())`
+  — same proven order as the v8 mod row.
+
+**GirlInventoryScreen after v10:** removed `SettingsRow`, `settingsRows`,
+`settingsActions`, `pendingClicks` (+bases), `MODE_SETTING_KEYS`, `initSettingsList`,
+the `mouseClicked` override, `settingsTooltip`/`valueLine`, `settingValue`/
+`settingToggleState`/`serverMode`/`modeSettingBase`/`rowLocked`,
+`recordPendingSettingClick`/`effectiveToggle`/`effectiveMode` and the list colors.
+Kept: Main/Behavior columns, 20-frame `rebuildWidgets`, `dynamicLabel` (now reads
+`girl.getFollowDistanceMode()` directly), relationship/pregnancy HUD in renderBg,
+`onClose` → SetGUIOpenState(false).
+
+**Lang (4 new keys, en+ru, parity 733=733):**
+`gui.pleasurehorizons.settings_screen.title` (Настройки девушки / Girl settings),
+`.relationship` (Уровень отношений: %s/%s), `.back` (Назад / Back),
+`.open` (Полный экран со всеми настройками девушки / Full screen with all girl
+settings — the tooltip of the inventory button). Button label reuses
+`gui.pleasurehorizons.section.settings`; mod row reuses
+`gui.pleasurehorizons.settings.open`.
+
+**Gotcha hit:** a large multi-method `edit_file` deletion silently no-oped
+(fuzzy match), then a retry with old_text = head-of-method / new_text = whole
+method duplicated the block. Recovered by deleting the whole region by line
+numbers in python (`del lines[start:end]` between unique marker strings). Rule
+unchanged: after any big edit, grep-verify the final file — twice in v10 the
+reported edit state did not match the file.
