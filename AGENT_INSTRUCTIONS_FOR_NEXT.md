@@ -1422,3 +1422,23 @@ zombies» — they must be able to submerge.
 with the normal escape (jump toward shore within 8 blocks of
 `findNearestShore`). After any long swim the movement base value must equal
 the profile default (check via attributes, no more speed creep).
+
+### 5.51 v12 — speed base captured in the constructor (a349dde)
+
+User: «они бегают туда-сюда на очень высокой скорости». v11's "self-healing"
+recompute still corrupted the normal value: it re-captured `baseMovementSpeed`
+from the LIVE attribute whenever idle, but on the tick combat/water just ENDED
+the live value was still boosted → the boost was baked into the "normal" base
+forever (each fight +40%: 0.30 → 0.42 → 0.59 → ...). Guard aggro fights start/
+end constantly, so the creep was fast; at that speed the pathfinder overshoots
+and backtracks = "running back and forth".
+
+**Fix:** `baseMovementSpeed` moved UP to `GirlEntity` (PROTECTED — the
+TameableGirlEntity subclass lives in another package, `entity.base.tamable`;
+`private` broke CI once) and captured exactly once, at the end of
+`applyConfigScaledStats()` in the constructor (after profile attributes +
+`GirlsConfig.speedMultiplier`, before any boost can exist). The tick recompute
+in TameableGirlEntity now only WRITES (`base * 1.4 * 1.3` per state, write-only
+on change) and never re-captures. Chunk load re-runs the constructor → a jar
+restart resets any previously baked-in speed. The 80-tick water reset cycle and
+the combat flag are gone from the speed path entirely.
