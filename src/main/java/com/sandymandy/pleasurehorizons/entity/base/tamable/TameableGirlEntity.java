@@ -131,8 +131,6 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
     private boolean carrierSneaking = false;
 
-    /** Un-boosted MOVEMENT_SPEED base value, captured while out of combat and water. */
-    private double baseMovementSpeed = -1D;
 
     /** Anti-stuck: last position for stuck detection. */
     private net.minecraft.world.phys.Vec3 lastStuckCheckPos = net.minecraft.world.phys.Vec3.ZERO;
@@ -1570,24 +1568,20 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
             boolean ownerInWater = ownerHere != null
                     && (ownerHere.isInWater() || ownerHere.isUnderWater());
 
-            // Self-healing speed (v11): the movement base value is recomputed every tick from
-            // a captured un-boosted value instead of multiply/divide bookkeeping. The old
-            // x1.4//1.4 (combat) and x1.3//1.3 (water) pairs drifted: the water boost was
-            // re-applied every 80 ticks while she was still swimming (compounding to super
-            // speed) but divided only once on exit, leaving girls permanently at many times
-            // their normal speed.
+            // Self-healing speed (v11, capture fixed in v12): the movement base value is
+            // recomputed every tick from baseMovementSpeed - captured once in the
+            // GirlEntity CONSTRUCTOR, before any boost can exist - instead of
+            // multiply/divide bookkeeping. (v11 also re-captured from the live attribute
+            // while idle, but on the tick combat/water just ENDED the live value was still
+            // boosted, so the boost got baked into the "normal" value forever: each fight
+            // permanently added +40% and the girls ran back and forth at super speed.)
             var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-            if (speedAttr != null) {
-                if (!inCombat && !this.isInWater()) {
-                    this.baseMovementSpeed = speedAttr.getBaseValue();
-                }
-                if (this.baseMovementSpeed > 0D) {
-                    double desired = this.baseMovementSpeed
-                            * (inCombat ? 1.4D : 1.0D)
-                            * (this.isInWater() ? 1.3D : 1.0D);
-                    if (Math.abs(speedAttr.getBaseValue() - desired) > 1.0E-6D) {
-                        speedAttr.setBaseValue(desired);
-                    }
+            if (speedAttr != null && this.baseMovementSpeed > 0D) {
+                double desired = this.baseMovementSpeed
+                        * (inCombat ? 1.4D : 1.0D)
+                        * (this.isInWater() ? 1.3D : 1.0D);
+                if (Math.abs(speedAttr.getBaseValue() - desired) > 1.0E-6D) {
+                    speedAttr.setBaseValue(desired);
                 }
             }
 

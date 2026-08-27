@@ -157,6 +157,16 @@ public abstract class GirlEntity extends PathfinderMob {
     private final QuestManager questManager = new QuestManager();
 
     private boolean guiOpenState = false;
+    /**
+     * MOVEMENT_SPEED base value at construction time (profile + server config multiplier,
+     * no combat/water boosts). The tick-level speed recompute in {@link
+     * com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity} uses it as the
+     * "normal" value. Captured HERE, in the constructor, on purpose: by the first tick a
+     * combat/water boost can already be applied to the live attribute, and re-capturing from
+     * the live value would bake the boost in permanently (v12 fix for "girls run back and
+     * forth at super speed").
+     */
+    private double baseMovementSpeed = -1D;
     @Nullable
     private Player lookAtTarget = null;
 
@@ -201,6 +211,9 @@ public abstract class GirlEntity extends PathfinderMob {
                 speed.setBaseValue(speed.getBaseValue() * speedMultiplier);
             }
         }
+        // Final un-boosted base for the tick-level recompute (see baseMovementSpeed).
+        var baseSpeed = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        this.baseMovementSpeed = baseSpeed != null ? baseSpeed.getBaseValue() : -1D;
     }
 
     public static AttributeSupplier.Builder createDefaultAttributes() {
