@@ -1234,3 +1234,45 @@ CI: cannot find symbol) — после edit_file ВСЕГДА grep'ить, чт�
 `net.neoforged.moddev:2.0.143` не скачался (Maven-сбой на раннере). Лечится
 rerun-failed-jobs (`POST .../actions/runs/{id}/rerun-failed-jobs`). Логи
 джобы: `GET /actions/jobs/{id}/logs` (302 на подписанный blob — curl -L).
+
+### 5.47. Фикс: кнопки выбора сцен были «мертвыми» (v7)
+
+Пользователь: «кнопка сцены не нажимается». Диагностика (коммит `43a8060`,
+CI green, маркер `v7 :: scene picker fix`):
+
+**Цепочка бага (tamed girl, большая менюха → Talk → ♥ Сцены):**
+1. `InteractionScreen.openScenes()` при ОТКРЫВАНИИ пикера слала
+   `SetGUIOpenStateC2SPacket(id, false)`.
+2. Серверный хендлер `SetGUIOpenStateC2SPacket(false)` делал ТРИ вещи:
+   `girl.setGUIOpenState(false, null)` (т.е. `lookAtTarget = null`!) +
+   `ctx.player().closeContainer()` (контейнер инвентаря девушки закрывался
+   на сервере).
+3. `StartSceneC2SPacket.handle` авторизует выбор по этому состоянию:
+   `girl.isGUIOpen()` && `lookAtTarget == player` &&
+   (для tamed) `containerMenu instanceof GirlInventoryScreenHandler` — всё
+   три условия падали → клики по сценам **тихо отклонялись** (без сообщения).
+
+**Фикс:** в `openScenes()` НЕ слать SetGUIOpenState(false). Состояние
+чистится: (a) `GirlSceneScreen.onClose()` при выходе без выбора; (b)
+сервером в `StartSceneC2SPacket` при принятый сцене (`setGUIOpenState(false,
+null)` + `closeContainer()`).
+
+**Важные факты ванили, на которых держится этот дизайн (проверено по
+MCP-1.21):** `Minecraft.setScreen(новый)` вызывает `oldScreen.removed()`, а
+у `AbstractContainerScreen` `removed()` = только `menu.removed(player)`
+(возврат несиомого предмета) — **НЕ** `closeContainer()`. Реальное закрытие
+контейнера только в `AbstractContainerScreen.onClose()`
+(`player.closeContainer()` → ServerboundContainerCloseMessage). Поэтому
+экраны-«надстройки» (InteractionScreen, GirlSceneScreen,
+GirlCustomizeScreen) можно открывать поверх открытого контейнера — серверный
+меню остаётся открытым.
+
+**Путь wild girl** (правый клик по wild girl → `SceneOptionsS2CPacket`
+напрямую, `WildGirlEntity:171`) багом НЕ страдал: там никто не чистил
+состояние до клика.
+
+**Доп. примечание для пользователя:** сцены в пикере серые, пока
+`relationshipLevel < scene.requiredRelationshipLevel()` (первая сцена у Lucy
+— уровень 4). Это дизайн, не баг: кнопка disabled + тултип «нужен уровень N».
+Для нового мира уровень качается подарками (`gift` / `likedGift` flow в
+`WildGirlEntity`) и общением.
