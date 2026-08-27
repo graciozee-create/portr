@@ -108,10 +108,9 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
                 } else {
                     java.util.List<Component> tip = settingsTooltip(row.key());
                     if (tip != null && tip.size() >= 2) {
-                        // 1.21.1 renderTooltip takes wrapped FormattedCharSequence lines, not raw Components.
+                        // 1.21.1 renderTooltip takes FormattedCharSequence lines, not raw Components.
                         java.util.List<net.minecraft.util.FormattedCharSequence> lines = tip.stream()
-                                .map(component -> this.font.getSplitter().split(component, 300))
-                                .flatMap(java.util.List::stream)
+                                .map(Component::getVisualOrderText)
                                 .toList();
                         guiGraphics.renderTooltip(this.font, lines, mouseX, mouseY);
                     }
