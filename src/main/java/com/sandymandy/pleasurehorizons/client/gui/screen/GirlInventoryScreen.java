@@ -35,12 +35,29 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
     private static final int ROW_GAP = 4;
     private static final int COL_PAD = 10;
     private static final int HEADER_H = 14;
+    // Settings are a proper list, not buttons: each row shows the name on the left and the
+    // LIVE value on the right (Вкл/Выкл, Близко/Обычно/Далеко); clicking the row toggles it.
+    private static final int SETTINGS_PANEL_W = 180;
+    private static final int SETTINGS_ROW_H = 16;
     private static final int COLOR_SECTION_HEADER = 0xFFCC88DD;
+    private static final int COLOR_PANEL_BORDER = 0xFF664466;
+    private static final int COLOR_PANEL_BG = 0xF01C1018;
+    private static final int COLOR_ROW_NAME = 0xFFDDCCDD;
+    private static final int COLOR_VALUE_ON = 0xFF7DDD8A;
+    private static final int COLOR_VALUE_OFF = 0xFF9988AA;
+    private static final int COLOR_VALUE_MODE = 0xFFDDCCDD;
+    /** One clickable row of the settings list (absolute coords, setting key, is-mod-row). */
+    private record SettingsRow(int x, int y, int w, int h, String key, boolean mod) {
+    }
     private final TameableGirlEntity girl;
     private final Player player;
     /** Section header rows (absolute screen coords + label), drawn in renderLabels. */
     private final java.util.List<int[]> sectionHeaderPositions = new java.util.ArrayList<>();
     private final java.util.List<Component> sectionHeaderLabels = new java.util.ArrayList<>();
+    /** Rows of the settings list, rebuilt in init. */
+    private final java.util.List<SettingsRow> settingsRows = new java.util.ArrayList<>();
+    /** labelKey -> action for the settings rows (from InventoryButtonRegistry.BUTTONS_SETTINGS). */
+    private final java.util.Map<String, InventoryButtonAction> settingsActions = new java.util.HashMap<>();
     private int frameCounter;
     /**
      * Clicks made on stateful setting buttons since the server state was last observed, plus
@@ -79,6 +96,22 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
             this.rebuildWidgets();
         }
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+        // Tooltips for the custom-drawn settings rows (vanilla renderTooltip only covers widgets).
+        for (SettingsRow row : this.settingsRows) {
+            if (!row.mod() && ScreenUtils.isMouseOverHere(mouseX, mouseY, row.x(), row.y(), row.w(), row.h())) {
+                if (this.rowLocked(row.key())) {
+                    InventoryButtonAction action = this.settingsActions.get(row.key());
+                    guiGraphics.renderTooltip(this.font,
+                            List.of(Component.translatable("gui.pleasurehorizons.requires_relationship",
+                                    action == null ? 1 : action.requiredRelationshipLevel())), mouseX, mouseY);
+                } else {
+                    java.util.List<Component> tip = settingsTooltip(row.key());
+                    if (tip != null && tip.size() >= 2) {
+                        guiGraphics.renderTooltip(this.font, tip, mouseX, mouseY);
+                    }
+                }
+            }
+        }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
@@ -89,6 +122,90 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
             int[] pos = this.sectionHeaderPositions.get(i);
             guiGraphics.drawString(this.font, this.sectionHeaderLabels.get(i), pos[0], pos[1], COLOR_SECTION_HEADER, false);
         }
+
+        // Settings list: framed panel, one row per setting (name left, live value right).
+        if (!this.settingsRows.isEmpty()) {
+            SettingsRow first = this.settingsRows.get(0);
+            SettingsRow last = this.settingsRows.get(this.settingsRows.size() - 1);
+            int panelTop = first.y() - 4;
+            int panelBottom = last.y() + last.h() + 4;
+            guiGraphics.fill(first.x() - 2, panelTop - 2, first.x() + first.w() + 2, panelBottom + 2, COLOR_PANEL_BORDER);
+            guiGraphics.fill(first.x() - 1, panelTop - 1, first.x() + first.w() + 1, panelBottom + 1, COLOR_PANEL_BG);
+
+            for (SettingsRow row : this.settingsRows) {
+                boolean hover = ScreenUtils.isMouseOverHere(mouseX, mouseY, row.x(), row.y(), row.w(), row.h());
+                if (hover) {
+                    guiGraphics.fill(row.x(), row.y(), row.x() + row.w(), row.y() + row.h(), 0x40FFFFFF);
+                }
+                if (row.mod()) {
+                    guiGraphics.drawString(this.font,
+                            Component.translatable("gui.pleasurehorizons.settings.open"),
+                            row.x() + 6, row.y() + 4, COLOR_SECTION_HEADER, true);
+                    continue;
+                }
+                boolean locked = this.rowLocked(row.key());
+                guiGraphics.drawString(this.font, Component.translatable(row.key()),
+                        row.x() + 6, row.y() + 4, locked ? 0xFF665566 : COLOR_ROW_NAME, true);
+                Component value = this.settingValue(row.key());
+                Boolean on = this.settingToggleState(row.key());
+                int valueColor = locked ? 0xFF665566
+                        : (on == null ? COLOR_VALUE_MODE : (on ? COLOR_VALUE_ON : COLOR_VALUE_OFF));
+                guiGraphics.drawString(this.font, value,
+                        row.x() + row.w() - 6 - this.font.width(value), row.y() + 4, valueColor, true);
+            }
+        }
+    }
+
+    /**
+     * Live value for a settings row: on/off for toggles, the mode name for cycles.
+     * Includes the optimistic pending-click reconciliation (see effectiveToggle/effectiveMode).
+     */
+    private Component settingValue(String key) {
+        if (MODE_SETTING_KEYS.contains(key)) {
+            int mode = effectiveMode(key, serverMode(key));
+            return Component.translatable("setting.pleasurehorizons." + modeSettingBase(key) + "." + mode);
+        }
+        boolean on = this.settingToggleState(key);
+        return Component.translatable(on ? "setting.pleasurehorizons.on" : "setting.pleasurehorizons.off");
+    }
+
+    /** Settings below the girl's relationship level are visible but locked (same gate the old buttons had). */
+    private boolean rowLocked(String key) {
+        InventoryButtonAction action = this.settingsActions.get(key);
+        return action != null
+                && girl.getCurrentRelationshipLevel() < action.requiredRelationshipLevel();
+    }
+
+    /** Current (optimistic) state of a toggle setting, or null if the key is a mode cycle. */
+    private Boolean settingToggleState(String key) {
+        if (MODE_SETTING_KEYS.contains(key)) {
+            return null;
+        }
+        return switch (key) {
+            case "gui.pleasurehorizons.button.followTeleport" -> effectiveToggle(key, girl.isFollowTeleportEnabled());
+            case "gui.pleasurehorizons.button.closeDoors" -> effectiveToggle(key, girl.isCloseDoorsEnabled());
+            case "gui.pleasurehorizons.button.avoidWater" -> effectiveToggle(key, girl.isAvoidWaterEnabled());
+            case "gui.pleasurehorizons.button.autoDeliver" -> effectiveToggle(key, girl.isAutoDeliverEnabled());
+            case "gui.pleasurehorizons.button.autoEquipArmor" -> effectiveToggle(key, girl.isAutoEquipArmorEnabled());
+            case "gui.pleasurehorizons.button.avoidCreepers" -> effectiveToggle(key, girl.isAvoidCreepersEnabled());
+            default -> effectiveToggle(key, girl.isHighJumpEnabled());
+        };
+    }
+
+    /** The server value for a mode-cycle setting (followDistance, workPace, ...). */
+    private int serverMode(String key) {
+        return switch (key) {
+            case "gui.pleasurehorizons.button.followDistance" -> girl.getFollowDistanceMode();
+            case "gui.pleasurehorizons.button.workPace" -> girl.getWorkPaceMode();
+            case "gui.pleasurehorizons.button.workRadius" -> girl.getWorkRadiusMode();
+            case "gui.pleasurehorizons.button.guardRange" -> girl.getGuardRangeMode();
+            default -> girl.getStayRadiusMode();
+        };
+    }
+
+    /** "followDistance" / "workPace" / ... - the part shared with the setting.* lang keys. */
+    private String modeSettingBase(String key) {
+        return key.substring(key.lastIndexOf('.') + 1);
     }
 
     @Override
@@ -203,25 +320,53 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
 
         if (girl.isTamed()) {
             int topY = centerY + 8;
-            // Two columns per side of the 176px panel:
-            //   [Main] [Behavior]  |panel|  [Settings] [Mod]
+            // Left of the panel: two button columns (Main, Behavior).
+            // Right of the panel: a proper settings list (name + live value per row).
             this.drawSectionColumn(centerX - COL_PAD - 2 * BTN_W - COL_GAP, topY,
                     "gui.pleasurehorizons.section.main", InventoryButtonRegistry.BUTTONS_MAIN);
             this.drawSectionColumn(centerX - COL_PAD - BTN_W, topY,
                     "gui.pleasurehorizons.section.behavior", InventoryButtonRegistry.BUTTONS_BEHAVIOR);
-            this.drawSectionColumn(centerX + GUI_WIDTH + COL_PAD, topY,
-                    "gui.pleasurehorizons.section.settings", InventoryButtonRegistry.BUTTONS_SETTINGS);
-            // Mod-wide/client options (freecam, etc.) are not per-girl, so they open their
-            // own screen.
-            this.drawSectionColumn(centerX + GUI_WIDTH + COL_PAD + BTN_W + COL_GAP, topY,
-                    "gui.pleasurehorizons.section.mod", List.of(new InventoryButtonAction(
-                            "gui.pleasurehorizons.settings.open", 0, true,
-                            (g, p) -> {
-                                this.onClose();
-                                net.minecraft.client.Minecraft.getInstance()
-                                        .setScreen(new FreecamSettingsScreen());
-                            })));
+            this.initSettingsList(centerX + GUI_WIDTH + COL_PAD, topY);
         }
+    }
+
+    /** Builds the settings list: header + one row per setting + a "mod settings" row. */
+    private void initSettingsList(int panelX, int topY) {
+        this.sectionHeaderPositions.add(new int[]{panelX, topY});
+        this.sectionHeaderLabels.add(Component.translatable("gui.pleasurehorizons.section.settings"));
+        this.settingsRows.clear();
+        this.settingsActions.clear();
+        for (InventoryButtonAction action : InventoryButtonRegistry.BUTTONS_SETTINGS) {
+            this.settingsActions.put(action.labelKey(), action);
+            int y = topY + HEADER_H + this.settingsRows.size() * SETTINGS_ROW_H;
+            this.settingsRows.add(new SettingsRow(panelX, y, SETTINGS_PANEL_W, SETTINGS_ROW_H, action.labelKey(), false));
+        }
+        // Mod-wide/client options are not per-girl, so the last row opens their screen.
+        int y = topY + HEADER_H + this.settingsRows.size() * SETTINGS_ROW_H;
+        this.settingsRows.add(new SettingsRow(panelX, y, SETTINGS_PANEL_W, SETTINGS_ROW_H,
+                "gui.pleasurehorizons.settings.open", true));
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && girl != null && minecraft != null && player != null) {
+            for (SettingsRow row : this.settingsRows) {
+                if (ScreenUtils.isMouseOverHere(mouseX, mouseY, row.x(), row.y(), row.w(), row.h())) {
+                    if (row.mod()) {
+                        this.onClose();
+                        net.minecraft.client.Minecraft.getInstance().setScreen(new FreecamSettingsScreen());
+                    } else if (!this.rowLocked(row.key())) {
+                        InventoryButtonAction action = this.settingsActions.get(row.key());
+                        if (action != null) {
+                            action.action().accept(girl, player);
+                            recordPendingSettingClick(row.key());
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     /** A section header plus a vertical column of buttons under it. */
@@ -308,13 +453,7 @@ public class GirlInventoryScreen extends AbstractContainerScreen<GirlInventorySc
         int n = this.pendingClicks.getOrDefault(key, 0);
         if (n == 0) {
             if (MODE_SETTING_KEYS.contains(key)) {
-                this.pendingBaseMode.put(key, switch (key) {
-                    case "gui.pleasurehorizons.button.followDistance" -> girl.getFollowDistanceMode();
-                    case "gui.pleasurehorizons.button.workPace" -> girl.getWorkPaceMode();
-                    case "gui.pleasurehorizons.button.workRadius" -> girl.getWorkRadiusMode();
-                    case "gui.pleasurehorizons.button.guardRange" -> girl.getGuardRangeMode();
-                    default -> girl.getStayRadiusMode();
-                });
+                this.pendingBaseMode.put(key, serverMode(key));
             } else {
                 this.pendingBaseToggle.put(key, switch (key) {
                     case "gui.pleasurehorizons.button.followTeleport" -> girl.isFollowTeleportEnabled();
