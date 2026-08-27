@@ -58,7 +58,7 @@ public class PleasureHorizons {
         LOGGER.info("Initializing " + MOD_NAME + " for NeoForge 1.21.1!");
         // Build marker: if you do not see this line in latest.log, the jar you launched
         // is an older build and does not contain the spawn eggs / creative tab.
-                                                                LOGGER.info("[PH] BUILD MARKER 2026-08-27 v10 :: settings full screen");
+                                                                        LOGGER.info("[PH] BUILD MARKER 2026-08-27 v11 :: movement & diving");
 
         // Registries
         PleasureHorizonsItems.register(modEventBus);

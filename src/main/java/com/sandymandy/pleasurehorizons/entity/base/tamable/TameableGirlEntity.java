@@ -131,8 +131,8 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
     /** Carrier's sneak state, used to put her down on a fresh sneak press while carried. */
     private boolean carrierSneaking = false;
 
-    /** Whether combat speed boost is currently applied (prevents stacking). */
-    private boolean combatSpeedBoosted = false;
+    /** Un-boosted MOVEMENT_SPEED base value, captured while out of combat and water. */
+    private double baseMovementSpeed = -1D;
 
     /** Anti-stuck: last position for stuck detection. */
     private net.minecraft.world.phys.Vec3 lastStuckCheckPos = net.minecraft.world.phys.Vec3.ZERO;
@@ -1566,59 +1566,78 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
         if (!this.level().isClientSide() && this.isTamed()) {
             LivingEntity target = this.getTarget();
             boolean inCombat = target != null && target.isAlive();
-            
-            if (inCombat) {
-                // Remove water penalty - she needs to chase through water
-                this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
-                // Boost movement speed by 40% during combat
-                var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-                if (speedAttr != null && !this.combatSpeedBoosted) {
-                    double baseSpeed = speedAttr.getBaseValue();
-                    speedAttr.setBaseValue(baseSpeed * 1.4D);
-                    this.combatSpeedBoosted = true;
+            Player ownerHere = this.getOwnerAnywhere() instanceof Player p ? p : null;
+            boolean ownerInWater = ownerHere != null
+                    && (ownerHere.isInWater() || ownerHere.isUnderWater());
+
+            // Self-healing speed (v11): the movement base value is recomputed every tick from
+            // a captured un-boosted value instead of multiply/divide bookkeeping. The old
+            // x1.4//1.4 (combat) and x1.3//1.3 (water) pairs drifted: the water boost was
+            // re-applied every 80 ticks while she was still swimming (compounding to super
+            // speed) but divided only once on exit, leaving girls permanently at many times
+            // their normal speed.
+            var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) {
+                if (!inCombat && !this.isInWater()) {
+                    this.baseMovementSpeed = speedAttr.getBaseValue();
                 }
-                
-                // Combat stuck: if chasing a target but can't reach it, jump periodically
-                // to clear obstacles. This helps with fences, 1-block gaps, and low walls.
-                if (this.tickCount % 30 == 0 && this.onGround()
-                        && !this.getNavigation().isDone() && this.getNavigation().getPath() != null) {
-                    double distToTarget = this.distanceToSqr(target);
-                    // If target is close (< 4 blocks) but path is long, she's stuck behind
-                    // an obstacle - jump to try to clear it
-                    if (distToTarget < 16.0D && this.getNavigation().getPath().getNodeCount() > 8) {
-                        this.jumpFromGround();
+                if (this.baseMovementSpeed > 0D) {
+                    double desired = this.baseMovementSpeed
+                            * (inCombat ? 1.4D : 1.0D)
+                            * (this.isInWater() ? 1.3D : 1.0D);
+                    if (Math.abs(speedAttr.getBaseValue() - desired) > 1.0E-6D) {
+                        speedAttr.setBaseValue(desired);
                     }
                 }
-            } else if (this.combatSpeedBoosted) {
-                // Restore normal speed and water penalty when combat ends
-                var speedAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-                if (speedAttr != null) {
-                    double currentSpeed = speedAttr.getBaseValue();
-                    speedAttr.setBaseValue(currentSpeed / 1.4D);
-                }
-                if (this.isAvoidWaterEnabled()) {
-                    this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 8.0F);
-                } else {
-                    this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, 0.0F);
-                }
-                this.combatSpeedBoosted = false;
             }
-            
-            // Water escape AI: proactive system that helps girls get out of water quickly
-            // instead of floating helplessly. Works regardless of navigation state.
-            if (this.isInWater() && !this.isSceneActive() && !this.isDowned()
-                    && !this.isPassenger()) {
-                this.waterStuckTicks++;
-                
-                // Boost swim speed (vanilla swim is very slow without attributes)
-                if (this.waterStuckTicks == 1) {
-                    var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-                    if (swimAttr != null && !this.combatSpeedBoosted) {
-                        // Temporary boost while in water
-                        swimAttr.setBaseValue(swimAttr.getBaseValue() * 1.3D);
-                    }
+
+            // Water pathfinding cost: free while chasing, while following a swimming/diving
+            // owner (so she can route straight through the water to him), and while the
+            // avoid-water setting is off.
+            float waterCost = inCombat || (this.isFollowing() && ownerInWater)
+                    ? 0.0F : (this.isAvoidWaterEnabled() ? 8.0F : 0.0F);
+            if (this.getPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER) != waterCost) {
+                this.setPathfindingMalus(net.minecraft.world.level.pathfinder.PathType.WATER, waterCost);
+            }
+
+            // Combat stuck: if chasing a target but can't reach it, jump periodically
+            // to clear obstacles. This helps with fences, 1-block gaps, and low walls.
+            if (inCombat && this.tickCount % 30 == 0 && this.onGround()
+                    && !this.getNavigation().isDone() && this.getNavigation().getPath() != null) {
+                double distToTarget = this.distanceToSqr(target);
+                // If target is close (< 4 blocks) but path is long, she's stuck behind
+                // an obstacle - jump to try to clear it
+                if (distToTarget < 16.0D && this.getNavigation().getPath().getNodeCount() > 8) {
+                    this.jumpFromGround();
                 }
-                
+            }
+
+            // Diving: while the owner is in the water and she follows him, swim straight at
+            // him - including DOWN, so she submerges when he dives instead of bobbing at the
+            // surface. Navigation is paused for the dive: water path nodes run along the
+            // surface and would fight the descent (the follow goal re-paths every 10 ticks
+            // and picks up where this leaves off once the owner surfaces).
+            if (this.isInWater() && this.isFollowing() && !this.isSceneActive()
+                    && !this.isDowned() && !this.isPassenger() && ownerInWater) {
+                this.waterStuckTicks = 0;
+                double dx = ownerHere.getX() - this.getX();
+                double dy = (ownerHere.getY() + 0.5D) - (this.getY() + 0.5D);
+                double dz = ownerHere.getZ() - this.getZ();
+                double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (len > 1.2D) {
+                    if (!this.getNavigation().isDone()) {
+                        this.getNavigation().stop();
+                    }
+                    this.setDeltaMovement(this.getDeltaMovement()
+                            .add(dx / len * 0.08D, dy / len * 0.06D, dz / len * 0.08D));
+                }
+            } else if (this.isInWater() && !this.isSceneActive() && !this.isDowned()
+                    && !this.isPassenger() && !ownerInWater) {
+                // Water escape AI: helps girls out of water they do NOT want to be in (owner
+                // is on land). Suppressed while the owner is in the water - then she belongs
+                // in the water and swims with him (see the dive block above).
+                this.waterStuckTicks++;
+
                 // Every 10 ticks (0.5s): jump to try to get onto blocks above water level.
                 // This is the primary escape method - most shorelines are 1 block above water.
                 if (this.waterStuckTicks % 10 == 0 && !inCombat) {
@@ -1638,62 +1657,34 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                         }
                     } else {
                         // No shore found - just swim up
-                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.1D, 0));
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.05D, 0));
                     }
                 }
-                
-                // If underwater (block above head): swim sideways to find air
-                if (this.waterStuckTicks % 15 == 0 && this.isUnderWater() && !inCombat) {
-                    // Try all 4 directions to find air
-                    float yaw = this.getYRot();
-                    for (int turn = 0; turn < 4; turn++) {
-                        float testYaw = yaw + turn * 90F;
-                        double dx = -Math.sin(Math.toRadians(testYaw));
-                        double dz = Math.cos(Math.toRadians(testYaw));
-                        net.minecraft.core.BlockPos checkPos = this.blockPosition().offset(
-                                (int) dx, 1, (int) dz);
-                        if (this.level().getBlockState(checkPos).isAir()
-                                || !this.level().getFluidState(checkPos).isSource()) {
-                            // Found air in this direction - swim toward it
-                            this.setYRot(testYaw);
-                            this.setDeltaMovement(this.getDeltaMovement().add(
-                                    dx * 0.2D, 0.15D, dz * 0.2D));
-                            break;
-                        }
-                    }
+
+                // If underwater (head below the surface): drift up gently WITHOUT turning -
+                // the old 90-degree yaw overwrite every 15 ticks made her spin in place.
+                if (this.waterStuckTicks % 20 == 0 && this.isUnderWater() && !inCombat) {
+                    this.setDeltaMovement(this.getDeltaMovement().add(0, 0.03D, 0));
                 }
-                
-                // After 4 seconds: teleport to owner if following, or force big jump
+
+                // After 4 seconds: teleport to the owner if following (he is on land here),
+                // or give one more push. Speed restoration is automatic (self-healing above).
                 if (this.waterStuckTicks >= 80 && !inCombat) {
                     if (this.isFollowing()) {
                         LivingEntity owner = this.getOwner();
                         if (owner != null && owner.isAlive() && !owner.isInWater()) {
                             this.teleportNear((Player) owner);
-                            this.waterStuckTicks = 0;
-                            // Restore speed
-                            var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-                            if (swimAttr != null && !this.combatSpeedBoosted) {
-                                swimAttr.setBaseValue(swimAttr.getBaseValue() / 1.3D);
-                            }
                         }
                     } else {
-                        // Not following - just force a big jump
                         this.jumpFromGround();
-                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
-                        this.waterStuckTicks = 0;
+                        this.setDeltaMovement(this.getDeltaMovement().add(0, 0.2D, 0));
                     }
+                    this.waterStuckTicks = 0;
                 }
             } else {
-                // Not in water - reset counter and restore swim speed if needed
-                if (this.waterStuckTicks > 0) {
-                    var swimAttr = this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
-                    if (swimAttr != null && !this.combatSpeedBoosted) {
-                        swimAttr.setBaseValue(swimAttr.getBaseValue() / 1.3D);
-                    }
-                }
+                // Not in water (or in water with the owner) - reset the escape counter
                 this.waterStuckTicks = 0;
             }
-            
             // Anti-stuck: smart escape sequence. Only fires when navigation is active (girl
             // is trying to go somewhere) but she has not made horizontal progress. Stuckness is
             // deliberately measured in the XZ plane only: a vertical jump is NOT progress, so a
