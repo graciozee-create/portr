@@ -27,6 +27,34 @@ public class PleasureHorizonsItemGroups {
                         output.accept(PleasureHorizonsItems.SETTLEMENT_HUB_ITEM.get());
                         output.accept(PleasureHorizonsItems.HOUSE_TAG_ITEM.get());
                         output.accept(PleasureHorizonsItems.CARVED_GIRL_PUMPKIN_ITEM.get());
+                        // Jenny Mod special items
+                        output.accept(PleasureHorizonsItems.ALLIE_LAMP.get());
+                        output.accept(PleasureHorizonsItems.GALATH_COIN.get());
+                        output.accept(PleasureHorizonsItems.DRAGON_STAFF.get());
+                        output.accept(PleasureHorizonsItems.TRIBE_EGG.get());
+                        // Gadget items
+                        output.accept(PleasureHorizonsItems.GUIDE_BOOK.get());
+                        output.accept(PleasureHorizonsItems.MEMORY_CRYSTAL.get());
+                        output.accept(PleasureHorizonsItems.SUMMONING_WHISTLE.get());
+                        output.accept(PleasureHorizonsItems.GIRL_WAND.get());
+                        output.accept(PleasureHorizonsItems.HORNY_POTION.get());
+                        output.accept(PleasureHorizonsItems.HEALING_CHARM.get());
+                        output.accept(PleasureHorizonsItems.BOND_BRACELET.get());
+                        // Gift items
+                        output.accept(PleasureHorizonsItems.GIFT_RED_ROSE.get());
+                        output.accept(PleasureHorizonsItems.GIFT_CHOCOLATE_BOX.get());
+                        output.accept(PleasureHorizonsItems.GIFT_TEDDY_BEAR.get());
+                        output.accept(PleasureHorizonsItems.GIFT_LOVE_LETTER.get());
+                        output.accept(PleasureHorizonsItems.GIFT_DIAMOND_RING.get());
+                        output.accept(PleasureHorizonsItems.GIFT_COPPER_GEAR.get());
+                        output.accept(PleasureHorizonsItems.GIFT_ENCHANTED_QUILL.get());
+                        output.accept(PleasureHorizonsItems.GIFT_MOONLIGHT_LILY.get());
+                        output.accept(PleasureHorizonsItems.GIFT_ANCIENT_COIN.get());
+                        output.accept(PleasureHorizonsItems.GIFT_GOLDEN_HONEYCOMB.get());
+                        output.accept(PleasureHorizonsItems.GIFT_SILVER_BELL.get());
+                        output.accept(PleasureHorizonsItems.GIFT_MYSTIC_HERB.get());
+                        output.accept(PleasureHorizonsItems.GIFT_DRAGON_SCALE.get());
+                        output.accept(PleasureHorizonsItems.GIFT_CRYSTAL_SLIME.get());
                     })
                     .build());
 
