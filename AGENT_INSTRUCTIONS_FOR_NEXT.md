@@ -1568,3 +1568,62 @@ weight 1), or force with `/girls summon galath` (note: the command is
 coppie allie bia goblin galath manglelie jenny). Tame her like any girl
 (isAttractedTo 1/3 chance) to stop the aggro. Lucy/Mika/Momo spawn only in
 girl_village biomes; Slime/Kobold/Coppie come from crafted eggs.
+
+### 5.55 v16 — stony_shore datapack fix + goblin taming/riding + full audit (e21108d, 4a5feef)
+
+**Datapack load error (e21108d).** v15's remove_spawns referenced
+`minecraft:stony_shores` — the real id is `minecraft:stony_shore` (singular,
+1.18+). Unknown id left the worldgen/biome registry unbound →
+RegistryDataLoader refused all datapacks → DatapackLoadFailureScreen
+(user log: `Unbound values in registry ... [minecraft:stony_shores]` — the
+only unbound value, so the other 12 ids were valid). Note: user runs
+NeoForge 21.1.248 (mod requires [21.1.80,)); artifact verified to contain
+the fixed file.
+
+**Goblin taming (4a5feef).** Root cause: goblin mobInteract opened the
+catch screen on every non-sneak click while `hasStolenItems()` — and a
+goblin near a player holding ANY gold item (tools/ingots/nuggets/blocks/
+apples) steals within seconds and keeps stealing, so the emerald
+feed/tame path in the base mobInteract was unreachable; the catch screen
+has no tame option → wild goblins untamable. Fix: emerald in main hand
+now always falls through to super (1/3 tryTame, same as all girls + the
+other port). Also: `setTamedBy` override returns carried gold on taming
+(catch screen is the only retrieval path and only opens untamed →
+taming with gold aboard would have trapped it forever).
+
+**Goblin riding (4a5feef).** Mounting worked (startRiding +
+canAddPassenger) but nothing steered: no travel() override, no
+PlayerRideableJumping, no getControllingPassenger — the girl's own goals
+drove her. Ported the proven Galath piggyback pattern (travel() steering
+branch: rider zza/xxa/sneak, 0.5/0.3 per tick, rotation to rider,
+super.travel(ZERO) as final authority; isNoGravity while ridden;
+getControllingPassenger; canJump/onPlayerJump/handleStartJump/
+handleStopJump/getJumpCooldown; getRiddenSpeed 1.0). Seat fixed:
+0.85*bbHeight on a 1.5 goblin = 1.275 (rider floating above her head) →
+fixed 0.8D like Galath. The isVehicle() guard keeps the branch inactive
+while she is carried by the player (carrier is her "first passenger").
+TameableGirlEntity tick blocks only ADD to delta (dives/escapes) — the
+travel() override replaces it, so they cannot fight the rider.
+StartSceneC2SPacket blocks scenes while the player is a passenger — no
+scene-while-ridden edge.
+
+**Full audit + port comparisons.** Decompiled the ORIGINAL FapCraft
+1.12.2 v1.1 (Wayback jar, CFR 0.152; obfuscated as com.trolmastercard.
+sexmod; goblin = e3, state enum = fp, catch UI = dy/eq): original goblin
+taming = right-click idle → INSTANT tame + PICK_UP (carried in hand,
+"you are already carrying a Goblin"); RUN state (carrying gold) + click
+within 3.5 → CATCH (item returned via L()); queen births TWO babies
+(AWAIT_PICK_UP); NO vehicle riding at all — fp.RIDE/COWGIRL* are scene
+animation states. Our port's design (emerald 1/3 tame + shift-click
+piggyback) is a deliberate divergence, validated against the OTHER PORT
+(PleasureCraft, Fabric 1.21.4, github.com/Saml-ISM/PleasureCraft, commit
+a015b66 — only Bia+Lucy exist there, no goblin): its AbstractGirlEntity
+uses the same tame-item + `random.nextInt(3)==0` pattern. So both
+divergences are consistent with the other port's conventions.
+Audit scope, all clean: 13 girl entities (only Custom/Galath/Goblin/
+Manglelie override mobInteract; Custom+Manglelie fall through correctly,
+Galath's "defeat first" is by design), WildGirlEntity (slime stays wild,
+gifts level her), TameableGirlEntity interactions/tick, GirlSceneEntity
+scene flow, StartSceneC2SPacket + GoblinActionC2SPacket validation,
+SettlementGirlEntityAI (bow/ammo), QuestManager (fetch/kill/escort +
+goblin quests), all 146 data JSONs valid, biome modifier + tags.
