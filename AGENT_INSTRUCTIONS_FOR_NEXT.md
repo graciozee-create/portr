@@ -1509,3 +1509,62 @@ followTargetEvenIfNotSeen=FALSE)` → it stops when the path completes
 (`canContinueToUse = !isDone`) and re-starts via the 20-tick-throttled
 `canUse` - so an in-range girl still gets one attack per start
 (`start()` resets the attack cooldown to 0).
+
+### 5.54 v15 — 0/0 relationship bug + sea spawns + the succubus (3ca28c1)
+
+Three user reports in one round: «у некоторых девушек 0/0 уровень отношений»,
+«девушки в море спавнятся слишком часто», «как мне найти этого сукуба».
+
+**1. 0/0 relationship levels — fixed (clamp).**
+`GirlEntity.maxRelationshipLevel()` (pure calc, ~L1120) returns the max of
+`Scene.requiredRelationshipLevel` over `getScenes()` (`.orElse(4)`); the
+fallbacks are `Math.max(4, entityData[...])` and default 4 — so 0 is only
+possible when the girl HAS scenes and ALL of them require level 0. Exactly
+three natural girls match: **Bia (Anal@0), Galath (Bed@0), Goblin
+(Breeding@0)**. Consequences of the 0: UI shows `0/0` (GirlInventoryScreen,
+GirlSettingsScreen, InteractionScreen, GirlStatusOverlay) AND the level-up
+gate `getCurrentRelationshipLevel() < maxRelationshipLevel()` in
+TameableGirlEntity/WildGirlEntity tickers is false at 0 → those girls can
+never level up at all. Fix: `Math.max(1, ...)` around the stream max.
+Full scene-level map (for reference): Allie 0/2/4, Coppie 6/8, Jenny 0/2,
+Manglelie 0/2, Kobold 4/6, Lucy 4/6/8/10, Mika 6/8/10, Momo 6/8, Slime 4/6.
+Clamp is safe: max is used only for display + the `<` gate; scene unlocking
+uses the scene's own required level (StartSceneC2SPacket, GirlSceneEntity),
+not max.
+
+**2. Sea spawning — fixed (remove_spawns).**
+Root cause: the six add_spawns biome modifiers target `#minecraft:is_overworld`
+(7 overworld girls: allie, bia, goblin, jenny, manglelie + galath uses
+`#minecraft:is_nether`), weight 1 / min 1 / max 1. `is_overworld` INCLUDES
+all 9 ocean biomes (empirically proven by the bug itself). Oceans have no
+other natural monster spawns → the weight-1 girl is effectively the ONLY
+monster spawn entry there, so every ocean spawn roll produces a girl.
+NeoForge's biome `biomes` field accepts ID | [list] | #tag with NO negation
+(verified in 21.1.80 sources: `Biome.LIST_CODEC` =
+directListOrTagReference), so exclusion = explicit water list.
+Implemented as `data/pleasurehorizons/neoforge/biome_modifier/
+girls_no_water_spawns.json`: `neoforge:remove_spawns`, biomes = 13 IDs
+(9 oceans + river + frozen_river + beach + stony_shores), entity_types =
+new `#pleasurehorizons:girls` tag (tags/entity_type/girls.json, all 13
+entity types incl. custom_girl). Ordering is GUARANTEED:
+`ModifiableBiomeInfo.applyBiomeModifiers` iterates `Phase.values()` —
+ADD before REMOVE — and AddSpawnsBiomeModifier only acts in ADD while
+RemoveSpawnsBiomeModifier only in REMOVE, so our removal always runs after
+any add_spawns (our own or other mods'). RemoveSpawnsBiomeModifier scans
+ALL MobCategories, so spawn category is irrelevant. No Java change needed;
+data files are validated by the game at load (unknown biome ID = datapack
+error in log, not a crash).
+
+**3. «сукуб» = GALATH (answer, no code).**
+There is no separate succubus entity; the only succubus reference in the
+whole codebase is the comment in GalathEntity.registerGoals(): she is "the
+original's hostile succubus" — untamed Galath targets survival players
+(NearestAttackableTargetGoal<Player>, gated by shouldAggroPlayer: untamed,
+not downed, no scene, not passenger, not sitting). How to find her:
+spawns in ANY nether biome (galath_spawn.json → `#minecraft:is_nether`,
+weight 1), or force with `/girls summon galath` (note: the command is
+`/girls` not `/girl`; `spawn` subcommand is CUSTOM-GIRL profiles only,
+`summon` is the one with natural-girl types: lucy mika momo slime kobold
+coppie allie bia goblin galath manglelie jenny). Tame her like any girl
+(isAttractedTo 1/3 chance) to stop the aggro. Lucy/Mika/Momo spawn only in
+girl_village biomes; Slime/Kobold/Coppie come from crafted eggs.
