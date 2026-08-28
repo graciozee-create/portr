@@ -1729,3 +1729,27 @@ AABB has no single-Vec3 ctor (use AABB(Vec3, Vec3)); DamageTypes has no
 FALL/OUT_OF_WORLD/STARVE/THORNS constants (use type().msgId()).
 
 CI green: run 33175444836 (cfb1818) + 770d040 (spawn-check fix).
+
+**Cross-port verification (user asked "check the other githubs"):**
+- `colorgarden/Pleasure-Horizons-I18n` (reworked-girls, OUR DIRECT UPSTREAM)
+  has NO Galath at all (7 girls: Lucy/Mika/Momo/Slime/Kobold/Coppie/Custom)
+  — our Galath was assembled from the rechenz port + the decompiled original.
+- `rechenz/Jenny-mod-1.21.1` (Schnurri_tv, com.schnurritv.sexmod): GalathEntity
+  (477 ln) is a 1:1 copy of our PRE-v17 combat (energy wave 200t/4dmg/wither/
+  weakness r6, grab 300/3/60/160/8 A-D mash + GalathGrabPacket, 300 HP/8 dmg,
+  nether stars + coin on die(), biome modifier weight 3) — confirming the old
+  port came from there, not from the original. Their Manglelie has a
+  "Mother-Daughter Bond" (near Galath: regen on her, str+resist on Manglelie,
+  portal particles) — buff-only, no head-riding.
+- `Mine335/JennysMod1.21.1`: Galath = tameable flying COMPANION (CompanionKind),
+  shoots EnergyBallEntity projectiles (blaze-style, 60t cd, 16-block range),
+  armor 4 / 0.2 knockback resist, coin summon via GalathBindingData, flies
+  (hover, 0.22 speed). Different game design — not the original boss.
+- `Saml-ISM/PleasureCraft`: no Galath (checked earlier).
+- NOT ported from the original, deliberate: tamed "daughter" Manglelie
+  (RIDE_MOMMY_HEAD — sits on her head, Galath chases her, WorldSavedData
+  binding, failsafe spawn; NONE of the modern ports implements it) — user
+  decided NOT to add it (2026-08-28); instant-kill 15-tick telegraph (context
+  unclear in decompile, insta-kill game-breaking); flight HUD (no GUI asset);
+  EntityAITempt (isAttractedTo exists, no TemptGoal); morning PlayerWakeUpEvent
+  scene; purple nametag.
