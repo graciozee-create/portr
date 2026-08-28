@@ -12,9 +12,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,7 +25,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +49,7 @@ import java.util.Set;
  * <p>It reuses the shared tamed-girl ownership model: {@code isTamed()}/{@code setTamedBy()}.
  * The thief behaviour runs only while untamed, downed/scene/passenger/sitting are all gated.</p>
  */
-public class GoblinEntity extends SettlementGirlEntityAI {
+public class GoblinEntity extends SettlementGirlEntityAI implements PlayerRideableJumping {
 
     // Synced data
     private static final EntityDataAccessor<String> DATA_STOLEN_OWNER =
@@ -301,8 +306,13 @@ public class GoblinEntity extends SettlementGirlEntityAI {
             return this.toggleRide(player);
         }
 
-        // A goblin carrying your gold can be caught: open the catch screen.
-        if (!this.isTamed() && this.hasStolenItems()) {
+        // A goblin carrying your gold can be caught: open the catch screen -
+        // unless the player holds her taming item. The screen used to swallow
+        // every non-sneak click, which made taming impossible in practice
+        // (a goblin near a player with any gold item in the inventory always
+        // had stolen goods, so the emerald feed path was never reached).
+        if (!this.isTamed() && this.hasStolenItems()
+                && !player.getItemInHand(hand).is(this.isAttractedTo())) {
             this.openCaughtScreen(player);
             return InteractionResult.SUCCESS;
         }
@@ -341,6 +351,17 @@ public class GoblinEntity extends SettlementGirlEntityAI {
                 new GoblinCaughtScreenS2CPacket(this.getId(), false));
     }
 
+    @Override
+    public void setTamedBy(Player player) {
+        super.setTamedBy(player);
+        // The catch screen (the only way to retrieve stolen gold) only opens
+        // for UNTAMED goblins, so taming a thief who still carries your gold
+        // must return it on the spot or it would be stuck in her forever.
+        if (this.hasStolenItems() && player instanceof ServerPlayer serverPlayer) {
+            this.returnStolenItems(serverPlayer);
+        }
+    }
+
     private InteractionResult toggleRide(Player player) {
         if (this.isDowned() || this.isSceneActive() || this.isPassenger()) {
             return InteractionResult.PASS;
@@ -376,9 +397,98 @@ public class GoblinEntity extends SettlementGirlEntityAI {
                 && super.canAddPassenger(passenger);
     }
 
+    /** Fixed piggyback seat (matches the bound Galath): a 1.5-high goblin with
+     *  a 0.85*bh offset would put the rider floating above her head. */
     @Override
     public net.minecraft.world.phys.Vec3 getPassengerRidingPosition(net.minecraft.world.entity.Entity passenger) {
-        return new net.minecraft.world.phys.Vec3(0.0D, this.getBbHeight() * 0.85D, 0.0D);
+        return new net.minecraft.world.phys.Vec3(0.0D, 0.8D, 0.0D);
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger instanceof Player player ? player : null;
+    }
+
+    /**
+     * Piggyback steering, same pattern as the bound Galath: while a player
+     * rides, the rider's WASD/space/sneak drive the goblin and {@code travel}
+     * becomes the final authority on per-tick movement, so the shared
+     * tamed-girl goals underneath cannot fight the steering.
+     */
+    @Override
+    public void travel(Vec3 travelVector) {
+        LivingEntity rider = this.getControllingPassenger();
+        if (rider != null && this.isVehicle()) {
+            float forward = rider.zza;
+            float strafe = rider.xxa;
+            boolean sneak = rider.isShiftKeyDown();
+            this.setYRot(rider.getYRot());
+            this.yRotO = this.getYRot();
+            this.yBodyRot = this.getYRot();
+            this.yHeadRot = this.getYRot();
+            Vec3 lookVec = rider.getLookAngle();
+            double hSpeed = 0.5D;
+            double vSpeed = 0.3D;
+            double mx = 0.0D;
+            double my = 0.0D;
+            double mz = 0.0D;
+            if (strafe != 0.0F) {
+                mx = -lookVec.z * hSpeed * strafe;
+                mz = lookVec.x * hSpeed * strafe;
+            }
+            if (forward != 0.0F) {
+                mx += lookVec.x * hSpeed * forward;
+                mz += lookVec.z * hSpeed * forward;
+            }
+            if (this.jumping) {
+                my = vSpeed;
+                this.jumping = false;
+            } else if (sneak) {
+                my = -vSpeed;
+            }
+            this.setDeltaMovement(mx, my, mz);
+            this.hasImpulse = true;
+            this.fallDistance = 0.0F;
+            super.travel(Vec3.ZERO);
+            return;
+        }
+        super.travel(travelVector);
+    }
+
+    @Override
+    public boolean isNoGravity() {
+        return this.getControllingPassenger() != null || super.isNoGravity();
+    }
+
+    @Override
+    public boolean canJump() {
+        return true;
+    }
+
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        this.jumping = true;
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+        this.jumping = true;
+    }
+
+    @Override
+    public void handleStopJump() {
+    }
+
+    @Override
+    public int getJumpCooldown() {
+        return 0;
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return 1.0F;
     }
 
     // ------------------------------------------------------------ persistence
