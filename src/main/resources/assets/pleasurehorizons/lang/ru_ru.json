@@ -526,8 +526,6 @@
   "msg.pleasurehorizons.galath_ko": "%s парализована! Теперь пора её покорить - подойди к ней и кликни правой кнопкой.",
   "msg.pleasurehorizons.galath_bound": "%s связана с тобой. Её душа связана с монетой в твоей руке - используй её, чтобы призвать её.",
   "msg.pleasurehorizons.galath_defeat_hint": "%s не будет слушать тебя, пока ты её не победишь.",
-  "msg.pleasurehorizons.galath_grabbed": "§4Галат схватила тебя! ЖМИ A/D, ЧТОБЫ ВЫРВАТЬСЯ!",
-  "msg.pleasurehorizons.galath_escaped": "§aТы вырвался из хватки Галат!",
   "msg.pleasurehorizons.galath_mounted": "§5Ты взобрался на Галат!",
   "msg.pleasurehorizons.galath_dismounted": "§7Ты спрыгнул с Галат.",
   "msg.pleasurehorizons.galath_ritual_start": "§5Галат и Манглели начинают тёмный ритуал...",
