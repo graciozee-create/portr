@@ -78,7 +78,13 @@ public class GirlAttackSwitchGoal extends Goal {
         double distSq = girl.distanceToSqr(target);
         double healthRatio = girl.getHealth() / girl.getMaxHealth();
 
-        if (hasBow()) {
+        // In water the bow is useless: arrows lose almost all velocity in water, and a
+        // kiting archer (wounded or out of the 5-block melee band) would swim away from an
+        // underwater target and "circle" it forever. Melee first - the combat dive in
+        // tick() brings her to the target at any depth.
+        boolean underwaterFight = girl.isInWater()
+                || (target.isInWater() || target.isUnderWater());
+        if (hasBow() && !underwaterFight) {
             boolean healthyAndClose = healthRatio > 0.5 && distSq <= switchDistanceSq;
             swapTo(healthyAndClose ? meleeGoal : bowGoal);
         } else {

@@ -1636,6 +1636,12 @@ public abstract class TameableGirlEntity extends GirlSceneEntity {
                 double dz = target.getZ() - this.getZ();
                 double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 if (len > 1.0D) {
+                    // Stop the navigation: the combat goal re-paths at the surface-level
+                    // node every few ticks and would pull her back up, cancelling the dive
+                    // (the goal's attack check is independent of the navigation).
+                    if (!this.getNavigation().isDone()) {
+                        this.getNavigation().stop();
+                    }
                     this.setDeltaMovement(this.getDeltaMovement()
                             .add(dx / len * 0.09D, dy / len * 0.10D, dz / len * 0.09D));
                 }
