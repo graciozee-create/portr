@@ -102,7 +102,9 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
     private int skeletonSummonCooldown = 0;
     private int damageAccumulated = 0;
     private int rideCooldown = 0;
-    private final List<UUID> minionUUIDs = new ArrayList<>();
+    // The original keeps a live list of her wither-skeleton minions (bI). 1.21.1 has no
+    // Level#getEntity(UUID), so the minions are referenced directly.
+    private final List<WitherSkeleton> minions = new ArrayList<>();
 
     // Manglelie threesome ("dark ritual") state, mirrored by ManglelieEntity.
     public boolean isInThreesome = false;
@@ -238,8 +240,10 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         // and thorns (her decompiled attackEntityFrom returns false for all of them).
         if (!this.isTamed() && (source.is(DamageTypes.LAVA) || source.is(DamageTypes.IN_FIRE)
                 || source.is(DamageTypes.ON_FIRE) || source.is(DamageTypes.HOT_FLOOR)
-                || source.is(DamageTypes.FALL) || source.is(DamageTypes.OUT_OF_WORLD)
-                || source.is(DamageTypes.STARVE) || source.is(DamageTypes.THORNS))) {
+                || source.type().msgId().equals("fall")
+                || source.type().msgId().equals("out_of_world")
+                || source.type().msgId().equals("starve")
+                || source.type().msgId().equals("thorns"))) {
             return false;
         }
 
@@ -272,12 +276,11 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
             serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
                     this.getX(), this.getY() + 1.5D, this.getZ(),
                     12, 0.4D, 0.5D, 0.4D, 0.08D);
-            for (ServerPlayer nearby : serverLevel.getPlayers()) {
-                if (nearby.distanceToSqr(this) <= 32.0D * 32.0D) {
-                    nearby.displayClientMessage(
-                            Component.translatable("msg.pleasurehorizons.galath_ko", this.getGirlDisplayName()),
-                            true);
-                }
+            for (ServerPlayer nearby : serverLevel.getPlayers(
+                    p -> p.distanceToSqr(this) <= 32.0D * 32.0D)) {
+                nearby.displayClientMessage(
+                        Component.translatable("msg.pleasurehorizons.galath_ko", this.getGirlDisplayName()),
+                        true);
             }
         }
         this.playSound(SoundEvents.ENDERMAN_DEATH, 1.0F, 0.6F);
@@ -358,7 +361,7 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         double tx = target != null ? target.getX() : this.getX();
         double tz = target != null ? target.getZ() : this.getZ();
 
-        for (int i = 0; i < 2 && this.minionUUIDs.size() < MAX_WITHER_MINIONS; i++) {
+        for (int i = 0; i < 2 && this.minions.size() < MAX_WITHER_MINIONS; i++) {
             WitherSkeleton skeleton = EntityType.WITHER_SKELETON.create(this.level());
             if (skeleton == null) continue;
             double angle = this.random.nextDouble() * Math.PI * 2;
@@ -369,7 +372,7 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
             if (target != null) skeleton.setTarget(target);
             skeleton.setPersistenceRequired();
             this.level().addFreshEntity(skeleton);
-            this.minionUUIDs.add(skeleton.getUUID());
+            this.minions.add(skeleton);
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(ParticleTypes.SMOKE, sx, this.getY(), sz, 8, 0.3D, 0.5D, 0.3D, 0.05D);
             }
@@ -383,20 +386,16 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
     }
 
     private void expireMinions() {
-        this.minionUUIDs.removeIf(uuid -> {
-            Entity minion = this.level().getEntity(uuid);
-            return minion == null || !minion.isAlive() || minion.level() != this.level();
-        });
+        this.minions.removeIf(minion -> !minion.isAlive());
     }
 
     private void clearMinions() {
-        for (UUID uuid : this.minionUUIDs) {
-            Entity minion = this.level().getEntity(uuid);
-            if (minion != null && minion.isAlive()) {
+        for (WitherSkeleton minion : this.minions) {
+            if (minion.isAlive()) {
                 minion.discard();
             }
         }
-        this.minionUUIDs.clear();
+        this.minions.clear();
     }
 
     /**
@@ -479,7 +478,7 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
                         6, 0.15D, 0.15D, 0.15D, 0.03D);
             }
 
-            AABB reach = new AABB(ballPos).inflate(SWING_HIT_RADIUS);
+            AABB reach = new AABB(ballPos, ballPos).inflate(SWING_HIT_RADIUS);
             for (LivingEntity entity : this.galath.level().getEntitiesOfClass(LivingEntity.class, reach,
                     e -> e != this.galath && e.isAlive() && !(e instanceof TameableGirlEntity))) {
                 if (this.hitThisSwing.contains(entity.getUUID())) continue;

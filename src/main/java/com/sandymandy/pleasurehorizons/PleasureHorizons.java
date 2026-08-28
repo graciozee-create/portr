@@ -24,9 +24,7 @@ import com.sandymandy.pleasurehorizons.util.managers.TamedGirlSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerLevelAccessor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -35,6 +33,7 @@ import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -229,26 +228,18 @@ public class PleasureHorizons {
      */
     @SubscribeEvent
     public void onLivingPositionCheck(MobSpawnEvent.PositionCheck event) {
-        if (event.getLevel().isClientSide()) return;
         if (event.getSpawnType() != MobSpawnType.NATURAL) return;
         Mob mob = event.getEntity();
         if (!(mob instanceof WitherSkeleton) && !(mob instanceof Blaze)) return;
 
         ServerLevelAccessor accessor = event.getLevel();
-        ServerLevel world;
-        if (accessor instanceof ServerLevel serverLevel) {
-            world = serverLevel;
-        } else if (accessor instanceof ServerChunkCache chunkCache) {
-            world = chunkCache.getLevel();
-        } else {
-            return;
-        }
+        ServerLevel world = accessor.getLevel();
         if (world.dimension() != Level.NETHER) return;
 
         BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
-        // Original position check: the block at the spawn must not be a replaceable
-        // one (air, carpet, plants, buttons, ladders, torches, signs, banners).
-        if (!world.getBlockState(pos).isSolidBlock(world, pos)) return;
+        // Original position check: the spawn must stand on real ground, not on a
+        // replaceable block (air, carpet, plants, buttons, ladders, torches, ...).
+        if (world.isEmptyBlock(pos)) return;
 
         // Do not stack bosses: if an untamed Galath is already nearby, let the
         // natural mob through instead.
