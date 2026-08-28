@@ -46,7 +46,7 @@ import java.util.UUID;
  *
  * <ul>
  *   <li>No natural spawn: a {@code LivingSpawnEvent.CheckSpawn} handler replaces Nether
- *       wither-skeleton/blaze spawns with her (see {@code PleasureHorizons#onLivingCheckSpawn}).
+ *       wither-skeleton/blaze spawns with her (see {@code PleasureHorizons#onLivingPositionCheck}).
  *   <li>Hostile to players, but her combat is NOT standard melee: she fights with
  *       energy balls - a swing whose hitbox is active during ticks 9-30, dealing 1 damage
  *       + 1.5 knockback and <b>dodged by sneaking</b>. She is immune to fire, lava,

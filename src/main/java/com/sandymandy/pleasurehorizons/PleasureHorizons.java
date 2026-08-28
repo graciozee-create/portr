@@ -11,6 +11,7 @@ import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsSpawnEggs;
 import com.sandymandy.pleasurehorizons.entity.base.GirlEntity;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
+import com.sandymandy.pleasurehorizons.entity.girls.GalathEntity;
 import com.sandymandy.pleasurehorizons.networking.PleasureHorizonsPackets;
 import com.sandymandy.pleasurehorizons.registries.GirlRegistry;
 import com.sandymandy.pleasurehorizons.registries.PleasureHorizonsDispenserBehavior;
@@ -23,9 +24,15 @@ import com.sandymandy.pleasurehorizons.util.managers.TamedGirlSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerLevelAccessor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.monster.Blaze;
+import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
@@ -35,6 +42,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,6 +215,57 @@ public class PleasureHorizons {
                         finished.rewardAffection()), false);
             }
         }
+    }
+
+    /**
+     * Original 1.12.2: Galath has NO natural spawn of her own. A
+     * {@code LivingSpawnEvent.CheckSpawn} handler in the original denies Nether
+     * wither-skeleton/blaze spawns at valid positions and spawns Galath there
+     * instead. This port mirrors that with the 1.21.1 equivalent
+     * ({@link MobSpawnEvent.PositionCheck}): the natural mob is denied and Galath
+     * takes its place. A 64-block guard prevents several bosses stacking on top of
+     * each other, and spawner-block spawns are left untouched (the original skipped
+     * {@code checkSpawn.isSpawner()} too).
+     */
+    @SubscribeEvent
+    public void onLivingPositionCheck(MobSpawnEvent.PositionCheck event) {
+        if (event.getLevel().isClientSide()) return;
+        if (event.getSpawnType() != MobSpawnType.NATURAL) return;
+        Mob mob = event.getEntity();
+        if (!(mob instanceof WitherSkeleton) && !(mob instanceof Blaze)) return;
+
+        ServerLevelAccessor accessor = event.getLevel();
+        ServerLevel world;
+        if (accessor instanceof ServerLevel serverLevel) {
+            world = serverLevel;
+        } else if (accessor instanceof ServerChunkCache chunkCache) {
+            world = chunkCache.getLevel();
+        } else {
+            return;
+        }
+        if (world.dimension() != Level.NETHER) return;
+
+        BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
+        // Original position check: the block at the spawn must not be a replaceable
+        // one (air, carpet, plants, buttons, ladders, torches, signs, banners).
+        if (!world.getBlockState(pos).isSolidBlock(world, pos)) return;
+
+        // Do not stack bosses: if an untamed Galath is already nearby, let the
+        // natural mob through instead.
+        for (GalathEntity nearby : world.getEntitiesOfClass(GalathEntity.class,
+                mob.getBoundingBox().inflate(64.0D))) {
+            if (!nearby.isTamed()) return;
+        }
+
+        event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        GalathEntity galath = GirlRegistry.GALATH.get().create(world);
+        if (galath == null) {
+            // Never eat the natural spawn if the boss cannot be created.
+            event.setResult(MobSpawnEvent.PositionCheck.Result.DEFAULT);
+            return;
+        }
+        galath.setPos(event.getX(), event.getY(), event.getZ());
+        world.addFreshEntity(galath);
     }
 
     @SubscribeEvent
