@@ -3,7 +3,6 @@ package com.sandymandy.pleasurehorizons.entity.girls;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.SettlementGirlEntityAI;
 import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
-import com.sandymandy.pleasurehorizons.networking.S2C.GalathGrabScreenS2CPacket;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -13,8 +12,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,8 +20,9 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,27 +30,42 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Galath - a hostile mini-boss from the original Jenny/Fapcraft mod.
+ * Galath - the Nether succubus boss, ported 1:1 from the original Jenny/Fapcraft mod
+ * (decompiled 1.12.2 class {@code f_}).
  *
- * <p>The original character starts as an enemy in the Nether: she is aggressive, has boss-tier
- * stats, and can only become a companion after the player defeats her. This is the full port
- * of that fight, including the wave/skeleton/grab combat extras:</p>
+ * <p>Original behaviour (verified against the decompiled mod jar):</p>
  *
  * <ul>
- *   <li>Boss stats: 300 HP, 8 damage, follow 64, speed 0.3, 50 XP.</li>
- *   <li>Untamed Galath hunts survival players and periodically releases a wither/weakness
- *       energy wave and summons skeletons while she is damaged.</li>
- *   <li>Every 15 seconds she can grab a nearby player: the victim has 8 seconds to mash A/D
- *       (60 escape points); success knocks them free, failure deals heavy damage.</li>
- *   <li>When defeated she vanishes, drops her soul coin + nether stars, and the winning player
- *       is marked so the coin (summon/dismiss) works in survival.</li>
+ *   <li>No natural spawn: a {@code LivingSpawnEvent.CheckSpawn} handler replaces Nether
+ *       wither-skeleton/blaze spawns with her (see {@code PleasureHorizons#onLivingCheckSpawn}).
+ *   <li>Hostile to players, but her combat is NOT standard melee: she fights with
+ *       energy balls - a swing whose hitbox is active during ticks 9-30, dealing 1 damage
+ *       + 1.5 knockback and <b>dodged by sneaking</b>. She is immune to fire, lava,
+ *       fall damage, the void, starvation and thorns (a Nether boss).</li>
+ *   <li>While she takes damage she summons wither skeletons, placed 15+ blocks away
+ *       from her victim (the original keeps a UUID list of her minions).</li>
+ *   <li>When beaten she does NOT die: she screams, floats down and lies paralyzed
+ *       ("Galath is paralyzed! Now it's time to corrupt her - walk to her and right
+ *       click her"). Any player who right-clicks her while she lies down binds her:
+ *       she stands up, and the <b>soul-binding coin goes straight into the claimer's
+ *       hand</b> (the old item is dropped), exactly like the original GIVE_COIN cutscene.
+ *   <li>A beaten-by-environment Galath with no player to claim her simply vanishes
+ *       (the original resets her ownership data on non-player death).</li>
+ *   <li>After a scene the player is pulled back to her side (the original
+ *       {@code GalathEntity#d} teleport).</li>
+ *   <li>When bound she is a flying mount: the original "ride" option opens her flight
+ *       (no gravity, the rider steers, jump/sneak for altitude) - no piggyback gallop.
+ *   <li>The Manglelie threesome ("dark ritual") is also original (her post-tame menu
+ *       option, Manglelie required).</li>
  * </ul>
  */
 public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideableJumping {
@@ -60,25 +74,35 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
     private static final int RIDE_COOLDOWN = 100;
     private static final int THREESOME_DISTANCE_SQ = 36;          // owner must stay within 6 blocks
 
-    // Boss combat tuning (canon values from the upstream 1.21.1 port).
-    private static final int ENERGY_WAVE_INTERVAL = 200;          // 10 seconds
-    private static final double ENERGY_WAVE_RANGE = 6.0D;
-    private static final int SKELETON_SUMMON_INTERVAL = 600;      // 30 seconds
-    private static final int DAMAGE_FOR_SKELETONS = 30;           // skeleton burst every 30 damage
-    private static final int GRAB_INTERVAL = 300;                 // 15 seconds between grab attempts
-    private static final int GRAB_RANGE = 3;                      // 3 block range for grab
-    private static final int ESCAPE_THRESHOLD = 60;
-    private static final int ESCAPE_DURATION = 160;               // 8 seconds
-    private static final int GRAB_CUM_DAMAGE = 8;
+    // ---- original 1.12.2 boss-fight tuning (decompiled f_ class) -------------
+    private static final int SWING_DURATION = 35;                 // full energy-ball swing
+    private static final int SWING_ACTIVE_FROM = 9;               // original: hitbox active at ad 9..30
+    private static final int SWING_ACTIVE_TO = 30;
+    private static final double SWING_REACH_SQ = 16.0D;           // 4 blocks to start the swing
+    private static final double SWING_HIT_RADIUS = 1.4D;          // original ball hitbox 0.75 + player
+    private static final int SWING_COOLDOWN_MIN = 40;
+    private static final int SWING_COOLDOWN_MAX = 80;
+    private static final float BALL_DAMAGE = 1.0F;                // original energy-ball damage
+    private static final float BALL_KNOCKBACK = 1.5F;             // original knockback
+    private static final int KO_FLY_DURATION = 80;                // KNOCK_OUT_FLY: scream + float down
+    private static final int KO_DISCARD_GRACE = 100;              // unclaimed (environment) KO vanishes
+    private static final int SKELETON_SUMMON_INTERVAL = 600;      // 30 s between summon bursts
+    private static final int DAMAGE_FOR_SKELETONS = 30;           // summon burst every 30 damage
+    private static final int MAX_WITHER_MINIONS = 3;
+    private static final int WITHER_MINION_RANGE = 15;            // original: placed >15 blocks from target
 
-    private int energyCooldown = 0;
-    private int grabCooldown = 0;
-    private int grabPhaseTicks = 0;
-    private String grabbedPlayerUUID = "";
-    private int escapeTaps = 0;
+    private enum KnockOutPhase { NONE, FLY, GROUND }
+
+    private KnockOutPhase koPhase = KnockOutPhase.NONE;
+    private int koTicks = 0;
+    @Nullable
+    private UUID koVictor;
+
+    private int swingCooldown = 0;
     private int skeletonSummonCooldown = 0;
     private int damageAccumulated = 0;
     private int rideCooldown = 0;
+    private final List<UUID> minionUUIDs = new ArrayList<>();
 
     // Manglelie threesome ("dark ritual") state, mirrored by ManglelieEntity.
     public boolean isInThreesome = false;
@@ -106,12 +130,14 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         }
     }
 
-    /** Boss-tier stats, mirroring the original {@code GalathEntity#createBossAttributes()}. */
+    /**
+     * The original Galath has no boss-tier attributes: a standard 20 HP girl that fights
+     * with 1-damage energy balls and wither-skeleton minions - she is a dodge-and-manage
+     * boss, not a HP sponge.
+     */
     public static AttributeSupplier.Builder createAttributes() {
         return createDefaultAttributes()
-                .add(Attributes.MAX_HEALTH, 300.0D)
-                .add(Attributes.ATTACK_DAMAGE, 8.0D)
-                .add(Attributes.ARMOR, 4.0D)
+                .add(Attributes.ATTACK_DAMAGE, 1.0D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D);
     }
@@ -161,6 +187,12 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
     }
 
     @Override
+    protected void registerCombatGoals() {
+        // No standard melee/bow switch: the original fights with energy balls only.
+        this.goalSelector.addGoal(2, new BallSwingGoal(this));
+    }
+
+    @Override
     public void tick() {
         super.tick();
         if (this.level().isClientSide()) return;
@@ -168,190 +200,178 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         if (this.rideCooldown > 0) this.rideCooldown--;
         this.tickThreesome();
 
-        // Bound Galath is a companion again; her boss attacks stop.
-        if (this.isTamed()) return;
-
-        // Active combat grab takes priority over the other attacks.
-        if (!this.grabbedPlayerUUID.isEmpty()) {
-            this.tickActiveGrab();
+        // Bound Galath is a companion again; her boss behaviour stops.
+        if (this.isTamed()) {
+            this.expireMinions();
             return;
         }
 
-        // Damage-accumulated skeleton burst.
+        if (this.koPhase != KnockOutPhase.NONE) {
+            this.tickKnockOut();
+            return;
+        }
+
+        this.expireMinions();
+
+        // Original: while she takes damage she calls in wither skeletons, and keeps
+        // summoning periodically while actively fighting.
         if (this.damageAccumulated >= DAMAGE_FOR_SKELETONS && this.skeletonSummonCooldown <= 0) {
             this.damageAccumulated = 0;
             this.skeletonSummonCooldown = SKELETON_SUMMON_INTERVAL;
-            this.summonSkeletons();
+            this.summonWitherSkeletons();
         }
-
-        this.tickEnergyWave();
-        this.tickGrabAttempt();
 
         if (this.skeletonSummonCooldown > 0) this.skeletonSummonCooldown--;
 
-        // Random skeleton summon while actively fighting (1% per tick).
         if (this.getTarget() != null && this.skeletonSummonCooldown <= 0
-                && this.random.nextFloat() < 0.01F) {
+                && this.random.nextFloat() < 0.005F) {
             this.skeletonSummonCooldown = SKELETON_SUMMON_INTERVAL;
-            this.summonSkeletons();
+            this.summonWitherSkeletons();
         }
     }
 
-    private void tickEnergyWave() {
-        if (this.energyCooldown > 0) {
-            this.energyCooldown--;
-            return;
-        }
-        this.energyCooldown = ENERGY_WAVE_INTERVAL;
-        LivingEntity target = this.getTarget();
-        if (target == null) return;
-
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
-                    this.getX(), this.getY() + 1.5D, this.getZ(),
-                    10, 1.0D, 0.5D, 1.0D, 0.12D);
-        }
-
-        AABB area = this.getBoundingBox().inflate(ENERGY_WAVE_RANGE);
-        for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, area,
-                e -> e != this && !(e instanceof TameableGirlEntity))) {
-            if (entity.getType().getCategory().isFriendly()) continue;
-            entity.hurt(this.damageSources().magic(), 4.0F);
-            entity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 1, false, true));
-            entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, false, true));
-        }
-    }
-
-    private void tickGrabAttempt() {
-        if (this.grabCooldown > 0) {
-            this.grabCooldown--;
-            return;
-        }
-        if (this.getTarget() == null) return;
-
-        this.grabCooldown = GRAB_INTERVAL;
-        Player nearestPlayer = null;
-        double nearestDist = (double) GRAB_RANGE * GRAB_RANGE;
-        for (Player player : this.level().getEntitiesOfClass(Player.class,
-                this.getBoundingBox().inflate(GRAB_RANGE))) {
-            if (player.isCreative() || player.isSpectator()) continue;
-            double dist = player.distanceToSqr(this);
-            if (dist < nearestDist) {
-                nearestDist = dist;
-                nearestPlayer = player;
-            }
-        }
-        if (nearestPlayer != null) {
-            this.startGrab(nearestPlayer);
-        }
-    }
-
-    private void tickActiveGrab() {
-        Player grabbed = this.grabbedPlayer();
-        if (grabbed == null || !grabbed.isAlive() || grabbed.isCreative() || grabbed.isSpectator()) {
-            this.releaseGrab(null);
-            return;
-        }
-
-        this.grabPhaseTicks++;
-
-        if (this.grabPhaseTicks >= ESCAPE_DURATION) {
-            grabbed.hurt(this.damageSources().mobAttack(this), GRAB_CUM_DAMAGE);
-            grabbed.hurt(this.damageSources().magic(), 4.0F);
-            Vec3 knockback = grabbed.position().subtract(this.position()).normalize();
-            grabbed.knockback(2.0D, knockback.x, knockback.z);
-            this.releaseGrab(grabbed);
-            return;
-        }
-
-        // Light damage over time while she holds the victim.
-        if (this.grabPhaseTicks % 20 == 0) {
-            grabbed.hurt(this.damageSources().mobAttack(this), 1.0F + this.random.nextFloat());
-        }
-
-        Vec3 lockPos = this.position().add(this.getLookAngle().scale(1.0D));
-        grabbed.teleportTo(lockPos.x, this.getY(), lockPos.z);
-        grabbed.setYRot(this.getYRot());
-    }
+    // ------------------------------------------------------------ boss combat
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        // Original: a Nether boss ignores fire/lava, falling, the void, starvation
+        // and thorns (her decompiled attackEntityFrom returns false for all of them).
+        if (!this.isTamed() && (source.is(DamageTypes.LAVA) || source.is(DamageTypes.IN_FIRE)
+                || source.is(DamageTypes.ON_FIRE) || source.is(DamageTypes.HOT_FLOOR)
+                || source.is(DamageTypes.FALL) || source.is(DamageTypes.OUT_OF_WORLD)
+                || source.is(DamageTypes.STARVE) || source.is(DamageTypes.THORNS))) {
+            return false;
+        }
+
         boolean wasDowned = this.isDowned();
         boolean result = super.hurt(source, amount);
         if (!this.level().isClientSide() && !this.isTamed() && !wasDowned && this.isDowned()) {
-            this.onDefeated(source);
-        } else if (!this.level().isClientSide() && !this.isTamed() && result) {
-            // Skeleton summon tracks real damage taken while the boss is still alive.
+            this.beginKnockOut(playerFromDamage(source));
+        } else if (!this.level().isClientSide() && !this.isTamed() && !this.isDowned() && result) {
+            // Wither-skeleton summoning tracks real damage taken while she is still up.
             this.damageAccumulated += (int) amount;
         }
         return result;
     }
 
-    private void onDefeated(DamageSource source) {
-        Player player = playerFromDamage(source);
+    /**
+     * Original KNOCK_OUT sequence start: she does not die - she screams
+     * ("Galath is paralyzed!"), gravity is dropped and she floats down to the ground
+     * where she lies until a player right-clicks her.
+     */
+    private void beginKnockOut(@Nullable Player victor) {
+        this.koPhase = KnockOutPhase.FLY;
+        this.koTicks = 0;
+        this.koVictor = victor != null ? victor.getUUID() : null;
         this.setTarget(null);
         this.getNavigation().stop();
-
-        // If she goes down mid-grab, release the victim and close the escape screen.
-        if (!this.grabbedPlayerUUID.isEmpty()) {
-            Player grabbed = this.grabbedPlayer();
-            this.grabbedPlayerUUID = "";
-            this.grabPhaseTicks = 0;
-            this.escapeTaps = 0;
-            if (grabbed instanceof ServerPlayer serverPlayer) {
-                PacketDistributor.sendToPlayer(serverPlayer,
-                        new GalathGrabScreenS2CPacket(this.getId(), false));
-            }
-        }
+        this.clearMinions();
+        this.setNoGravity(true);
 
         if (this.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
                     this.getX(), this.getY() + 1.5D, this.getZ(),
                     12, 0.4D, 0.5D, 0.4D, 0.08D);
-            if (player != null) {
-                // Canon flow: only a player's victory grants the soul-binding coin (and a
-                // handful of nether stars). Environmental deaths drop no reward.
-                markDefeatedFor(player);
-                this.spawnAtLocation(new ItemStack(PleasureHorizonsItems.GALATH_COIN.get()));
-                int stars = 1 + this.random.nextInt(3);
-                this.spawnAtLocation(new ItemStack(Items.NETHER_STAR, stars));
-                if (player instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.giveExperiencePoints(this.getBaseExperienceReward());
+            for (ServerPlayer nearby : serverLevel.getPlayers()) {
+                if (nearby.distanceToSqr(this) <= 32.0D * 32.0D) {
+                    nearby.displayClientMessage(
+                            Component.translatable("msg.pleasurehorizons.galath_ko", this.getGirlDisplayName()),
+                            true);
                 }
             }
         }
-        this.playSound(SoundEvents.WITHER_SPAWN, 0.8F, 0.6F);
-
-        if (player != null) {
-            player.displayClientMessage(
-                    Component.translatable("msg.pleasurehorizons.galath_defeated", this.getGirlDisplayName()),
-                    true);
-        }
-
-        // Canon flow: she is gone after losing; the dropped coin is what summons the bound Galath.
-        this.discard();
+        this.playSound(SoundEvents.ENDERMAN_DEATH, 1.0F, 0.6F);
     }
 
-    /** Summon 2-3 skeletons that fight for Galath. */
-    private void summonSkeletons() {
-        if (this.level().isClientSide()) return;
+    private void tickKnockOut() {
+        this.koTicks++;
+        if (this.koPhase == KnockOutPhase.FLY) {
+            // KNOCK_OUT_FLY: she hovers slowly toward the ground (the hover itself runs in
+            // travel(), where it survives the base movement code). Original: no gravity,
+            // cleared path, screaming.
+            if (this.koTicks >= KO_FLY_DURATION || this.onGround()) {
+                this.koPhase = KnockOutPhase.GROUND;
+                this.koTicks = 0;
+                this.playSound(SoundEvents.ENDERMAN_TELEPORT, 0.8F, 0.8F);
+            }
+        } else {
+            // KNOCK_OUT_GROUND: lies paralyzed. A player must come and right-click her;
+            // an unclaimed (environment-killed) boss vanishes, like the original reset.
+            if (this.koVictor == null && this.koTicks >= KO_DISCARD_GRACE) {
+                this.discard();
+            }
+        }
+    }
 
-        int count = 2 + this.random.nextInt(2);
-        for (int i = 0; i < count; i++) {
-            Skeleton skeleton = EntityType.SKELETON.create(this.level());
+    /** True while she lies on the ground waiting to be claimed. */
+    public boolean isKnockOutGround() {
+        return this.koPhase == KnockOutPhase.GROUND;
+    }
+
+    /**
+     * Original GIVE_COIN: the first player to right-click the paralyzed Galath binds her.
+     * She stands up, becomes tamed, and the soul-binding coin goes straight into the
+     * claimer's main hand (the previous item is dropped on the ground).
+     */
+    private void claimFromKnockOut(Player player) {
+        this.koPhase = KnockOutPhase.NONE;
+        this.koTicks = 0;
+        this.koVictor = null;
+        this.setTarget(null);
+        this.setFreeze(false);
+        this.setNoGravity(false);
+        this.setDowned(false);
+        this.setHealth(this.getMaxHealth());
+        this.setTamedBy(player);
+        this.getNavigation().stop();
+        this.setBasePos(this.blockPosition());
+        this.clearMinions();
+
+        markDefeatedFor(player);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.giveExperiencePoints(this.getBaseExperienceReward());
+        }
+
+        // Original: "granting him a coin to which her soul is bound" - straight to the hand.
+        ItemStack previous = player.getItemInHand(InteractionHand.MAIN_HAND);
+        player.setItemInHand(InteractionHand.MAIN_HAND,
+                new ItemStack(PleasureHorizonsItems.GALATH_COIN.get()));
+        if (!previous.isEmpty()) {
+            player.drop(previous, false);
+        }
+
+        this.playSound(SoundEvents.PLAYER_LEVELUP, 1.0F, 1.2F);
+        player.displayClientMessage(
+                Component.translatable("msg.pleasurehorizons.galath_bound", this.getGirlDisplayName()),
+                true);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.WITCH,
+                    this.getX(), this.getY() + 1.5D, this.getZ(),
+                    12, 0.5D, 0.6D, 0.5D, 0.05D);
+        }
+    }
+
+    /** Original: she summons wither skeletons 15+ blocks away from her victim. */
+    private void summonWitherSkeletons() {
+        if (this.level().isClientSide()) return;
+        LivingEntity target = this.getTarget();
+        double tx = target != null ? target.getX() : this.getX();
+        double tz = target != null ? target.getZ() : this.getZ();
+
+        for (int i = 0; i < 2 && this.minionUUIDs.size() < MAX_WITHER_MINIONS; i++) {
+            WitherSkeleton skeleton = EntityType.WITHER_SKELETON.create(this.level());
             if (skeleton == null) continue;
             double angle = this.random.nextDouble() * Math.PI * 2;
-            double dist = 2.0D + this.random.nextDouble() * 3.0D;
-            double sx = this.getX() + Math.cos(angle) * dist;
-            double sz = this.getZ() + Math.sin(angle) * dist;
+            double dist = WITHER_MINION_RANGE + this.random.nextDouble() * 5.0D;
+            double sx = tx + Math.cos(angle) * dist;
+            double sz = tz + Math.sin(angle) * dist;
             skeleton.setPos(sx, this.getY(), sz);
-            LivingEntity target = this.getTarget();
             if (target != null) skeleton.setTarget(target);
             skeleton.setPersistenceRequired();
             this.level().addFreshEntity(skeleton);
+            this.minionUUIDs.add(skeleton.getUUID());
             if (this.level() instanceof ServerLevel serverLevel) {
-                serverLevel.sendParticles(ParticleTypes.SMOKE,
-                        sx, this.getY(), sz, 8, 0.3D, 0.5D, 0.3D, 0.05D);
+                serverLevel.sendParticles(ParticleTypes.SMOKE, sx, this.getY(), sz, 8, 0.3D, 0.5D, 0.3D, 0.05D);
             }
         }
 
@@ -362,51 +382,121 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         }
     }
 
-    private void startGrab(Player player) {
-        this.grabbedPlayerUUID = player.getUUID().toString();
-        this.grabPhaseTicks = 0;
-        this.escapeTaps = 0;
-        this.getNavigation().stop();
-        Vec3 lockPos = this.position().add(this.getLookAngle().scale(1.0D));
-        player.teleportTo(lockPos.x, this.getY(), lockPos.z);
-        player.setYRot(this.getYRot());
-        player.displayClientMessage(
-                Component.translatable("msg.pleasurehorizons.galath_grabbed"), true);
-        if (player instanceof ServerPlayer serverPlayer) {
-            PacketDistributor.sendToPlayer(serverPlayer,
-                    new GalathGrabScreenS2CPacket(this.getId(), true));
-        }
+    private void expireMinions() {
+        this.minionUUIDs.removeIf(uuid -> {
+            Entity minion = this.level().getEntity(uuid);
+            return minion == null || !minion.isAlive() || minion.level() != this.level();
+        });
     }
 
-    /** Receives batched escape-tap packets from the client. */
-    public void onEscapeTap(int taps) {
-        if (this.grabbedPlayerUUID.isEmpty() || this.isTamed()) return;
-        this.escapeTaps += Math.max(1, Math.min(taps, 10));
-        if (this.escapeTaps >= ESCAPE_THRESHOLD) {
-            Player grabbed = this.grabbedPlayer();
-            this.releaseGrab(grabbed);
-        }
-    }
-
-    private void releaseGrab(@Nullable Player player) {
-        if (player != null) {
-            player.displayClientMessage(
-                    Component.translatable("msg.pleasurehorizons.galath_escaped"), true);
-            Vec3 knockback = player.position().subtract(this.position()).normalize();
-            player.knockback(1.5D, knockback.x, knockback.z);
-            if (player instanceof ServerPlayer serverPlayer) {
-                PacketDistributor.sendToPlayer(serverPlayer,
-                        new GalathGrabScreenS2CPacket(this.getId(), false));
+    private void clearMinions() {
+        for (UUID uuid : this.minionUUIDs) {
+            Entity minion = this.level().getEntity(uuid);
+            if (minion != null && minion.isAlive()) {
+                minion.discard();
             }
         }
-        this.grabbedPlayerUUID = "";
-        this.grabPhaseTicks = 0;
-        this.escapeTaps = 0;
-        this.grabCooldown = GRAB_INTERVAL / 2;
+        this.minionUUIDs.clear();
     }
 
-    public boolean isGrabbingPlayer() {
-        return !this.grabbedPlayerUUID.isEmpty();
+    /**
+     * The original energy-ball attack: a 35-tick swing whose hitbox is active during
+     * ticks 9-30 (decompiled {@code f_#h}). 1 damage + 1.5 knockback, and a player
+     * that sneaks when the ball reaches them takes no damage (the original's
+     * {@code isSneaking} guard). Works underwater too, since the base melee goal was
+     * replaced by this one.
+     */
+    private static final class BallSwingGoal extends Goal {
+        private final GalathEntity galath;
+        private int swingTicks = 0;
+        private final Set<UUID> hitThisSwing = new HashSet<>();
+
+        private BallSwingGoal(GalathEntity galath) {
+            this.galath = galath;
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = this.galath.getTarget();
+            if (target == null || !target.isAlive()) return false;
+            if (this.galath.isTamed() || this.galath.isDowned() || this.galath.isFrozenInPlace()
+                    || this.galath.isSceneActive() || this.galath.isPassenger()) {
+                return false;
+            }
+            if (this.galath.swingCooldown > 0) return false;
+
+            if (this.galath.isInWater() && (target.isInWater() || target.isUnderWater())) {
+                // Underwater the ball is a short-range splash (replaces the water melee).
+                return target.distanceToSqr(this.galath) <= 6.25D;
+            }
+            return target.distanceToSqr(this.galath) <= SWING_REACH_SQ
+                    && this.galath.hasLineOfSight(target);
+        }
+
+        @Override
+        public void start() {
+            this.swingTicks = 1;
+            this.hitThisSwing.clear();
+            this.galath.playSound(SoundEvents.WITHER_SHOOT, 0.6F, 1.6F);
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            LivingEntity target = this.galath.getTarget();
+            if (target == null || !target.isAlive()) {
+                this.swingTicks = 0;
+                return false;
+            }
+            double reachSq = this.galath.isInWater() ? 6.25D : 20.25D;
+            return target.distanceToSqr(this.galath) <= reachSq;
+        }
+
+        @Override
+        public void tick() {
+            if (this.swingTicks <= 0) return;
+            this.swingTicks++;
+
+            if (this.swingTicks > SWING_DURATION) {
+                this.swingTicks = 0;
+                this.galath.swingCooldown = SWING_COOLDOWN_MIN
+                        + this.galath.random.nextInt(SWING_COOLDOWN_MAX - SWING_COOLDOWN_MIN);
+                return;
+            }
+
+            if (this.swingTicks >= SWING_ACTIVE_FROM && this.swingTicks <= SWING_ACTIVE_TO) {
+                this.hitWithBall();
+            }
+        }
+
+        private void hitWithBall() {
+            Vec3 ballPos = this.galath.getEyePosition()
+                    .add(this.galath.getLookAngle().scale(1.1D))
+                    .add(0.0D, -0.2D, 0.0D);
+
+            if (this.galath.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                        ballPos.x, ballPos.y, ballPos.z,
+                        6, 0.15D, 0.15D, 0.15D, 0.03D);
+            }
+
+            AABB reach = new AABB(ballPos).inflate(SWING_HIT_RADIUS);
+            for (LivingEntity entity : this.galath.level().getEntitiesOfClass(LivingEntity.class, reach,
+                    e -> e != this.galath && e.isAlive() && !(e instanceof TameableGirlEntity))) {
+                if (this.hitThisSwing.contains(entity.getUUID())) continue;
+                // Original: sneaking dodges the energy ball entirely.
+                if (entity instanceof Player player && player.isCrouching()) continue;
+
+                this.hitThisSwing.add(entity.getUUID());
+                entity.hurt(this.galath.damageSources().mobAttack(this.galath), BALL_DAMAGE);
+                Vec3 dir = entity.position().subtract(this.galath.position()).normalize();
+                entity.knockback(BALL_KNOCKBACK, dir.x, dir.z);
+            }
+        }
+
+        @Override
+        public void stop() {
+            this.swingTicks = 0;
+        }
     }
 
     // ------------------------------------------------------------ threesome
@@ -506,6 +596,8 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         return null;
     }
 
+    // ------------------------------------------------------------ flight
+
     /** Toggle riding for a bound Galath (Shift + empty hand). */
     private InteractionResult toggleRide(Player player) {
         if (this.getPassengers().isEmpty()) {
@@ -527,14 +619,29 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
 
     @Override
     public void travel(Vec3 travelVector) {
-        // While holding a victim (or inside a ritual) she plants herself.
-        if (this.isGrabbingPlayer() || this.isInThreesome || this.isFrozenInPlace()) {
+        // Knock-out: she floats down (FLY) or lies still (GROUND). Handled here because the
+        // base tick would otherwise re-apply gravity / knock the hover around.
+        if (this.koPhase != KnockOutPhase.NONE) {
+            if (this.koPhase == KnockOutPhase.FLY && !this.onGround()) {
+                this.setDeltaMovement(0.0D, -0.03D, 0.0D);
+            } else {
+                this.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            }
+            this.fallDistance = 0.0F;
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
+        // While in the ritual or paralyzed she plants herself.
+        if (this.isInThreesome || this.isFrozenInPlace()) {
             this.setDeltaMovement(0.0D, 0.0D, 0.0D);
             return;
         }
 
         LivingEntity rider = this.getControllingPassenger();
         if (rider != null && this.isVehicle()) {
+            // Original "ride": she FLYES with the rider - no gravity, mouse steering,
+            // W/S for speed, jump for altitude up, sneak for altitude down.
             float forward = rider.zza;
             float strafe = rider.xxa;
             boolean sneak = rider.isShiftKeyDown();
@@ -578,7 +685,8 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
 
     @Override
     public boolean canAddPassenger(Entity passenger) {
-        return this.getPassengers().isEmpty() && passenger instanceof Player;
+        return this.koPhase == KnockOutPhase.NONE && this.getPassengers().isEmpty()
+                && passenger instanceof Player;
     }
 
     @Nullable
@@ -622,25 +730,25 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         return 0;
     }
 
-    @Nullable
-    private Player grabbedPlayer() {
-        if (this.grabbedPlayerUUID.isEmpty()) return null;
-        try {
-            return this.level().getPlayerByUUID(UUID.fromString(this.grabbedPlayerUUID));
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (this.level().isClientSide()) {
-            // Optimistic client result: only the owner may interact with a tamed Galath.
-            boolean willAct = this.isTamed() && this.isOwner(player);
+            // Optimistic client result: the owner interacts with a tamed Galath, and any
+            // player may claim one lying in her knock-out.
+            boolean willAct = (this.isTamed() && this.isOwner(player)) || this.isKnockOutGround();
             return willAct ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
 
         if (!this.getOverrideAnim().isEmpty() || hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
+
+        // Original: right-click the paralyzed Galath and she is bound to you.
+        if (this.koPhase != KnockOutPhase.NONE) {
+            if (this.koPhase == KnockOutPhase.GROUND && player.distanceToSqr(this) <= 16.0D) {
+                this.claimFromKnockOut(player);
+                return InteractionResult.SUCCESS;
+            }
             return InteractionResult.PASS;
         }
 
@@ -669,12 +777,31 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         return InteractionResult.FAIL;
     }
 
+    /**
+     * Original: after a scene ends, Galath pulls her player back to her side
+     * (decompiled {@code GalathEntity#d} - teleport to a point next to her).
+     */
+    @Override
+    public void stopScene() {
+        super.stopScene();
+        if (this.level().isClientSide() || !this.isTamed()) return;
+        Player owner = this.getOwner() instanceof Player player ? player : null;
+        if (owner == null || !owner.isAlive()) return;
+        if (owner.distanceToSqr(this) > 64.0D) {
+            Vec3 offset = this.getLookAngle().scale(0.4D);
+            owner.teleportTo(this.getX() + offset.x,
+                    this.getY() + 0.5D - owner.getEyeHeight(),
+                    this.getZ() + offset.z);
+            owner.setYRot(this.getYRot());
+        }
+    }
+
     /** Remember that this player earned the right to use the soul-binding coin. */
     private void markDefeatedFor(Player player) {
         player.getPersistentData().putBoolean(DEFEATED_KEY, true);
     }
 
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     private Player playerFromDamage(DamageSource source) {
         Entity attacker = source.getEntity();
         if (attacker instanceof Player player) {
