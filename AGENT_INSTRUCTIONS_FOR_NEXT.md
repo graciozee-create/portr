@@ -1544,7 +1544,7 @@ NeoForge's biome `biomes` field accepts ID | [list] | #tag with NO negation
 directListOrTagReference), so exclusion = explicit water list.
 Implemented as `data/pleasurehorizons/neoforge/biome_modifier/
 girls_no_water_spawns.json`: `neoforge:remove_spawns`, biomes = 13 IDs
-(9 oceans + river + frozen_river + beach + stony_shores), entity_types =
+(9 oceans + river + frozen_river + beach + stony_shore), entity_types =
 new `#pleasurehorizons:girls` tag (tags/entity_type/girls.json, all 13
 entity types incl. custom_girl). Ordering is GUARANTEED:
 `ModifiableBiomeInfo.applyBiomeModifiers` iterates `Phase.values()` —
