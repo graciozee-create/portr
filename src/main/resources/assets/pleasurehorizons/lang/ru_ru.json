@@ -524,7 +524,7 @@
   "message.pleasurehorizons.galath_dismissed": "Галат отпущен.",
   "msg.pleasurehorizons.galath_coin_locked": "Монета Галата не отзывается. Сначала победи Галат.",
   "msg.pleasurehorizons.galath_ko": "%s парализована! Теперь пора её покорить - подойди к ней и кликни правой кнопкой.",
-  "msg.pleasurehorizons.galath_bound": "%s связана с тобой. Её душа связана с монетой в твоей руке - используй её, чтобы призвать её.",
+  "msg.pleasurehorizons.galath_bound": "%s связана с тобой. Её душа связана с монетой в твоей руке - используй её, чтобы призвать её. Shift + ПКМ (пустая рука) — сесть к ней на спину, она летает.",
   "msg.pleasurehorizons.galath_defeat_hint": "%s не будет слушать тебя, пока ты её не победишь.",
   "msg.pleasurehorizons.galath_mounted": "§5Ты взобрался на Галат!",
   "msg.pleasurehorizons.galath_dismounted": "§7Ты спрыгнул с Галат.",

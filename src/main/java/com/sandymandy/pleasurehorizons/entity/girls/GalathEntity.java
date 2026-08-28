@@ -5,6 +5,7 @@ import com.sandymandy.pleasurehorizons.entity.base.tamable.TameableGirlEntity;
 import com.sandymandy.pleasurehorizons.item.PleasureHorizonsItems;
 import com.sandymandy.pleasurehorizons.util.variables.Scene;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -752,19 +753,22 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
         }
 
         if (this.isTamed()) {
-            if (this.isOwner(player) && player.isShiftKeyDown()) {
-                if (player.getItemInHand(hand).isEmpty()) {
-                    return this.toggleRide(player);
-                }
+            if (this.isOwner(player) && player.isShiftKeyDown() && !this.isSceneActive()) {
                 if (this.isInThreesome) {
                     this.exitThreesome();
                     return InteractionResult.SUCCESS;
                 }
-                ManglelieEntity mang = this.findNearbyManglelie(player);
+                // Shift + item with a Manglelie nearby starts the dark ritual; otherwise
+                // (any item, empty hand or not) Shift always mounts - previously a held
+                // item fell through to the base sit-toggle, which made mounting feel
+                // broken. SIT is still available through the inventory screen button.
+                ManglelieEntity mang = !player.getItemInHand(hand).isEmpty()
+                        ? this.findNearbyManglelie(player) : null;
                 if (mang != null && !mang.isInThreesome) {
                     this.startThreesome(mang, player);
                     return InteractionResult.SUCCESS;
                 }
+                return this.toggleRide(player);
             }
             return super.mobInteract(player, hand);
         }
@@ -792,6 +796,39 @@ public class GalathEntity extends SettlementGirlEntityAI implements PlayerRideab
                     this.getY() + 0.5D - owner.getEyeHeight(),
                     this.getZ() + offset.z);
             owner.setYRot(this.getYRot());
+        }
+    }
+
+    /**
+     * Persists the knock-out state. Without it a player who wins the fight but reloads
+     * before claiming gets a downed (invulnerable) untamed Galath whose "claimable"
+     * phase was lost - permanently untameable and unkillable.
+     */
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (this.koPhase != KnockOutPhase.NONE) {
+            tag.putString("GalathKO", this.koPhase.name());
+            if (this.koVictor != null) {
+                tag.putUUID("GalathKOVictor", this.koVictor);
+            }
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("GalathKO")) {
+            try {
+                this.koPhase = KnockOutPhase.valueOf(tag.getString("GalathKO"));
+            } catch (IllegalArgumentException e) {
+                this.koPhase = KnockOutPhase.NONE;
+            }
+            this.koVictor = tag.hasUUID("GalathKOVictor") ? tag.getUUID("GalathKOVictor") : null;
+            this.koTicks = 0;
+            if (this.koPhase == KnockOutPhase.FLY) {
+                this.setNoGravity(true);
+            }
         }
     }
 
