@@ -1108,7 +1108,9 @@ public abstract class GirlEntity extends PathfinderMob {
     }
 
     /**
-     * Returns the highest relationship level required by this girl's scenes.
+     * Returns the highest relationship level required by this girl's scenes,
+     * clamped to at least one so a scene list of only level-zero scenes still
+     * yields a usable progress range instead of {@code 0/0}.
      *
      * <p>The old port only returned {@link #MAX_RELATIONSHIP_LEVEL}, which is initialised to
      * four and was never updated. Girls with later scenes therefore displayed {@code 4/4}
@@ -1124,10 +1126,13 @@ public abstract class GirlEntity extends PathfinderMob {
                 return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
             }
 
-            return scenes.stream()
+            // Clamp to at least one: a girl whose only scenes all require level zero
+            // (Bia, Galath, Goblin) would otherwise report 0/0 and the
+            // current < max progress check in the tamable/wild tickers could never pass.
+            return Math.max(1, scenes.stream()
                     .map(com.sandymandy.pleasurehorizons.util.variables.Scene::requiredRelationshipLevel)
                     .max(Integer::compareTo)
-                    .orElse(4);
+                    .orElse(4));
         } catch (RuntimeException exception) {
             // A missing/malformed custom profile must not make relationship progress unusable.
             return Math.max(4, this.entityData.get(MAX_RELATIONSHIP_LEVEL));
