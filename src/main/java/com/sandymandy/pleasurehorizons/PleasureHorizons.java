@@ -237,9 +237,10 @@ public class PleasureHorizons {
         if (world.dimension() != Level.NETHER) return;
 
         BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
-        // Original position check: the spawn must stand on real ground, not on a
-        // replaceable block (air, carpet, plants, buttons, ladders, torches, ...).
-        if (world.isEmptyBlock(pos)) return;
+        // The spawn position is the air space the mob will occupy; the original required
+        // real ground, so the block BELOW the spawn must be solid (she never appears
+        // floating, and replaceable blocks such as carpets/plants don't count).
+        if (world.isEmptyBlock(pos.below())) return;
 
         // Do not stack bosses: if an untamed Galath is already nearby, let the
         // natural mob through instead.
