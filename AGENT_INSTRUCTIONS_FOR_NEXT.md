@@ -1627,3 +1627,105 @@ gifts level her), TameableGirlEntity interactions/tick, GirlSceneEntity
 scene flow, StartSceneC2SPacket + GoblinActionC2SPacket validation,
 SettlementGirlEntityAI (bow/ammo), QuestManager (fetch/kill/escort +
 goblin quests), all 146 data JSONs valid, biome modifier + tags.
+
+### 5.56 v17 — Galath: original 1.12.2 boss fight, verified against the decompiled original (2ac31a1, 052139c, dc281ca, cfb1818, 770d040)
+
+User challenged the Galath system ("the original combat was completely
+different"). Re-decompiled the ORIGINAL FapCraft 1.12.2 v1.1 jar
+(Wayback URL in External Sources; CFR 0.152). Findings: original Galath =
+class **f_** (4862 lines, extends em, IEntityMultiPart); registration in
+bi.a(): `bi.a("galath", f_.class, fy.GALATH.npcID, ...)` — and **NO
+EntityRegistry.addSpawn for her at all**. The original v1.1 also has girls
+we don't (ellie, luna, bee) and lacks ours (lucy, mika, momo, coppie).
+
+**Original mechanics (decompiled facts, not guesses):**
+- No natural spawn: a `LivingSpawnEvent.CheckSpawn` handler denies Nether
+  wither-skeleton/blaze spawns at a valid position and spawns Galath
+  instead (position check aS = {air, carpet, bush, button, ladder, torch,
+  sign, banner} → reject; spawner spawns skipped).
+- Combat is a scripted state machine, NO attack goals: goals are swim,
+  door-open (hz), watch-player (df = plain EntityAIWatchClosest2), tempt.
+  Attacks: **energy balls** — entity-part hitboxes on model bones
+  energyBallL/R, active during swing ticks 9..30 (f_#h), 1 damage +
+  **1.5 knockback, DODGED BY SNEAKING** (isSneaking guard), won't kill a
+  player at ≤1 HP; wither-skeleton MINIONS (bI UUID list, placed >15
+  blocks from the target); player teleported to her side after scenes
+  (f_#d).
+- attackEntityFrom: ignores fire (isFireDamage), and 4 more damage types
+  (we port: lava/in_fire/on_fire/hot_floor/fall/out_of_world/starve/thorns).
+- No boss-tier attributes found (standard 20 HP girl) — she is a
+  dodge-and-manage boss, not an HP sponge.
+- **KO sequence** (not death): "Galath is paralyzed! Now it's time to
+  corrupt her (Walk to her and right click her)" → KNOCK_OUT_FLY (no
+  gravity, GIRLS_GALATH_AAA scream, cleared path) → KNOCK_OUT_GROUND
+  (lies down) → GIVE_COIN cutscene → **coin goes straight into the
+  claimer's main hand** (old item dropped), message: "Defeating a
+  succubus makes her accept the victor as her master, granting him a coin
+  to which her soul is bound. Using the coin summons her, offering
+  services on demand. If her master uses the coin on her or goes too far,
+  she returns to the coin." Alternative: right-click while KNOCK_OUT_GROUND
+  tames her immediately (CORRUPT_INTRO). Ownership persisted in
+  WorldSavedData sexmod:galath_owner_ship.
+- Tamed menu with coin in hand: ride (opens FLIGHT HUD galath_flight_ui.png
+  — she FLYES with the rider, not piggyback), cowgirl, anal, threesome
+  (WITH MANGLELIE — our threesome is original), HUG_MANG etc. If the
+  player leaves mid-scene she flies off (w() → FLY, "returns to the coin").
+
+**What the port had instead (from the intermediate 1.21.1 upstream port
+this project is based on):** 300 HP / 8 dmg boss, 10-s wither/weakness
+energy wave, 15-s grab + 8-s A/D-mash escape screen, skeletons on 30
+damage taken, nether stars drop, coin as ground drop, natural nether
+biome-modifier spawn. ALL REMOVED (user chose "full alignment").
+
+**New implementation (GalathEntity rewrite, 700+ ln):**
+- Attributes: standard 20 HP, ATTACK_DAMAGE 1.0, follow 64, speed 0.3,
+  50 XP. registerCombatGoals overridden: NO GirlAttackSwitchGoal — only
+  the custom **BallSwingGoal** (35-tick swing, hitbox ticks 9..30,
+  AABB(ballPos,ballPos).inflate(1.4), 1 dmg + 1.5 knockback, players
+  crouching are skipped; 4-block reach, water splash variant ≤2.5 blocks
+  so the v13/v14 underwater combat dive still lands hits).
+- Immmunities in hurt() (untamed only): lava/in_fire/on_fire/hot_floor via
+  DamageTypes, fall/out_of_world/starve/thorns via
+  `source.type().msgId()` (project style; the DamageTypes constants for
+  those don't exist in 21.1.80).
+- KO: base already flips IS_DOWNED at lethal hit (keeps her at 1 HP,
+  "downed" model animation plays automatically). beginKnockOut: nav
+  stop, target null, minions cleared, no-gravity on, ENDERMAN_DEATH
+  scream, "galath_ko" message broadcast to players ≤32 blocks.
+  travel() KO branch: FLY = hover down -0.03/tick until onGround or 80
+  ticks → GROUND (lies still). Unclaimed environment KO (koVictor null)
+  discards after 100 ticks (original ownership reset).
+  mobInteract during GROUND (any player, ≤4 blocks, main hand) →
+  claimFromKnockOut: stand up, full heal, setTamedBy, DEFEATED_KEY mark
+  for the CLAIMER, 50 XP, **coin set into main hand + old item dropped**,
+  PLAYER_LEVELUP, "galath_bound" message.
+- Minions: WitherSkeleton (not Skeleton), 15-20 blocks from the victim,
+  cap 3, tracked by reference (List<WitherSkeleton> — 1.21.1 has NO
+  Level#getEntity(UUID); getEntity takes an int id), expired each tick,
+  discarded on KO/claim.
+- Spawn: galath_spawn.json biome modifier REMOVED;
+  PleasureHorizons#onLivingPositionCheck (MobSpawnEvent.PositionCheck —
+  the 21.1.80 equivalent of 1.20 CheckSpawn; old LivingSpawnEvent.CheckSpawn
+  does not exist in 1.21.1): NATURAL only, WitherSkeleton/Blaze, Nether,
+  `world.isEmptyBlock(pos.below())` reject (spawn pos is the air space —
+  check the block BELOW), 64-block untamed-Galath no-stacking guard,
+  setResult(FAIL) + spawn Galath at the position.
+- stopScene override: after any scene, owner >8 blocks away is teleported
+  to a point next to her (original f_#d).
+- Ride: flight semantics (no-gravity hover + rider steering + jump/sneak
+  altitude) already in place from the piggyback work; canAddPassenger
+  blocks mounting while KO'd. Threesome, scenes, coin item (GalathCoinItem
+  summon/dismiss via DEFEATED_KEY), spawn egg, quests unchanged.
+- Grab system fully deleted: GalathGrabScreen, GalathGrabScreenS2CPacket,
+  GalathGrabTapsC2SPacket, registrations, ClientPacketHandlers hook,
+  galath_grabbed/galath_escaped lang keys. Lang now 732=732
+  (+galath_ko/+galath_bound, -galath_defeated).
+
+**1.21.1 API traps hit by this work (for future reference):**
+ServerLevelAccessor = net.minecraft.world.level (NOT server.level),
+wraps the real ServerLevel via getLevel(); BlockState has no
+isSolidBlock(Level, BlockPos); ServerLevel#getPlayers needs a Predicate;
+AABB has no single-Vec3 ctor (use AABB(Vec3, Vec3)); DamageTypes has no
+FALL/OUT_OF_WORLD/STARVE/THORNS constants (use type().msgId()).
+
+CI green: run 33175444836 (cfb1818) + 770d040 (spawn-check fix).
