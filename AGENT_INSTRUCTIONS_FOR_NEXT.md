@@ -1477,3 +1477,35 @@ doHurtTarget works underwater, air supply is refilled every 20 ticks (no
 drowning). Target acquisition was already fine (track-owner-attacker,
 attack-with-owner Enemy-only, guard/pack/hunt goals, WATER malus 0 in
 combat).
+
+### 5.53 v14 — underwater melee fix (fe1f73f)
+
+User (after v13): «она просто под зомби крутится». Two more causes:
+
+1. **Navigation vs dive tug-of-war.** The combat goal (vanilla
+   MeleeAttackGoal tick / bow goal) re-issues `navigation.moveTo(target)`
+   every 4-11 ticks; for a float-capable mob the water path ends at the
+   SURFACE-level node above the target, and that navigation is far stronger
+   than the 0.09/tick dive velocity add → the girl was pulled back to the
+   surface, orbited at mid-depth, and spent most of her time out of the
+   ~1.9 block melee reach. Fix: the combat dive now calls
+   `navigation.stop()` every tick while it steers (same pattern as the
+   owner dive); the melee goal's `checkAndPerformAttack` is independent of
+   the navigation, so hits land once she is in range.
+2. **Bow is useless underwater.** `GirlAttackSwitchGoal` (settlement girls)
+   picks the bow goal when wounded (health ≤ 50%) or more than 5 blocks
+   from the target; `GirlBowAttackGoal` kites (swims away below 6 blocks)
+   and arrows in water lose almost all velocity → a wounded archer circled
+   the underwater target forever. Fix: `underwaterFight = girl.isInWater()
+   || target.isInWater()/isUnderWater()` → always melee in that case.
+
+Also recorded: `FloatGoal` holds only the JUMP flag (verified in MCP) - it
+does NOT block movement goals; the earlier flag-contention theory was wrong.
+`MeleeAttackGoal.canUse` = `createPath(target,0) != null ||
+isWithinMeleeAttackRange`; `canPerformAttack` = cooldown + melee range +
+line of sight (a raycast through water passes - water is not solid).
+`GirlMeleeAttackGoal` is `MeleeAttackGoal(girl, speed,
+followTargetEvenIfNotSeen=FALSE)` → it stops when the path completes
+(`canContinueToUse = !isDone`) and re-starts via the 20-tick-throttled
+`canUse` - so an in-range girl still gets one attack per start
+(`start()` resets the attack cooldown to 0).
